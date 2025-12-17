@@ -33,7 +33,7 @@ export default function OrdersPage() {
 
     useEffect(() => {
         fetchOrders();
-    }, [showCompleted]);
+    }, []); // Only fetch ONCE on mount
 
     async function fetchOrders() {
         setLoading(true);
@@ -47,7 +47,7 @@ export default function OrdersPage() {
             return;
         }
 
-        // 1. Fetch Orders 
+        // 1. Fetch ALL Orders (Client-side filtering is faster for UI toggles)
         const ordersQuery = supabase
             .from('orders')
             .select(`
@@ -56,16 +56,13 @@ export default function OrdersPage() {
                     product_name, 
                     artwork_code, 
                     specs, 
+                    dimension,
                     artwork_pdf, 
                     artwork_cdr, 
                     category_id
                 )
             `)
             .order('created_at', { ascending: false });
-
-        if (!showCompleted) {
-            ordersQuery.not('status', 'in', '("Completed","Delivered")');
-        }
 
         // 2. Fetch Categories Separately
         const categoriesQuery = supabase.from('category').select('id, name');
@@ -120,6 +117,14 @@ export default function OrdersPage() {
     // Derived State: Filtered & Grouped (Memoized)
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
+            // 1. Filter by Status (Client-side)
+            if (!showCompleted) {
+                const s = order.status?.toLowerCase().trim() || '';
+                // Hide if Completed or Delivered
+                if (s === 'completed' || s === 'delivered') return false;
+            }
+
+            // 2. Filter by Search
             if (!searchTerm) return true;
             const search = searchTerm.toLowerCase();
             const pName = order.products?.product_name?.toLowerCase() || '';
@@ -127,7 +132,7 @@ export default function OrdersPage() {
             const printer = order.printer_name?.toLowerCase() || '';
             return pName.includes(search) || oId.includes(search) || printer.includes(search);
         });
-    }, [orders, searchTerm]);
+    }, [orders, searchTerm, showCompleted]);
 
     // Reset page when filter changes
     useEffect(() => {
@@ -304,9 +309,13 @@ export default function OrdersPage() {
                                                     {/* 4. Specs */}
                                                     <td className="px-6 py-4 align-top">
                                                         <div className="text-xs text-slate-600 leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin whitespace-pre-wrap">
-                                                            {/* Showing 'specs' directly as 'spec' was erroring. Also added null check. */}
-                                                            {orders.find(o => o.id === order.id)?.products?.specs || '-'}
+                                                            {order.products?.specs || '-'}
                                                         </div>
+                                                        {(!order.products?.specs || order.products?.specs === '-') && order.products?.dimension && (
+                                                            <div className="text-[10px] text-slate-400 mt-1">
+                                                                Dim: {order.products.dimension}
+                                                            </div>
+                                                        )}
                                                     </td>
 
                                                     {/* 5. Total Print Qty */}
