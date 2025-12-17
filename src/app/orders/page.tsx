@@ -11,6 +11,7 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [categoryMap, setCategoryMap] = useState<Record<number, string>>({});
 
     // View State
     const [showCompleted, setShowCompleted] = useState(false);
@@ -36,15 +37,14 @@ export default function OrdersPage() {
 
         // DEBUG CHECK: Env Vars
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        // If the URL is missing or is our placeholder, show critical error
         if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
-            setError('CRITICAL: Missing Vercel Environment Variables. App is using placeholder URL. Please add keys in Vercel Settings.');
+            setError('CRITICAL: Missing Vercel Environment Variables. App is using placeholder URL.');
             setLoading(false);
             return;
         }
 
-        // Dynamic query building
-        let query = supabase
+        // 1. Fetch Orders (Removed nested category join)
+        const ordersQuery = supabase
             .from('orders')
             .select(`
                 *,
@@ -55,25 +55,36 @@ export default function OrdersPage() {
                     spec,
                     artwork_pdf, 
                     artwork_cdr, 
-                    category_id,
-                    category (name)
+                    category_id
                 )
             `)
             .order('created_at', { ascending: false });
 
-        // Filter based on "Show Completed" toggle
         if (!showCompleted) {
-            query = query.not('status', 'in', '("Completed","Delivered")');
+            ordersQuery.not('status', 'in', '("Completed","Delivered")');
         }
 
-        const { data, error } = await query;
+        // 2. Fetch Categories Separately
+        const categoriesQuery = supabase.from('category').select('id, name');
 
-        if (error) {
-            console.error('Error fetching orders:', error);
-            setError(error.message);
+        const [ordersRes, categoriesRes] = await Promise.all([
+            ordersQuery,
+            categoriesQuery
+        ]);
+
+        if (ordersRes.error) {
+            console.error('Error fetching orders:', ordersRes.error);
+            setError(ordersRes.error.message);
         } else {
-            setOrders(data || []);
+            setOrders(ordersRes.data || []);
         }
+
+        if (categoriesRes.data) {
+            const map: Record<number, string> = {};
+            categoriesRes.data.forEach((c: any) => map[c.id] = c.name);
+            setCategoryMap(map);
+        }
+
         setLoading(false);
     }
 
@@ -115,7 +126,9 @@ export default function OrdersPage() {
 
     const groupedOrders = groupByCategory
         ? filteredOrders.reduce((groups: Record<string, any[]>, order) => {
-            const catName = order.products?.category?.name || 'Uncategorized';
+            const catId = order.products?.category_id;
+            const catName = (catId && categoryMap[catId]) ? categoryMap[catId] : 'Uncategorized';
+
             if (!groups[catName]) groups[catName] = [];
             groups[catName].push(order);
             return groups;
@@ -132,15 +145,11 @@ export default function OrdersPage() {
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto">
-
             {/* DEBUG ALERT */}
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
                     <strong className="font-bold">Error Loading Data: </strong>
                     <span className="block sm:inline">{error}</span>
-                    <div className="mt-2 text-xs font-mono bg-red-100 p-2 rounded">
-                        Connected URL: {process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...
-                    </div>
                 </div>
             )}
 
