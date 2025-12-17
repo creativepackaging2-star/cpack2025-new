@@ -10,6 +10,7 @@ export default function OrdersPage() {
     // Data State
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // View State
     const [showCompleted, setShowCompleted] = useState(false);
@@ -27,10 +28,20 @@ export default function OrdersPage() {
 
     useEffect(() => {
         fetchOrders();
-    }, [showCompleted]); // Re-fetch when toggle changes (to keep it clean)
+    }, [showCompleted]);
 
     async function fetchOrders() {
         setLoading(true);
+        setError(null);
+
+        // DEBUG CHECK: Env Vars
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        // If the URL is missing or is our placeholder, show critical error
+        if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+            setError('CRITICAL: Missing Vercel Environment Variables. App is using placeholder URL. Please add keys in Vercel Settings.');
+            setLoading(false);
+            return;
+        }
 
         // Dynamic query building
         let query = supabase
@@ -59,6 +70,7 @@ export default function OrdersPage() {
 
         if (error) {
             console.error('Error fetching orders:', error);
+            setError(error.message);
         } else {
             setOrders(data || []);
         }
@@ -74,7 +86,7 @@ export default function OrdersPage() {
             .eq('id', id);
 
         if (error) {
-            alert('Error updating status');
+            alert('Error updating status: ' + error.message);
         } else {
             // Optimistic update
             setOrders(prev => prev.map(o => o.id === id ? { ...o, status: editStatus } : o));
@@ -120,6 +132,18 @@ export default function OrdersPage() {
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto">
+
+            {/* DEBUG ALERT */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+                    <strong className="font-bold">Error Loading Data: </strong>
+                    <span className="block sm:inline">{error}</span>
+                    <div className="mt-2 text-xs font-mono bg-red-100 p-2 rounded">
+                        Connected URL: {process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...
+                    </div>
+                </div>
+            )}
+
             {/* Header Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -169,7 +193,10 @@ export default function OrdersPage() {
                 {loading ? (
                     <div className="text-center py-12 text-slate-500">Loading orders...</div>
                 ) : Object.keys(groupedOrders).length === 0 ? (
-                    <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-slate-200 border-dashed">No active orders found.</div>
+                    <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-slate-200 border-dashed">
+                        No active orders found.
+                        {filteredOrders.length === 0 && !error && " (Try unchecking 'Show Completed' or verify filtering)"}
+                    </div>
                 ) : (
                     (Object.entries(groupedOrders) as [string, any[]][]).map(([category, catOrders]) => (
                         <div key={category} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -200,14 +227,14 @@ export default function OrdersPage() {
                                                 <td className="px-6 py-4 align-top">
                                                     <div className="font-bold text-slate-900">{order.products?.product_name || 'Unknown Product'}</div>
                                                     <div className="text-xs text-slate-500 font-mono mt-0.5">{order.products?.artwork_code || '-'}</div>
-                                                    <div className="flex gap-2 mt-1.5 ">
+                                                    <div className="flex gap-2 mt-1.5 opacity-90 transition-opacity">
                                                         {order.products?.artwork_pdf && (
-                                                            <a href={`/uploads/${order.products.artwork_pdf}`} target="_blank" className="text-red-500 hover:text-red-700 flex items-center text-[10px] font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-100 transition-colors">
+                                                            <a href={`/uploads/${order.products.artwork_pdf}`} target="_blank" className="text-red-500 hover:text-red-700 flex items-center text-[10px] font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
                                                                 <FileText className="w-3 h-3 mr-1" /> PDF
                                                             </a>
                                                         )}
                                                         {order.products?.artwork_cdr && (
-                                                            <a href={`/uploads/${order.products.artwork_cdr}`} target="_blank" className="text-blue-500 hover:text-blue-700 flex items-center text-[10px] font-medium bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 transition-colors">
+                                                            <a href={`/uploads/${order.products.artwork_cdr}`} target="_blank" className="text-blue-500 hover:text-blue-700 flex items-center text-[10px] font-medium bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                                                 <Upload className="w-3 h-3 mr-1" /> CDR
                                                             </a>
                                                         )}
