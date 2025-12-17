@@ -118,10 +118,17 @@ export default function OrdersPage() {
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
             // 1. Filter by Status (Client-side)
-            if (!showCompleted) {
-                const s = order.status?.toLowerCase().trim() || '';
-                // Hide if Completed or Delivered
-                if (s === 'completed' || s === 'delivered') return false;
+            const s = order.status?.toLowerCase().trim() || '';
+            const isCompleted = s === 'completed' || s === 'delivered' || s === 'dispatched'; // Dispatched is arguably active, but user said 'complete'. Let's keep Dispatched as Active usually.
+            // Wait, Dispatched usually means it's gone. But for now, let's stick to Completed/Delivered as 'Done'.
+            const isDone = s === 'completed' || s === 'delivered';
+
+            if (showCompleted) {
+                // Show ONLY Completed
+                if (!isDone) return false;
+            } else {
+                // Show ONLY Active (Hide Completed/Delivered)
+                if (isDone) return false;
             }
 
             // 2. Filter by Search
@@ -246,7 +253,7 @@ export default function OrdersPage() {
                                             <tr>
                                                 <th className="px-6 py-3 font-semibold w-[25%]">Product Info</th>
                                                 <th className="px-6 py-3 font-semibold w-[10%]">Qty</th>
-                                                <th className="px-6 py-3 font-semibold w-[15%]">Status</th>
+                                                <th className="px-6 py-3 font-semibold w-[15%]">Process</th>
                                                 <th className="px-6 py-3 font-semibold w-[20%]">Specs</th>
                                                 <th className="px-6 py-3 font-semibold w-[10%]">Total Print</th>
                                                 <th className="px-6 py-3 font-semibold w-[15%]">Files</th>
