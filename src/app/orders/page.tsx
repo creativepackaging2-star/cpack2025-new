@@ -27,8 +27,8 @@ export default function OrdersPage() {
     const [editProgress, setEditProgress] = useState('');
 
     const PROCESS_OPTIONS = [
-        'Printing', 'Cutting',
-        'Pasting', 'Packing', 'Ready', 'Dispatched'
+        'Paper', 'Plate', 'Print', 'Varnish',
+        'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'
     ];
 
     // ...
@@ -175,11 +175,20 @@ export default function OrdersPage() {
             : { 'All Orders': paginatedOrders };
     }, [groupByCategory, paginatedOrders, categoryMap]);
 
+    const getRowStyle = (order: Order) => {
+        const s = order.progress?.toLowerCase() || '';
+        if (s === 'hold') return 'bg-red-50 hover:bg-red-100 ring-1 ring-inset ring-red-200 group';
+        if (s === 'ready') return 'bg-emerald-50 hover:bg-emerald-100 ring-1 ring-inset ring-emerald-200 group';
+        return 'hover:bg-slate-50/80 transition-colors group';
+    };
+
     const getProgressColor = (progress: string | null) => {
         const s = progress?.toLowerCase() || '';
-        if (s.includes('ready') || s.includes('dispatch')) return 'bg-purple-50 text-purple-700 ring-purple-600/20';
-        if (s.includes('pending')) return 'bg-amber-50 text-amber-700 ring-amber-600/20';
-        if (s.includes('print') || s.includes('cut') || s.includes('paste') || s.includes('pack')) return 'bg-blue-50 text-blue-700 ring-blue-600/20';
+        if (s === 'ready') return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20 font-bold';
+        if (s === 'hold') return 'bg-red-100 text-red-800 ring-red-600/20 font-bold';
+        if (['paper', 'plate', 'print', 'varnish', 'foil', 'pasting', 'folding'].some(p => s.includes(p))) {
+            return 'bg-blue-50 text-blue-700 ring-blue-600/20';
+        }
         return 'bg-slate-50 text-slate-600 ring-slate-500/10';
     };
 
@@ -199,7 +208,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v19:37 Filter Fix</span>
+                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v19:58 RowColor</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
@@ -270,7 +279,7 @@ export default function OrdersPage() {
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {catOrders.map((order) => (
-                                                <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
+                                                <tr key={order.id} className={getRowStyle(order)}>
 
                                                     <td className="px-6 py-4 align-top">
                                                         <div className="font-bold text-slate-900">{order.products?.product_name || 'Unknown Product'}</div>
