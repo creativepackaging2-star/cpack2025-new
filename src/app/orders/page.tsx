@@ -246,7 +246,7 @@ export default function OrdersPage() {
                                             <tr>
                                                 <th className="px-6 py-3 font-semibold w-[25%]">Product Info</th>
                                                 <th className="px-6 py-3 font-semibold w-[10%]">Qty</th>
-                                                <th className="px-6 py-3 font-semibold w-[15%]">Progress</th>
+                                                <th className="px-6 py-3 font-semibold w-[15%]">Status</th>
                                                 <th className="px-6 py-3 font-semibold w-[20%]">Specs</th>
                                                 <th className="px-6 py-3 font-semibold w-[10%]">Total Print</th>
                                                 <th className="px-6 py-3 font-semibold w-[15%]">Files</th>
