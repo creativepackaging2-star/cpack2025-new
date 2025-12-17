@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, Filter, FileText, Upload, ChevronDown, ChevronRight, Save, X } from 'lucide-react';
+import { Search, Plus, Filter, FileText, Upload, ChevronDown, ChevronRight, Save, X, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OrdersPage() {
@@ -20,26 +20,25 @@ export default function OrdersPage() {
 
     // Pagination State
     const [page, setPage] = useState(1);
-    const ITEMS_PER_PAGE = 500; // Increased per user request to avoid page breaks in daily workflow
+    const ITEMS_PER_PAGE = 500; // Increased per user request to avoid page breaks
 
     // Quick Edit State
     const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
-    const [editStatus, setEditStatus] = useState('');
+    const [editProgress, setEditProgress] = useState('');
 
-    const STATUS_OPTIONS = [
-        'Pending', 'In Production', 'Printing', 'Cutting',
-        'Pasting', 'Packing', 'Ready', 'Dispatched', 'Delivered', 'Completed'
+    const PROCESS_OPTIONS = [
+        'Pending', 'Printing', 'Cutting',
+        'Pasting', 'Packing', 'Ready', 'Dispatched'
     ];
 
     useEffect(() => {
         fetchOrders();
-    }, []); // Only fetch ONCE on mount
+    }, []);
 
     async function fetchOrders() {
         setLoading(true);
         setError(null);
 
-        // DEBUG CHECK: Env Vars
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
             setError('CRITICAL: Missing Vercel Environment Variables.');
@@ -47,7 +46,6 @@ export default function OrdersPage() {
             return;
         }
 
-        // 1. Fetch ALL Orders (Client-side filtering is faster for UI toggles)
         const ordersQuery = supabase
             .from('orders')
             .select(`
@@ -64,7 +62,6 @@ export default function OrdersPage() {
             `)
             .order('created_at', { ascending: false });
 
-        // 2. Fetch Categories Separately
         const categoriesQuery = supabase.from('category').select('id, name');
 
         const [ordersRes, categoriesRes] = await Promise.all([
@@ -89,19 +86,33 @@ export default function OrdersPage() {
     }
 
     const handleQuickUpdate = async (id: number) => {
-        if (!editStatus) return;
+        if (!editProgress) return;
 
         const { error } = await supabase
             .from('orders')
-            .update({ status: editStatus })
+            .update({ progress: editProgress })
+            .eq('id', id);
+
+        if (error) {
+            alert('Error updating progress: ' + error.message);
+        } else {
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, progress: editProgress } : o));
+            setEditingOrderId(null);
+        }
+    };
+
+    const handleMarkComplete = async (id: number) => {
+        if (!window.confirm('Mark this order as Completed? It will move to the Completed view.')) return;
+
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: 'Completed' })
             .eq('id', id);
 
         if (error) {
             alert('Error updating status: ' + error.message);
         } else {
-            // Optimistic update
-            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: editStatus } : o));
-            setEditingOrderId(null);
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Completed' } : o));
         }
     };
 
@@ -110,28 +121,21 @@ export default function OrdersPage() {
             setEditingOrderId(null);
         } else {
             setEditingOrderId(order.id);
-            setEditStatus(order.status || 'Pending');
+            setEditProgress(order.progress || 'Pending');
         }
     };
 
-    // Derived State: Filtered & Grouped (Memoized)
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
-            // 1. Filter by Status (Client-side)
             const s = order.status?.toLowerCase().trim() || '';
-            const isCompleted = s === 'completed' || s === 'delivered' || s === 'dispatched'; // Dispatched is arguably active, but user said 'complete'. Let's keep Dispatched as Active usually.
-            // Wait, Dispatched usually means it's gone. But for now, let's stick to Completed/Delivered as 'Done'.
             const isDone = s === 'completed' || s === 'delivered';
 
             if (showCompleted) {
-                // Show ONLY Completed
                 if (!isDone) return false;
             } else {
-                // Show ONLY Active (Hide Completed/Delivered)
                 if (isDone) return false;
             }
 
-            // 2. Filter by Search
             if (!searchTerm) return true;
             const search = searchTerm.toLowerCase();
             const pName = order.products?.product_name?.toLowerCase() || '';
@@ -141,7 +145,6 @@ export default function OrdersPage() {
         });
     }, [orders, searchTerm, showCompleted]);
 
-    // Reset page when filter changes
     useEffect(() => {
         setPage(1);
     }, [searchTerm, groupByCategory, showCompleted]);
@@ -151,7 +154,6 @@ export default function OrdersPage() {
         const endIndex = startIndex + ITEMS_PER_PAGE;
         return filteredOrders.slice(startIndex, endIndex);
     }, [filteredOrders, page, ITEMS_PER_PAGE]);
-
 
     const groupedOrders = useMemo(() => {
         return groupByCategory
@@ -166,11 +168,11 @@ export default function OrdersPage() {
             : { 'All Orders': paginatedOrders };
     }, [groupByCategory, paginatedOrders, categoryMap]);
 
-    const getStatusColor = (status: string | null) => {
-        const s = status?.toLowerCase() || '';
-        if (s.includes('complete') || s.includes('delivered')) return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
+    const getProgressColor = (progress: string | null) => {
+        const s = progress?.toLowerCase() || '';
+        if (s.includes('ready') || s.includes('dispatch')) return 'bg-purple-50 text-purple-700 ring-purple-600/20';
         if (s.includes('pending')) return 'bg-amber-50 text-amber-700 ring-amber-600/20';
-        if (s.includes('production') || s.includes('print')) return 'bg-blue-50 text-blue-700 ring-blue-600/20';
+        if (s.includes('print') || s.includes('cut') || s.includes('paste') || s.includes('pack')) return 'bg-blue-50 text-blue-700 ring-blue-600/20';
         return 'bg-slate-50 text-slate-600 ring-slate-500/10';
     };
 
@@ -178,14 +180,12 @@ export default function OrdersPage() {
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-            {/* DEBUG ALERT (Kept minimal just in case, but can be removed if user confirmed data) */}
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
                     <strong className="font-bold">Error: </strong> {error}
                 </div>
             )}
 
-            {/* Header Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900">
                     Production Orders
@@ -217,7 +217,6 @@ export default function OrdersPage() {
                 </div>
             </div>
 
-            {/* Search Bar */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -229,7 +228,6 @@ export default function OrdersPage() {
                 />
             </div>
 
-            {/* Orders Table */}
             <div className="space-y-6">
                 {loading ? (
                     <div className="text-center py-12 text-slate-500">Loading orders...</div>
@@ -264,7 +262,6 @@ export default function OrdersPage() {
                                             {catOrders.map((order) => (
                                                 <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
 
-                                                    {/* 1. Product Info */}
                                                     <td className="px-6 py-4 align-top">
                                                         <div className="font-bold text-slate-900">{order.products?.product_name || 'Unknown Product'}</div>
                                                         <div className="text-xs text-slate-500 font-mono mt-0.5">{order.products?.artwork_code || '-'}</div>
@@ -282,22 +279,20 @@ export default function OrdersPage() {
                                                         </div>
                                                     </td>
 
-                                                    {/* 2. Quantity */}
                                                     <td className="px-6 py-4 align-top font-mono font-medium text-slate-700">
                                                         {order.quantity?.toLocaleString() || '-'}
                                                     </td>
 
-                                                    {/* 3. Process (Quick Edit) */}
                                                     <td className="px-6 py-4 align-top">
                                                         {editingOrderId === order.id ? (
                                                             <div className="flex items-center gap-1">
                                                                 <select
-                                                                    value={editStatus}
-                                                                    onChange={e => setEditStatus(e.target.value)}
+                                                                    value={editProgress}
+                                                                    onChange={e => setEditProgress(e.target.value)}
                                                                     className="text-xs border border-slate-300 rounded px-2 py-1 w-full"
                                                                     autoFocus
                                                                 >
-                                                                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                                                                    {PROCESS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                                                                 </select>
                                                                 <button onClick={() => handleQuickUpdate(order.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-4 h-4" /></button>
                                                                 <button onClick={() => setEditingOrderId(null)} className="text-slate-400 hover:bg-slate-100 p-1 rounded"><X className="w-4 h-4" /></button>
@@ -305,15 +300,14 @@ export default function OrdersPage() {
                                                         ) : (
                                                             <button
                                                                 onClick={() => toggleQuickEdit(order)}
-                                                                className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${getStatusColor(order.status)} hover:ring-opacity-50 transition-all`}
+                                                                className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${getProgressColor(order.progress)} hover:ring-opacity-50 transition-all`}
                                                             >
-                                                                {order.status || 'Pending'}
+                                                                {order.progress || 'Pending'}
                                                                 <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
                                                             </button>
                                                         )}
                                                     </td>
 
-                                                    {/* 4. Specs */}
                                                     <td className="px-6 py-4 align-top">
                                                         <div className="text-xs text-slate-600 leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin whitespace-pre-wrap">
                                                             {order.products?.specs || '-'}
@@ -325,12 +319,10 @@ export default function OrdersPage() {
                                                         )}
                                                     </td>
 
-                                                    {/* 5. Total Print Qty */}
                                                     <td className="px-6 py-4 align-top font-mono text-xs">
                                                         {order.total_print_qty?.toLocaleString() || '-'}
                                                     </td>
 
-                                                    {/* 6. Files */}
                                                     <td className="px-6 py-4 align-top">
                                                         <div className="space-y-1">
                                                             {order.coa_file && <div className="text-[10px] text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-block mr-1">COA</div>}
@@ -340,11 +332,22 @@ export default function OrdersPage() {
                                                         </div>
                                                     </td>
 
-                                                    {/* 7. Action */}
                                                     <td className="px-6 py-4 align-top text-right">
-                                                        <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-indigo-900 text-xs font-medium border border-indigo-200 rounded px-2 py-1 hover:bg-indigo-50">
-                                                            Edit
-                                                        </Link>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {/* Mark Complete Button (Only for Active Orders) */}
+                                                            {(!order.status || !order.status.toLowerCase().includes('complete')) && (
+                                                                <button
+                                                                    onClick={() => handleMarkComplete(order.id)}
+                                                                    title="Mark as Completed"
+                                                                    className="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded border border-emerald-200"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                            <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-indigo-900 text-xs font-medium border border-indigo-200 rounded px-2 py-1.5 hover:bg-indigo-50">
+                                                                Edit
+                                                            </Link>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -354,7 +357,6 @@ export default function OrdersPage() {
                             </div>
                         ))}
 
-                        {/* Pagination Controls */}
                         {totalPages > 1 && (
                             <div className="flex justify-center items-center space-x-2 pt-6">
                                 <button
