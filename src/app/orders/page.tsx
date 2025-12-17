@@ -20,7 +20,7 @@ export default function OrdersPage() {
 
     // Pagination State
     const [page, setPage] = useState(1);
-    const ITEMS_PER_PAGE = 50;
+    const ITEMS_PER_PAGE = 500; // Increased per user request to avoid page breaks in daily workflow
 
     // Quick Edit State
     const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
