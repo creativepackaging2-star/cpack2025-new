@@ -33,14 +33,7 @@ export default function OrdersPage() {
 
     // ...
 
-    const toggleQuickEdit = (order: Order) => {
-        if (editingOrderId === order.id) {
-            setEditingOrderId(null);
-        } else {
-            setEditingOrderId(order.id);
-            setEditProgress(order.progress || PROCESS_OPTIONS[0]); // Default to first process step if empty
-        }
-    };
+
 
     useEffect(() => {
         fetchOrders();
