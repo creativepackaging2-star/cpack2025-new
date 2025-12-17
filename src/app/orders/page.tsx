@@ -43,7 +43,8 @@ export default function OrdersPage() {
             return;
         }
 
-        // 1. Fetch Orders (Removed nested category join)
+        // 1. Fetch Orders 
+        // FIX: Removed 'spec' column which does not exist in DB
         const ordersQuery = supabase
             .from('orders')
             .select(`
@@ -52,7 +53,6 @@ export default function OrdersPage() {
                     product_name, 
                     artwork_code, 
                     specs, 
-                    spec,
                     artwork_pdf, 
                     artwork_cdr, 
                     category_id
@@ -284,7 +284,7 @@ export default function OrdersPage() {
                                                 {/* 4. Specs */}
                                                 <td className="px-6 py-4 align-top">
                                                     <div className="text-xs text-slate-600 leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin whitespace-pre-wrap">
-                                                        {orders.find(o => o.id === order.id)?.products?.specs || orders.find(o => o.id === order.id)?.products?.spec || '-'}
+                                                        {orders.find(o => o.id === order.id)?.products?.specs || '-'}
                                                     </div>
                                                 </td>
 
