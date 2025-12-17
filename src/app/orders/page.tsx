@@ -133,7 +133,8 @@ export default function OrdersPage() {
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
             const s = order.status?.toLowerCase().trim() || '';
-            const isDone = s === 'completed' || s === 'delivered';
+            // FIX: Match 'complete' (no d), 'completed', etc.
+            const isDone = s.includes('complete') || s === 'delivered';
 
             if (showCompleted) {
                 if (!isDone) return false;
@@ -142,6 +143,7 @@ export default function OrdersPage() {
             }
 
             if (!searchTerm) return true;
+            // ... (rest is same)
             const search = searchTerm.toLowerCase();
             const pName = order.products?.product_name?.toLowerCase() || '';
             const oId = order.order_id?.toLowerCase() || '';
@@ -185,25 +187,7 @@ export default function OrdersPage() {
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-            {/* Debug Status Breakdown */}
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded text-xs font-mono mb-4 text-slate-600">
-                <strong>Status Breakdown (Total {orders.length}):</strong>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                    {Object.entries(orders.reduce((acc: any, o) => {
-                        const s = o.status || 'NULL (Empty)';
-                        acc[s] = (acc[s] || 0) + 1;
-                        return acc;
-                    }, {})).map(([status, count]: any) => (
-                        <div key={status} className="flex justify-between border-b border-slate-200 pb-1">
-                            <span>{status}</span>
-                            <span className="font-bold">{count}</span>
-                        </div>
-                    ))}
-                </div>
-                <div className="mt-2 text-slate-400">
-                    * "Active" view currently hides ONLY: Completed, Delivered.
-                </div>
-            </div>
+
 
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
@@ -215,7 +199,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v19:33 Debug</span>
+                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v19:37 Filter Fix</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
