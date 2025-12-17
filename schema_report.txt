@@ -1,0 +1,41 @@
+--- Inspecting Products Table Schema ---
+Sample Data Data (Keys/Types):
+ - id: (string) value example: 62a91d13-64e6-4db4-a451-09fa3cf2d572
+ - sku: (string) value example: 19
+ - product_name: (string) value example: BD Dapto 350 mg Cartons
+ - ups: (string) value example: 4
+ - dimension: (string) value example: 68 x 35 x 100
+ - ink: (object) value example: null
+ - plate_no: (object) value example: null
+ - coating: (string) value example: Aqua
+ - actual_gsm_used: (string) value example: 320
+ - artwork_code: (string) value example: YR0DNAXIN/C1
+ - product_image: (object) value example: null
+ - artwork_cdr: (object) value example: null
+ - artwork_pdf: (string) value example: Product_Files_/19.ArtworkPDF.110203.pdf
+ - folding_dim: (object) value example: null
+ - folding: (object) value example: null
+ - category_id: (number) value example: 2
+ - customer_id: (number) value example: 4
+ - paper_type_id: (number) value example: 2
+ - gsm_id: (number) value example: 19
+ - size_id: (number) value example: 5
+ - construction_id: (number) value example: 19
+ - specification_id: (object) value example: null
+ - delivery_address_id: (number) value example: 15
+ - pasting_id: (number) value example: 2
+ - created_at: (string) value example: 2025-12-07T09:32:20.244585
+ - special_effects: (object) value example: null
+ - specs: (string) value example: 350 | White | 12.5 × 18 | 4 | Aqua | Lock Bottom
+
+--- Checking for ID/SKU Consistency (First 5) ---
+ID: 62a91d13-64e6-4db4-a451-09fa3cf2d572 (type: string), SKU: 19, Artwork: YR0DNAXIN/C1
+ID: 2e2d5b03-afcb-4d7d-8543-4e2c3529092a (type: string), SKU: 20, Artwork: YR0DNAXIN/L1
+ID: 5e322c83-5a03-4d64-b3d5-de1850fc47d0 (type: string), SKU: 21, Artwork: YR0DNAXIN/I1
+ID: 4e084b21-7dac-4c54-9ce4-3a48d930a0f5 (type: string), SKU: 22, Artwork: BDR/BDFOSFO 4G/C/02
+ID: 571afee0-b41a-4272-9f05-462293f210c3 (type: string), SKU: 23, Artwork: BDR/BDFOSFO 4G/C/04
+
+--- Checking Existence of New Tables ---
+[x] Table 'coating' EXISTS. Row count: null
+[x] Table 'specifications' EXISTS. Row count: 32
+[x] Table 'delivery_addresses' EXISTS. Row count: 15

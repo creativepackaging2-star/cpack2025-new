@@ -1,0 +1,96 @@
+{
+  "special_effects": [
+    {
+      "id": 144,
+      "name": "Uv Emboss"
+    },
+    {
+      "id": 146,
+      "name": "Foiling - Purpule"
+    },
+    {
+      "id": 149,
+      "name": "Your Missing Effect Name"
+    },
+    {
+      "id": 6,
+      "name": "Spot UV"
+    },
+    {
+      "id": 147,
+      "name": "Foil - Red"
+    },
+    {
+      "id": 1,
+      "name": "Silver Foil"
+    },
+    {
+      "id": 3,
+      "name": "Gold Foil"
+    },
+    {
+      "id": 4,
+      "name": "Embossing"
+    },
+    {
+      "id": 5,
+      "name": "Drip UV"
+    }
+  ],
+  "products_sample": [
+    {
+      "sku": "442",
+      "specs": "350 | White | 4 | UV Drip | Lock Bottom | 147",
+      "special_effects": "147"
+    },
+    {
+      "sku": "123",
+      "specs": "300 | White | 15.75 × 20.75 | 4 | Aqua | Side Pasting | 6|147",
+      "special_effects": "6|147"
+    },
+    {
+      "sku": "377",
+      "specs": "350 | White | 18 × 23 | 6 | Aqua | Side Pasting | 6|44",
+      "special_effects": "6|44"
+    },
+    {
+      "sku": "449",
+      "specs": "350 | Silver Metalic | 4 | UV Drip | Side Pasting | 147",
+      "special_effects": "147"
+    },
+    {
+      "sku": "385",
+      "specs": "350 | White | Aqua | Side Pasting | 6|147",
+      "special_effects": "6|147"
+    },
+    {
+      "sku": "44",
+      "specs": "300 | White | 14 × 20 | 2 | Aqua | Lock Bottom | 6|147",
+      "special_effects": "6|147"
+    },
+    {
+      "sku": "285",
+      "specs": "350 | White | Aqua | Side Pasting | 147",
+      "special_effects": "147"
+    },
+    {
+      "sku": "179",
+      "specs": "350 | White | 15.75 × 20.75 | 4 | Aqua | Side Pasting | 147",
+      "special_effects": "147"
+    },
+    {
+      "sku": "261",
+      "specs": "350 | White | 14 × 22 | 4 | Aqua | Side Pasting | 6|147",
+      "special_effects": "6|147"
+    },
+    {
+      "sku": "147",
+      "specs": "300 | White | 12.5 × 18 | 4 | Aqua | Lock Bottom | 6|147",
+      "special_effects": "6|147"
+    }
+  ],
+  "errors": {
+    "fx": null,
+    "p": null
+  }
+}

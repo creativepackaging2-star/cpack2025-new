@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Foil"
+  },
+  {
+    "id": 2,
+    "name": "Silver Foil"
+  },
+  {
+    "id": 3,
+    "name": "Gold Foil"
+  },
+  {
+    "id": 4,
+    "name": "Embossing"
+  },
+  {
+    "id": 5,
+    "name": "Drip"
+  },
+  {
+    "id": 6,
+    "name": "Spot Uv"
+  }
+]
