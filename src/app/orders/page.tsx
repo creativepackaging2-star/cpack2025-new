@@ -27,9 +27,20 @@ export default function OrdersPage() {
     const [editProgress, setEditProgress] = useState('');
 
     const PROCESS_OPTIONS = [
-        'Pending', 'Printing', 'Cutting',
+        'Printing', 'Cutting',
         'Pasting', 'Packing', 'Ready', 'Dispatched'
     ];
+
+    // ...
+
+    const toggleQuickEdit = (order: Order) => {
+        if (editingOrderId === order.id) {
+            setEditingOrderId(null);
+        } else {
+            setEditingOrderId(order.id);
+            setEditProgress(order.progress || PROCESS_OPTIONS[0]); // Default to first process step if empty
+        }
+    };
 
     useEffect(() => {
         fetchOrders();
@@ -121,7 +132,8 @@ export default function OrdersPage() {
             setEditingOrderId(null);
         } else {
             setEditingOrderId(order.id);
-            setEditProgress(order.progress || 'Pending');
+            // Default to first process step (Printing) if null, never Pending
+            setEditProgress(order.progress || 'Printing');
         }
     };
 
