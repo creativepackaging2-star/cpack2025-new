@@ -195,7 +195,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v18:57 Fix</span>
+                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v19:22 New Btn</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
@@ -340,14 +340,15 @@ export default function OrdersPage() {
 
                                                     <td className="px-6 py-4 align-top text-right">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            {/* Mark Complete Button (Only for Active Orders) */}
-                                                            {(!order.status || !order.status.toLowerCase().includes('complete')) && (
+                                                            {/* Mark Complete Button (Always show unless explicitly 'Completed') */}
+                                                            {(!order.status || order.status !== 'Completed') && (
                                                                 <button
                                                                     onClick={() => handleMarkComplete(order.id)}
                                                                     title="Mark as Completed"
-                                                                    className="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded border border-emerald-200"
+                                                                    className="flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded text-[10px] font-medium transition-colors"
                                                                 >
-                                                                    <CheckCircle className="w-4 h-4" />
+                                                                    <CheckCircle className="w-3 h-3" />
+                                                                    Complete
                                                                 </button>
                                                             )}
                                                             <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-indigo-900 text-xs font-medium border border-indigo-200 rounded px-2 py-1.5 hover:bg-indigo-50">
