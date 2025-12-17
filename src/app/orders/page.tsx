@@ -195,7 +195,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-slate-300 font-mono ml-2">v18:52</span>
+                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v18:57 Fix</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">

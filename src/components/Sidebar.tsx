@@ -29,6 +29,7 @@ export function Sidebar() {
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                prefetch={false} // Disable prefetching to improve INP on heavy pages
                                 className={twMerge(
                                     'group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200',
                                     isActive
