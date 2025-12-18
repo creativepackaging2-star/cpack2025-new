@@ -30,6 +30,52 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 ));
 DetailGroup.displayName = 'DetailGroup';
 
+const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate }: any) => {
+    return (
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm mb-8 animate-in fade-in duration-500">
+            <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
+                <h3 className="font-bold text-slate-800 tracking-tight">{category}</h3>
+                <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full shadow-sm">
+                    {catOrders.length} ORDERS
+                </span>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600 border-collapse">
+                    <thead className="bg-white text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
+                        <tr>
+                            <th className="px-6 py-3 w-[30px]"></th>
+                            <th className="px-2 py-3 w-[25%] uppercase tracking-widest">Product Info</th>
+                            <th className="px-4 py-3 w-[10%] text-center uppercase tracking-widest">Qty</th>
+                            <th className="px-4 py-3 w-[15%] uppercase tracking-widest">Process</th>
+                            <th className="px-4 py-3 w-[20%] uppercase tracking-widest">Specs</th>
+                            <th className="px-4 py-3 w-[10%] text-center uppercase tracking-widest">Total Print</th>
+                            <th className="px-4 py-3 w-[15%] text-right uppercase tracking-widest">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                        {catOrders.map((order: any) => (
+                            <OrderRow
+                                key={order.id}
+                                order={order}
+                                isExpanded={expandedOrderId === order.id}
+                                toggleRow={toggleRow}
+                                handleMarkComplete={handleMarkComplete}
+                                toggleQuickEdit={toggleQuickEdit}
+                                isUpdating={isUpdating === order.id}
+                                isEditing={editingOrderId === order.id}
+                                editProgress={editProgress}
+                                setEditProgress={setEditProgress}
+                                handleQuickUpdate={handleQuickUpdate}
+                            />
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+});
+OrderGroup.displayName = 'OrderGroup';
+
 const PROCESS_OPTIONS = [
     'Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'
 ];
@@ -56,12 +102,24 @@ const OrderRow = memo(({
     setEditProgress,
     handleQuickUpdate,
 }: any) => {
+    const [confirming, setConfirming] = useState(false);
     const s = order.progress?.toLowerCase() || '';
     const rowBaseStyle = isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50/80';
     let rowClassName = `${rowBaseStyle} transition-colors group`;
 
     if (s === 'hold') rowClassName = `bg-red-50 hover:bg-red-100 ring-1 ring-inset ring-red-200 group`;
     else if (s === 'ready') rowClassName = `bg-emerald-50 hover:bg-emerald-100 ring-1 ring-inset ring-emerald-200 group`;
+
+    const onCompleteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirming) {
+            setConfirming(true);
+            setTimeout(() => setConfirming(false), 3000);
+        } else {
+            handleMarkComplete(order.id);
+            setConfirming(false);
+        }
+    };
 
     return (
         <Fragment>
@@ -141,12 +199,12 @@ const OrderRow = memo(({
                     <div className="flex flex-col items-end gap-2">
                         {(!order.status || order.status !== 'Complete') && (
                             <button
-                                onClick={() => handleMarkComplete(order.id)}
-                                disabled={isUpdating === order.id}
-                                className={`group flex items-center gap-1.5 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white border-2 border-emerald-100 hover:border-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black transition-all shadow-sm active:scale-95 ${isUpdating === order.id ? 'opacity-50 grayscale' : ''}`}
+                                onClick={onCompleteClick}
+                                disabled={isUpdating}
+                                className={`group flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black transition-all shadow-sm active:scale-95 border-2 ${confirming ? 'bg-orange-500 text-white border-orange-500 animate-pulse' : 'bg-white text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'} ${isUpdating ? 'opacity-50 grayscale cursor-wait' : ''}`}
                             >
-                                {isUpdating === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3 group-hover:scale-125 transition-transform" />}
-                                COMPLETE
+                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : confirming ? <CheckCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3 group-hover:scale-125 transition-transform" />}
+                                {confirming ? 'SURE?' : 'COMPLETE'}
                             </button>
                         )}
                         <Link href={`/orders/${order.id}`} className="text-slate-400 hover:text-indigo-600 text-[10px] font-bold tracking-widest uppercase hover:underline p-1 transition-all">
@@ -307,29 +365,12 @@ export default function OrdersPage() {
         setLoading(false);
     }
 
-    const handleQuickUpdate = useCallback(async (id: number) => {
-        if (!editProgress) return;
-
-        const { error } = await supabase
-            .from('orders')
-            .update({ progress: editProgress })
-            .eq('id', id);
-
-        if (error) {
-            alert('Error updating progress: ' + error.message);
-        } else {
-            setOrders(prev => prev.map(o => o.id === id ? { ...o, progress: editProgress } : o));
-            setEditingOrderId(null);
-        }
-    }, [editProgress]);
-
     const handleMarkComplete = useCallback(async (id: number) => {
-        if (!window.confirm('Are you sure you want to mark this order as Complete?')) return;
-
-        setIsUpdating(id);
+        startTransition(() => {
+            setIsUpdating(id);
+        });
 
         try {
-            // UPDATING BOTH STATUS AND PROGRESS to ensure no DB trigger reverts the status
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
@@ -340,26 +381,17 @@ export default function OrdersPage() {
 
             if (updateError) throw updateError;
 
-            // Verification
-            const { data: verifyData, error: verifyError } = await supabase
-                .from('orders')
-                .select('status')
-                .eq('id', id)
-                .single();
-
-            if (verifyError) throw verifyError;
-
-            if (verifyData.status !== 'Complete') {
-                throw new Error(`Critical Reversion: Database still shows '${verifyData.status}'. Check for conflicting triggers.`);
-            }
-
-            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete', progress: 'Ready' } : o));
+            startTransition(() => {
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete', progress: 'Ready' } : o));
+            });
 
         } catch (err: any) {
             console.error('Persistence Failure:', err);
             alert('SYSTEM ERROR: ' + (err.message || 'Status could not be saved.'));
         } finally {
-            setIsUpdating(null);
+            startTransition(() => {
+                setIsUpdating(null);
+            });
         }
     }, []);
 
@@ -373,6 +405,25 @@ export default function OrdersPage() {
             }
         });
     }, []);
+
+    const handleQuickUpdate = useCallback(async (id: number) => {
+        if (!editProgress) return;
+        const targetProgress = editProgress;
+
+        const { error } = await supabase
+            .from('orders')
+            .update({ progress: targetProgress })
+            .eq('id', id);
+
+        if (error) {
+            alert('Error updating progress: ' + error.message);
+        } else {
+            startTransition(() => {
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, progress: targetProgress } : o));
+                setEditingOrderId(null);
+            });
+        }
+    }, [editProgress]);
 
     const toggleRow = useCallback((id: number) => {
         setExpandedOrderId(prev => prev === id ? null : id);
@@ -435,7 +486,9 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-red-600 font-black animate-pulse ml-2 border-2 border-red-500 bg-red-50 px-2 py-0.5 rounded shadow-sm">v20:00 FINAL-UPDATE-CONFIRMED</span>
+                    <span className="text-[12px] text-black font-black bg-yellow-400 border-4 border-black px-4 py-1 rounded shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce ml-4 rotate-2">
+                        v20:15 ULTRA-FAST-FINAL
+                    </span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
@@ -487,46 +540,20 @@ export default function OrdersPage() {
                 ) : (
                     <>
                         {(Object.entries(groupedOrders) as [string, any[]][]).map(([category, catOrders]) => (
-                            <div key={category} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                                {groupByCategory && (
-                                    <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
-                                        <h3 className="font-semibold text-slate-800">{category}</h3>
-                                        <span className="text-xs font-medium text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">{catOrders.length}</span>
-                                    </div>
-                                )}
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm text-slate-600 border-collapse">
-                                        <thead className="bg-white text-xs uppercase text-slate-500 border-b border-slate-100">
-                                            <tr>
-                                                <th className="px-6 py-3 font-semibold w-[30px]"></th>
-                                                <th className="px-2 py-3 font-semibold w-[25%]">Product Info</th>
-                                                <th className="px-4 py-3 font-semibold w-[10%] text-center">Qty</th>
-                                                <th className="px-4 py-3 font-semibold w-[15%]">Process</th>
-                                                <th className="px-4 py-3 font-semibold w-[20%]">Specs</th>
-                                                <th className="px-4 py-3 font-semibold w-[10%] text-center">Total Print</th>
-                                                <th className="px-4 py-3 font-semibold w-[15%] text-right">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {catOrders.map((order) => (
-                                                <OrderRow
-                                                    key={order.id}
-                                                    order={order}
-                                                    isExpanded={expandedOrderId === order.id}
-                                                    toggleRow={toggleRow}
-                                                    handleMarkComplete={handleMarkComplete}
-                                                    toggleQuickEdit={toggleQuickEdit}
-                                                    isUpdating={isUpdating === order.id}
-                                                    isEditing={editingOrderId === order.id}
-                                                    editProgress={editProgress}
-                                                    setEditProgress={setEditProgress}
-                                                    handleQuickUpdate={handleQuickUpdate}
-                                                />
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                            <OrderGroup
+                                key={category}
+                                category={category}
+                                catOrders={catOrders}
+                                expandedOrderId={expandedOrderId}
+                                toggleRow={toggleRow}
+                                handleMarkComplete={handleMarkComplete}
+                                toggleQuickEdit={toggleQuickEdit}
+                                isUpdating={isUpdating}
+                                editingOrderId={editingOrderId}
+                                editProgress={editProgress}
+                                setEditProgress={setEditProgress}
+                                handleQuickUpdate={handleQuickUpdate}
+                            />
                         ))}
 
                         {totalPages > 1 && (
