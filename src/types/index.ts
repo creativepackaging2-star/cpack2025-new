@@ -70,6 +70,23 @@ export type Order = {
     progress: string | null
     folding_dimension: string | null
     product_id: string | null // UUID from products table
+    // Snapshot columns
+    customer_name: string | null
+    paper_type_name: string | null
+    gsm_value: string | null
+    print_size: string | null
+    dimension: string | null
+    ink: string | null
+    plate_no: string | null
+    coating: string | null
+    special_effects: string | null
+    pasting_type: string | null
+    construction_type: string | null
+    specification: string | null
+    artwork_code: string | null
+    delivery_address: string | null
+    artwork_pdf: string | null
+    artwork_cdr: string | null
     created_at: string
     updated_at: string
 }
