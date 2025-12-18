@@ -58,6 +58,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             automation: '',
             file_no: '',
             folding_dimension: '',
+            remarks: '',
             // Snapshot fields
             customer_name: '',
             paper_type_name: '',
@@ -239,36 +240,34 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     if (loading) return <div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-indigo-600" /><span className="text-slate-500 font-medium">Fetching Product Details...</span></div>;
 
     return (
-        <form onSubmit={handleSubmit} className="premium-form max-w-7xl mx-auto mb-20 space-y-8">
+        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-xl">
             {/* --- HEADER SECTION --- */}
-            <div className="flex justify-between items-end border-b border-slate-200 pb-8">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase leading-none">
-                        {initialData ? 'Update Order' : 'Precision Booking'}
+            <div className="flex justify-between items-center border-b border-slate-100 pb-6">
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-black text-slate-900 uppercase">
+                        {initialData ? 'Update Order' : 'New Order Entry'}
                     </h1>
-                    <p className="text-slate-400 font-bold mt-2 uppercase tracking-[0.2em] text-[10px]">
-                        Manufacturing Logistics System <span className="text-indigo-600">v15:10 Premium</span>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        System Version v16:00 | {product?.product_name || 'Select Product'}
                     </p>
                 </div>
-                <div className="flex gap-4">
-                    <Link href="/orders" className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl transition-all active:scale-90"><X className="w-6 h-6" /></Link>
-                </div>
+                <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X className="w-6 h-6" /></Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
-                {/* --- LEFT: MAIN FORM CONTENT --- */}
-                <div className="lg:col-span-8 space-y-8">
+                {/* --- MAIN FORM --- */}
+                <div className="lg:col-span-8 space-y-10">
 
-                    {/* 1. PRODUCT SELECTION CARD */}
-                    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div>
-                        <SectionHeader icon={Search} title="Inventory Linkage" />
-                        <div className="relative mt-2">
+                    {/* SECTION 1: PRODUCT & LOGISTICS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <SectionHeader icon={Search} title="Product Selection" />
+                        <div className="lg:col-span-2 relative">
+                            <label className="label">Product</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-lg font-bold placeholder:text-slate-300 focus:border-indigo-500 focus:bg-white transition-all outline-none"
-                                placeholder="Search by Product Name, Code, or SKU..."
+                                className="input-field border-indigo-100 bg-indigo-50/10"
+                                placeholder="Search Product..."
                                 value={productSearch || (product?.product_name || '')}
                                 onChange={(e) => {
                                     setProductSearch(e.target.value);
@@ -277,206 +276,262 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                                 onFocus={() => setShowProductDropdown(true)}
                             />
                             {showProductDropdown && filteredProducts.length > 0 && (
-                                <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
                                     {filteredProducts.map(p => (
                                         <div
                                             key={p.id}
-                                            className="px-6 py-4 hover:bg-indigo-50 cursor-pointer border-b border-slate-50 last:border-0 group/item transition-colors"
+                                            className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-slate-50 last:border-0"
                                             onClick={() => {
                                                 setProductSearch(p.product_name);
                                                 setShowProductDropdown(false);
                                                 fetchProduct(p.id);
                                             }}
                                         >
-                                            <div className="text-sm font-black text-slate-800 group-hover/item:text-indigo-700 uppercase tracking-tight">{p.product_name}</div>
-                                            <div className="text-[10px] text-slate-400 font-bold flex gap-4 mt-1">
-                                                <span>CODE: {p.artwork_code}</span>
-                                                <span className="text-indigo-400">SKU: {p.sku}</span>
-                                            </div>
+                                            <div className="text-sm font-bold text-slate-800">{p.product_name}</div>
+                                            <div className="text-[10px] text-slate-400">SKU: {p.sku} | Code: {p.artwork_code}</div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* 2. CORE LOGISTICS CARD */}
-                    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <SectionHeader icon={Layers} title="Order Parameters" />
-                        <div className="md:col-span-1">
-                            <label className="premium-label">Job Identifier</label>
-                            <input name="order_id" value={formData.order_id || ''} onChange={handleChange} className="premium-input font-black uppercase text-indigo-700" placeholder="e.g. CP-901" required />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="premium-label">Production Goal</label>
-                            <input type="number" name="quantity" value={formData.quantity || ''} onChange={handleNumberChange} className="premium-input font-black text-lg bg-indigo-50/50 border-indigo-100" placeholder="0" required />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="premium-label">Batch Designation</label>
-                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="premium-input font-bold" />
-                        </div>
-
+                        <SectionHeader icon={Layers} title="Core Details" />
                         <div>
-                            <label className="premium-label">Booking Date</label>
-                            <input type="date" name="order_date" value={formData.order_date || ''} onChange={handleChange} className="premium-input font-medium" />
+                            <label className="label">OrderID</label>
+                            <input name="order_id" value={formData.order_id || ''} onChange={handleChange} className="input-field font-bold uppercase text-indigo-700" placeholder="Job No" required />
                         </div>
                         <div>
-                            <label className="premium-label">Current Status</label>
-                            <select name="status" value={formData.status || ''} onChange={handleChange} className="premium-input font-bold">
-                                <option value="In Production">In Production</option>
-                                <option value="Complete">Complete</option>
-                                <option value="Hold">On Hold</option>
-                            </select>
+                            <label className="label">order date</label>
+                            <input type="date" name="order_date" value={formData.order_date || ''} onChange={handleChange} className="input-field" />
                         </div>
                         <div>
-                            <label className="premium-label">Active Stage</label>
-                            <select name="progress" value={formData.progress || ''} onChange={handleChange} className="premium-input font-bold text-indigo-600">
-                                {['Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Emboss', 'Punching', 'Pasting', 'Ready'].map(s => (
+                            <label className="label">progress</label>
+                            <select name="progress" value={formData.progress || ''} onChange={handleChange} className="input-field font-bold">
+                                {['Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'].map(s => (
                                     <option key={s} value={s}>{s}</option>
                                 ))}
                             </select>
                         </div>
-                    </div>
 
-                    {/* 3. CALCULATIONS & FORMULAS CARD */}
-                    <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl">
-                        <SectionHeader icon={Settings} title="Manufacturing Intelligence" className="text-slate-400 border-slate-800" />
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Base Rate</span>
-                                <div className="text-xl font-mono flex items-center gap-2">
-                                    <span className="text-slate-600 text-sm">₹</span>
-                                    <input type="number" step="0.01" name="rate" value={formData.rate || ''} onChange={handleNumberChange} className="bg-transparent border-b border-slate-700 focus:border-indigo-500 outline-none w-full py-1 font-black" />
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Net Value</span>
-                                <div className="text-2xl font-black tabular-nums text-emerald-400">₹{formData.value?.toLocaleString() || '0'}</div>
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Print Load</span>
-                                <div className="text-2xl font-black tabular-nums">{formData.total_print_qty?.toLocaleString() || '0'} <span className="text-[10px] text-slate-500 font-bold">IMP</span></div>
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Paper Req.</span>
-                                <div className="text-2xl font-black tabular-nums text-indigo-400">{formData.paper_required?.toLocaleString() || '0'} <span className="text-[10px] text-slate-500 font-bold">SHT</span></div>
-                            </div>
+                        <div>
+                            <label className="label">Status</label>
+                            <select name="status" value={formData.status || ''} onChange={handleChange} className="input-field font-black">
+                                <option value="In Production">In Production</option>
+                                <option value="Complete">Complete</option>
+                                <option value="Hold">Hold</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="label">from our co.</label>
+                            <select name="from_our_company" value={formData.from_our_company || ''} onChange={handleChange} className="input-field">
+                                <option value="">Select...</option>
+                                <option value="Printers">Printers</option>
+                                <option value="Packaging">Packaging</option>
+                                <option value="Enterprise">Enterprise</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="label">Batch No</label>
+                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field" />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-8 border-t border-slate-800">
-                            <div>
-                                <label className="premium-label text-slate-500">Extra Allowance</label>
-                                <input type="number" name="extra" value={formData.extra || 0} onChange={handleNumberChange} className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-sm font-bold focus:border-indigo-500 outline-none" />
-                            </div>
-                            <div>
-                                <label className="premium-label text-slate-500">Paper UPS</label>
-                                <input type="number" name="paper_ups" value={formData.paper_ups || 1} onChange={handleNumberChange} className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-sm font-bold focus:border-indigo-500 outline-none" />
-                            </div>
-                            <div>
-                                <label className="premium-label text-slate-500">Billed Logic</label>
-                                <select name="billed" value={String(formData.billed)} onChange={handleChange} className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-sm font-bold focus:border-indigo-500 outline-none">
-                                    <option value="false">Non-Billed</option>
-                                    <option value="true">Professional Billing</option>
-                                </select>
-                            </div>
+                        <SectionHeader icon={Truck} title="Partners" />
+                        <div>
+                            <label className="label">printer</label>
+                            <input name="printer_name" value={formData.printer_name || ''} onChange={handleChange} className="input-field" placeholder="Printer Table" />
                         </div>
-                    </div>
+                        <div>
+                            <label className="label">printer mobile</label>
+                            <input name="printer_mobile" value={formData.printer_mobile || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">paperwala</label>
+                            <input name="paperwala_name" value={formData.paperwala_name || ''} onChange={handleChange} className="input-field" placeholder="Paper Wala Table" />
+                        </div>
+                        <div>
+                            <label className="label">paperwala mbile</label>
+                            <input name="paperwala_mobile" value={formData.paperwala_mobile || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div className="lg:col-span-1"></div>
 
-                    {/* 4. TECHNICAL SNAPSHOT CARD */}
-                    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative group">
-                        <div className="absolute top-0 right-0 p-4">
-                            <span className="text-[8px] font-black text-indigo-300 uppercase tracking-widest border border-indigo-100 px-2 py-1 rounded-full">Archive Snapshot</span>
+                        <SectionHeader icon={DollarSign} title="Numbers & Calculations" />
+                        <div>
+                            <label className="label font-black text-indigo-600">QTY</label>
+                            <input type="number" name="quantity" value={formData.quantity || ''} onChange={handleNumberChange} className="input-field border-indigo-200 bg-indigo-50/50" required />
                         </div>
-                        <SectionHeader icon={FileText} title="Manufacturing Specifications" />
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6 mt-4">
+                        <div>
+                            <label className="label">Rate</label>
+                            <input type="number" step="0.01" name="rate" value={formData.rate || ''} onChange={handleNumberChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Value (QTY X RATE)</label>
+                            <input type="number" value={formData.value || 0} readOnly className="input-field bg-slate-50 font-black text-emerald-600" />
+                        </div>
+
+                        <div>
+                            <label className="label">Gross Print Qty</label>
+                            <input type="number" value={formData.gross_print_qty || 0} readOnly className="input-field bg-slate-50" />
+                        </div>
+                        <div>
+                            <label className="label">Extra</label>
+                            <input type="number" name="extra" value={formData.extra || 0} onChange={handleNumberChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Total Print Qty</label>
+                            <input type="number" value={formData.total_print_qty || 0} readOnly className="input-field bg-slate-50 font-bold" />
+                        </div>
+
+                        <div>
+                            <label className="label">paper ups</label>
+                            <input type="number" name="paper_ups" value={formData.paper_ups || 1} onChange={handleNumberChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">paper required</label>
+                            <input type="number" value={formData.paper_required || 0} readOnly className="input-field bg-slate-50 font-bold" />
+                        </div>
+                        <div>
+                            <label className="label">Paper ord qty</label>
+                            <input type="number" name="paper_order_qty" value={formData.paper_order_qty || 0} onChange={handleNumberChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">paper order size</label>
+                            <input name="paper_order_size" value={formData.paper_order_size || ''} onChange={handleChange} className="input-field" placeholder="Dropdown table size" />
+                        </div>
+
+                        <SectionHeader icon={FileText} title="Invoicing & Delivery" />
+                        <div>
+                            <label className="label">Inv No</label>
+                            <input name="invoice_no" value={formData.invoice_no || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Qty Delivered</label>
+                            <input type="number" name="qty_delivered" value={formData.qty_delivered || ''} onChange={handleNumberChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Delivery Date</label>
+                            <input type="date" name="delivery_date" value={formData.delivery_date || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Ready Date</label>
+                            <input type="date" name="ready_date" value={formData.ready_date || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Ready/Delivery</label>
+                            <input name="ready_delivery" value={formData.ready_delivery || ''} onChange={handleChange} className="input-field" placeholder="Status of readiness" />
+                        </div>
+
+                        <SectionHeader icon={Edit3} title="Production & Dispatch Detail" />
+                        <div>
+                            <label className="label">Packing Detail</label>
+                            <input name="packing_detail" value={formData.packing_detail || ''} onChange={handleChange} className="input-field" placeholder="e.g. 100/box" />
+                        </div>
+                        <div>
+                            <label className="label">Automation</label>
+                            <input name="automation" value={formData.automation || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">File No</label>
+                            <input name="file_no" value={formData.file_no || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Shade Card</label>
+                            <input name="shade_card" value={formData.shade_card || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <label className="label">Remarks / Comments</label>
+                            <textarea name="remarks" value={(formData as any).remarks || ''} onChange={handleChange} className="input-field h-10 min-h-[40px] py-2" placeholder="Any additional instructions..." />
+                        </div>
+
+                        <SectionHeader icon={Edit3} title="Product Snapshots" />
+                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 bg-slate-50 p-6 rounded-xl border border-slate-100 italic text-[11px]">
                             {[
-                                { label: 'Client', name: 'customer_name' },
-                                { label: 'Fiber/GSM', name: 'gsm_value' },
-                                { label: 'Paper Grade', name: 'paper_type_name' },
-                                { label: 'Dimensions', name: 'dimension' },
-                                { label: 'Chromatics (Ink)', name: 'ink' },
-                                { label: 'Surface Coating', name: 'coating' },
-                                { label: 'Matrix (Plate)', name: 'plate_no' },
-                                { label: 'Specialized FX', name: 'special_effects' },
-                                { label: 'Fixation (Pasting)', name: 'pasting_type' }
-                            ].map(field => (
-                                <div key={field.name}>
-                                    <label className="premium-label text-[10px]">{field.label}</label>
-                                    <input name={field.name} value={(formData as any)[field.name] || ''} onChange={handleChange} className="w-full border-b-2 border-slate-100 py-1 font-bold text-slate-700 focus:border-indigo-500 outline-none transition-all text-sm uppercase" />
+                                { label: 'Customer', name: 'customer_name' },
+                                { label: 'Paper', name: 'paper_type_name' },
+                                { label: 'GSM', name: 'gsm_value' },
+                                { label: 'Print Size', name: 'print_size' },
+                                { label: 'Dimension', name: 'dimension' },
+                                { label: 'ink', name: 'ink' },
+                                { label: 'Plate No', name: 'plate_no' },
+                                { label: 'Coating', name: 'coating' },
+                                { label: 'Special Effects', name: 'special_effects' },
+                                { label: 'Pasting', name: 'pasting_type' },
+                                { label: 'folding dimention', name: 'folding_dimension' },
+                                { label: 'Construction', name: 'construction_type' },
+                                { label: 'Specification', name: 'specification' },
+                                { label: 'ArtworkCode', name: 'artwork_code' },
+                                { label: 'del address', name: 'delivery_address' }
+                            ].map(f => (
+                                <div key={f.name}>
+                                    <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">{f.label}</label>
+                                    <input name={f.name} value={(formData as any)[f.name] || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-2 py-1 uppercase" />
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                {/* --- RIGHT: SIDEBAR ASSETS --- */}
+                {/* --- SIDEBAR --- */}
                 <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute -right-10 -bottom-10 opacity-10 group-hover:rotate-12 transition-transform duration-700">
-                            <ImageIcon size={200} />
-                        </div>
-
-                        <SectionHeader icon={LinkIcon} title="Digital Assets" className="text-indigo-200 border-indigo-500/30" />
+                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl">
+                        <SectionHeader icon={LinkIcon} title="Assets & Reference" className="border-slate-800 text-slate-400" />
 
                         {product?.product_image && (
-                            <div className="mb-8 rounded-3xl overflow-hidden bg-white p-2 shadow-inner">
-                                <img src={`/uploads/${product.product_image}`} alt="Reference" className="w-full h-56 object-contain rounded-2xl" />
+                            <div className="mb-6 rounded-xl overflow-hidden bg-white/10 p-2">
+                                <img src={`/uploads/${product.product_image}`} alt="Ref" className="w-full h-48 object-contain" />
                             </div>
                         )}
 
-                        <div className="space-y-6 relative z-10">
-                            <div className="bg-black/20 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                <span className="text-[9px] font-black text-indigo-200 uppercase tracking-widest block mb-2">Internal SKU Control</span>
-                                <span className="text-xl font-mono font-black tracking-tighter">{product?.sku || 'PENDING'}</span>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[9px] font-black text-slate-500 uppercase block mb-1">SKU</label>
+                                <span className="font-mono text-xs bg-black/30 px-2 py-1 rounded block">{product?.sku || '-'}</span>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-1 gap-3">
                                 {product?.artwork_pdf && (
-                                    <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="flex items-center justify-between bg-white text-indigo-900 p-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all shadow-lg active:scale-95">
-                                        View Master PDF <FileText className="w-4 h-4 text-red-500" />
+                                    <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="flex items-center justify-between bg-white/5 border border-white/10 p-3 rounded-lg text-xs font-bold hover:bg-white/10 transition-all">
+                                        ArtworkPDF <FileText className="w-4 h-4 text-red-500" />
                                     </a>
                                 )}
                                 {product?.artwork_cdr && (
-                                    <a href={`/uploads/${product.artwork_cdr}`} download className="flex items-center justify-between bg-white/10 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all border border-white/10 active:scale-95">
-                                        Source CDR Link <Edit3 className="w-4 h-4 text-blue-300" />
+                                    <a href={`/uploads/${product.artwork_cdr}`} download className="flex items-center justify-between bg-white/5 border border-white/10 p-3 rounded-lg text-xs font-bold hover:bg-white/10 transition-all">
+                                        ArtworkCDR <LinkIcon className="w-4 h-4 text-blue-400" />
                                     </a>
                                 )}
                             </div>
 
-                            <div className="bg-white/5 rounded-2xl p-4 border border-white/10 mt-6">
-                                <span className="text-[9px] font-black text-indigo-300 uppercase tracking-widest block mb-3">Supply Chain Partners</span>
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="text-[9px] text-white/50 block font-bold">PRIMARY PRINTER</label>
-                                        <input name="printer_name" value={formData.printer_name || ''} onChange={handleChange} className="bg-transparent border-b border-indigo-400/30 w-full py-1 text-sm font-bold focus:border-white outline-none" placeholder="Not Assigned" />
-                                    </div>
-                                    <div>
-                                        <label className="text-[9px] text-white/50 block font-bold">PAPER VENDOR</label>
-                                        <input name="paperwala_name" value={formData.paperwala_name || ''} onChange={handleChange} className="bg-transparent border-b border-indigo-400/30 w-full py-1 text-sm font-bold focus:border-white outline-none" placeholder="Not Assigned" />
-                                    </div>
-                                </div>
+                            <SectionHeader icon={FileText} title="File Uploads" className="border-slate-800 mt-6" />
+                            <div className="space-y-2">
+                                <label className="label text-slate-500">Shade card file</label>
+                                <input type="file" className="block w-full text-[10px] text-slate-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
+
+                                <label className="label text-slate-500">Del label file</label>
+                                <input type="file" className="block w-full text-[10px] text-slate-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
+
+                                <label className="label text-slate-500">COA file</label>
+                                <input type="file" className="block w-full text-[10px] text-slate-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* --- ACTION FOOTER --- */}
-            <div className="pt-10 flex justify-end items-center gap-6 border-t-2 border-slate-100">
-                <Link href="/orders" className="text-slate-400 font-black text-xs uppercase tracking-widest hover:text-slate-900 px-6 transition-all">Discard Changes</Link>
+            {/* --- FOOTER --- */}
+            <div className="flex justify-end items-center gap-4 pt-8 border-t border-slate-100">
+                <Link href="/orders" className="text-sm font-bold text-slate-400 hover:text-slate-600 px-4">Cancel</Link>
                 <button
                     type="submit"
                     disabled={saving}
-                    className="bg-indigo-600 text-white px-12 py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl hover:bg-indigo-700 hover:-translate-y-1 active:translate-y-0 active:scale-95 transition-all flex items-center gap-3"
+                    className="bg-indigo-600 text-white px-10 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2"
                 >
-                    {saving ? <> <Loader2 className="animate-spin" /> COMMITTING...</> : <> <CheckCircle /> Finalize Order </>}
+                    {saving ? <><Loader2 className="animate-spin" /> Saving...</> : <><CheckCircle /> {initialData ? 'Update Order' : 'Save Order'}</>}
                 </button>
             </div>
 
             <style jsx>{`
-                .premium-label { font-size: 0.625rem; font-weight: 800; color: #94a3b8; display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.1em; }
-                .premium-input { display: block; width: 100%; border-radius: 1rem; border: 2px solid #f1f5f9; padding: 0.75rem 1rem; font-size: 0.875rem; background-color: #f8fafc; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: #1e293b; }
-                .premium-input:focus { border-color: #6366f1; background-color: #fff; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.1); outline: none; }
+                .label { font-size: 0.65rem; font-weight: 800; color: #64748b; display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
+                .input-field { display: block; width: 100%; border-radius: 0.75rem; border: 1.5px solid #f1f5f9; padding: 0.625rem 0.875rem; font-size: 0.875rem; background-color: #f8fafc; transition: all 0.2s; color: #1e293b; }
+                .input-field:focus { border-color: #6366f1; background-color: #fff; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
             `}</style>
         </form>
     );

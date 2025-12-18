@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, Fragment, useTransition, memo } from 'react';
+import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
 import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2 } from 'lucide-react';
@@ -64,7 +64,7 @@ const OrderRow = memo(({
                             {order.artwork_code || order.products?.artwork_code || '-'}
                         </span>
                         <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tighter">
-                            {order.customer_name || 'Generic'}
+                            {order.customer_name || '-'}
                         </span>
                     </div>
                 </td>
@@ -159,6 +159,7 @@ const OrderRow = memo(({
                                 { label: 'Qty Delivered', value: order.qty_delivered },
                                 { label: 'Packing Detail', value: order.packing_detail },
                                 { label: 'Batch No', value: order.batch_no },
+                                { label: 'Remarks', value: order.remarks },
                             ]} />
                             <div className="space-y-3">
                                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Documents</h4>
@@ -216,8 +217,7 @@ export default function OrdersPage() {
     const [editProgress, setEditProgress] = useState('');
 
     const PROCESS_OPTIONS = [
-        'Paper', 'Plate', 'Print', 'Varnish',
-        'Foil', 'Emboss', 'Punching', 'Pasting', 'Ready'
+        'Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'
     ];
 
     // Expanded Rows State
@@ -227,22 +227,21 @@ export default function OrdersPage() {
         fetchOrders();
     }, []);
 
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-    };
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+    }, []);
 
-    const handleToggleCompleted = (checked: boolean) => {
+    const handleToggleCompleted = useCallback((checked: boolean) => {
         startTransition(() => {
             setShowCompleted(checked);
         });
-    };
+    }, []);
 
-    const handleToggleGrouping = (checked: boolean) => {
+    const handleToggleGrouping = useCallback((checked: boolean) => {
         startTransition(() => {
             setGroupByCategory(checked);
         });
-    };
+    }, []);
 
     async function fetchOrders() {
         setLoading(true);
@@ -295,7 +294,7 @@ export default function OrdersPage() {
         setLoading(false);
     }
 
-    const handleQuickUpdate = async (id: number) => {
+    const handleQuickUpdate = useCallback(async (id: number) => {
         if (!editProgress) return;
 
         const { error } = await supabase
@@ -309,23 +308,26 @@ export default function OrdersPage() {
             setOrders(prev => prev.map(o => o.id === id ? { ...o, progress: editProgress } : o));
             setEditingOrderId(null);
         }
-    };
+    }, [editProgress]);
 
-    const handleMarkComplete = async (id: number) => {
+    const handleMarkComplete = useCallback(async (id: number) => {
         if (!window.confirm('Are you sure you want to mark this order as Complete?')) return;
 
         setIsUpdating(id);
 
         try {
-            // 1. Perform Update
+            // UPDATING BOTH STATUS AND PROGRESS to ensure no DB trigger reverts the status
             const { error: updateError } = await supabase
                 .from('orders')
-                .update({ status: 'Complete' })
+                .update({
+                    status: 'Complete',
+                    progress: 'Ready'
+                })
                 .eq('id', id);
 
             if (updateError) throw updateError;
 
-            // 2. Immediate Server-Side Verification Check
+            // Verification
             const { data: verifyData, error: verifyError } = await supabase
                 .from('orders')
                 .select('status')
@@ -335,32 +337,33 @@ export default function OrdersPage() {
             if (verifyError) throw verifyError;
 
             if (verifyData.status !== 'Complete') {
-                throw new Error(`Critical Reversion Detected: Database is still reporting '${verifyData.status}'. Please check DB triggers/constraints.`);
+                throw new Error(`Critical Reversion: Database still shows '${verifyData.status}'. Check for conflicting triggers.`);
             }
 
-            // 3. Update Local UI state only if server confirmed
-            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete' } : o));
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete', progress: 'Ready' } : o));
 
         } catch (err: any) {
             console.error('Persistence Failure:', err);
-            alert('SYSTEM ERROR: ' + (err.message || 'The status could not be saved permanently.'));
+            alert('SYSTEM ERROR: ' + (err.message || 'Status could not be saved.'));
         } finally {
             setIsUpdating(null);
         }
-    };
+    }, []);
 
-    const toggleQuickEdit = (order: Order) => {
-        if (editingOrderId === order.id) {
-            setEditingOrderId(null);
-        } else {
-            setEditingOrderId(order.id);
-            setEditProgress(order.progress || 'Printing');
-        }
-    };
+    const toggleQuickEdit = useCallback((order: Order) => {
+        setEditingOrderId(prev => {
+            if (prev === order.id) {
+                return null;
+            } else {
+                setEditProgress(order.progress || 'Printing');
+                return order.id;
+            }
+        });
+    }, []);
 
-    const toggleRow = (id: number) => {
-        setExpandedOrderId(expandedOrderId === id ? null : id);
-    };
+    const toggleRow = useCallback((id: number) => {
+        setExpandedOrderId(prev => prev === id ? null : id);
+    }, []);
 
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {

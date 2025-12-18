@@ -69,6 +69,7 @@ export type Order = {
     file_no: string | null
     progress: string | null
     folding_dimension: string | null
+    remarks: string | null
     product_id: string | null // UUID from products table
     // Snapshot columns
     customer_name: string | null
