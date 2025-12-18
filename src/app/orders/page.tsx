@@ -442,7 +442,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-1 rounded">v14:53 Advanced-Snapshot</span>
+                    <span className="text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-1 rounded">v19:42 Deployment-Final</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
