@@ -129,7 +129,7 @@ export default function OrdersPage() {
         setIsUpdating(id);
         const { error } = await supabase
             .from('orders')
-            .update({ status: 'Completed' })
+            .update({ status: 'Complete' })
             .eq('id', id);
 
         if (error) {
@@ -137,7 +137,7 @@ export default function OrdersPage() {
             setIsUpdating(null);
         } else {
             startTransition(() => {
-                setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Completed' } : o));
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete' } : o));
                 setIsUpdating(null);
             });
         }
@@ -373,7 +373,7 @@ export default function OrdersPage() {
 
                                                             <td className="px-4 py-4 align-top text-right">
                                                                 <div className="flex items-center justify-end gap-2">
-                                                                    {(!order.status || order.status !== 'Completed') && (
+                                                                    {(!order.status || order.status !== 'Complete') && (
                                                                         <button
                                                                             onClick={() => handleMarkComplete(order.id)}
                                                                             disabled={isUpdating === order.id}
