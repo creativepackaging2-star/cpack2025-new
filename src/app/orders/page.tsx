@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Fragment } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, Filter, FileText, Upload, ChevronDown, ChevronRight, Save, X, CheckCircle } from 'lucide-react';
+import { Search, Plus, Filter, FileText, Upload, ChevronDown, ChevronRight, Save, X, CheckCircle, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OrdersPage() {
@@ -31,9 +31,8 @@ export default function OrdersPage() {
         'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'
     ];
 
-    // ...
-
-
+    // Expanded Rows State
+    const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
     useEffect(() => {
         fetchOrders();
@@ -130,6 +129,10 @@ export default function OrdersPage() {
         }
     };
 
+    const toggleRow = (id: number) => {
+        setExpandedOrderId(expandedOrderId === id ? null : id);
+    };
+
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
             const s = order.status?.toLowerCase().trim() || '';
@@ -143,7 +146,6 @@ export default function OrdersPage() {
             }
 
             if (!searchTerm) return true;
-            // ... (rest is same)
             const search = searchTerm.toLowerCase();
             const pName = order.products?.product_name?.toLowerCase() || '';
             const oId = order.order_id?.toLowerCase() || '';
@@ -177,9 +179,12 @@ export default function OrdersPage() {
 
     const getRowStyle = (order: Order) => {
         const s = order.progress?.toLowerCase() || '';
-        if (s === 'hold') return 'bg-red-50 hover:bg-red-100 ring-1 ring-inset ring-red-200 group';
-        if (s === 'ready') return 'bg-emerald-50 hover:bg-emerald-100 ring-1 ring-inset ring-emerald-200 group';
-        return 'hover:bg-slate-50/80 transition-colors group';
+        const isExpanded = expandedOrderId === order.id;
+        let base = isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50/80';
+
+        if (s === 'hold') return `bg-red-50 hover:bg-red-100 ring-1 ring-inset ring-red-200 group`;
+        if (s === 'ready') return `bg-emerald-50 hover:bg-emerald-100 ring-1 ring-inset ring-emerald-200 group`;
+        return `${base} transition-colors group`;
     };
 
     const getProgressColor = (progress: string | null) => {
@@ -195,7 +200,7 @@ export default function OrdersPage() {
     const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-12 px-4">
 
 
             {error && (
@@ -208,7 +213,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-200 bg-green-50 px-1 rounded">v19:58 RowColor</span>
+                    <span className="text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-1 rounded">v11:07 Enhanced</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
@@ -229,9 +234,9 @@ export default function OrdersPage() {
                         />
                         Group by Category
                     </label>
-                    <Link href="/products" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
+                    <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-2 h-4 w-4" />
-                        New Order
+                        Create Order
                     </Link>
                 </div>
             </div>
@@ -265,112 +270,143 @@ export default function OrdersPage() {
                                     </div>
                                 )}
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm text-slate-600">
+                                    <table className="w-full text-left text-sm text-slate-600 border-collapse">
                                         <thead className="bg-white text-xs uppercase text-slate-500 border-b border-slate-100">
                                             <tr>
-                                                <th className="px-6 py-3 font-semibold w-[25%]">Product Info</th>
-                                                <th className="px-6 py-3 font-semibold w-[10%]">Qty</th>
-                                                <th className="px-6 py-3 font-semibold w-[15%]">Process</th>
-                                                <th className="px-6 py-3 font-semibold w-[20%]">Specs</th>
-                                                <th className="px-6 py-3 font-semibold w-[10%]">Total Print</th>
-                                                <th className="px-6 py-3 font-semibold w-[15%]">Files</th>
-                                                <th className="px-6 py-3 font-semibold text-right w-[5%]">Action</th>
+                                                <th className="px-6 py-3 font-semibold w-[30px]"></th>
+                                                <th className="px-2 py-3 font-semibold w-[25%]">Product Info</th>
+                                                <th className="px-4 py-3 font-semibold w-[10%]">Qty</th>
+                                                <th className="px-4 py-3 font-semibold w-[15%]">Process</th>
+                                                <th className="px-4 py-3 font-semibold w-[20%]">Specs</th>
+                                                <th className="px-4 py-3 font-semibold w-[10%]">Total Print</th>
+                                                <th className="px-4 py-3 font-semibold w-[15%] text-right">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {catOrders.map((order) => (
-                                                <tr key={order.id} className={getRowStyle(order)}>
-
-                                                    <td className="px-6 py-4 align-top">
-                                                        <div className="font-bold text-slate-900">{order.products?.product_name || 'Unknown Product'}</div>
-                                                        <div className="text-xs text-slate-500 font-mono mt-0.5">{order.products?.artwork_code || '-'}</div>
-                                                        <div className="flex gap-2 mt-1.5 opacity-90 transition-opacity">
-                                                            {order.products?.artwork_pdf && (
-                                                                <a href={`/uploads/${order.products.artwork_pdf}`} target="_blank" className="text-red-500 hover:text-red-700 flex items-center text-[10px] font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
-                                                                    <FileText className="w-3 h-3 mr-1" /> PDF
-                                                                </a>
-                                                            )}
-                                                            {order.products?.artwork_cdr && (
-                                                                <a href={`/uploads/${order.products.artwork_cdr}`} target="_blank" className="text-blue-500 hover:text-blue-700 flex items-center text-[10px] font-medium bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                                                    <Upload className="w-3 h-3 mr-1" /> CDR
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    </td>
-
-                                                    <td className="px-6 py-4 align-top font-mono font-medium text-slate-700">
-                                                        {order.quantity?.toLocaleString() || '-'}
-                                                    </td>
-
-                                                    <td className="px-6 py-4 align-top">
-                                                        {editingOrderId === order.id ? (
-                                                            <div className="flex items-center gap-1">
-                                                                <select
-                                                                    value={editProgress}
-                                                                    onChange={e => setEditProgress(e.target.value)}
-                                                                    className="text-xs border border-slate-300 rounded px-2 py-1 w-full"
-                                                                    autoFocus
-                                                                >
-                                                                    {PROCESS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                                                                </select>
-                                                                <button onClick={() => handleQuickUpdate(order.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-4 h-4" /></button>
-                                                                <button onClick={() => setEditingOrderId(null)} className="text-slate-400 hover:bg-slate-100 p-1 rounded"><X className="w-4 h-4" /></button>
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => toggleQuickEdit(order)}
-                                                                className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${getProgressColor(order.progress)} hover:ring-opacity-50 transition-all`}
-                                                            >
-                                                                {order.progress || '-'}
-                                                                <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
-                                                            </button>
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-6 py-4 align-top">
-                                                        <div className="text-xs text-slate-600 leading-relaxed max-h-[80px] overflow-y-auto scrollbar-thin whitespace-pre-wrap">
-                                                            {order.products?.specs || '-'}
-                                                        </div>
-                                                        {(!order.products?.specs || order.products?.specs === '-') && order.products?.dimension && (
-                                                            <div className="text-[10px] text-slate-400 mt-1">
-                                                                Dim: {order.products.dimension}
-                                                            </div>
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-6 py-4 align-top font-mono text-xs">
-                                                        {order.total_print_qty?.toLocaleString() || '-'}
-                                                    </td>
-
-                                                    <td className="px-6 py-4 align-top">
-                                                        <div className="space-y-1">
-                                                            {order.coa_file && <div className="text-[10px] text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-block mr-1">COA</div>}
-                                                            {order.del_label_file && <div className="text-[10px] text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-block mr-1">Label</div>}
-                                                            {order.shade_card_file && <div className="text-[10px] text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-block">Shade</div>}
-                                                            {(!order.coa_file && !order.del_label_file && !order.shade_card_file) && <span className="text-slate-300 text-xs">-</span>}
-                                                        </div>
-                                                    </td>
-
-                                                    <td className="px-6 py-4 align-top text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            {/* Mark Complete Button (Always show unless explicitly 'Completed') */}
-                                                            {(!order.status || order.status !== 'Completed') && (
-                                                                <button
-                                                                    onClick={() => handleMarkComplete(order.id)}
-                                                                    title="Mark as Completed"
-                                                                    className="flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded text-[10px] font-medium transition-colors"
-                                                                >
-                                                                    <CheckCircle className="w-3 h-3" />
-                                                                    Complete
+                                            {catOrders.map((order) => {
+                                                const isExpanded = expandedOrderId === order.id;
+                                                return (
+                                                    <Fragment key={order.id}>
+                                                        <tr className={getRowStyle(order)}>
+                                                            <td className="px-2 py-4 align-top">
+                                                                <button onClick={() => toggleRow(order.id)} className="p-1 hover:bg-slate-200 rounded text-slate-400">
+                                                                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                                 </button>
-                                                            )}
-                                                            <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-indigo-900 text-xs font-medium border border-indigo-200 rounded px-2 py-1.5 hover:bg-indigo-50">
-                                                                Edit
-                                                            </Link>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                            </td>
+                                                            <td className="px-2 py-4 align-top">
+                                                                <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{order.products?.product_name || 'Unknown Product'}</div>
+                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                    <div className="text-[10px] text-slate-500 font-mono bg-slate-100 px-1 py-0.5 rounded border border-slate-200">ID: {order.order_id || '-'}</div>
+                                                                    <div className="text-[10px] text-slate-400 font-mono">Code: {order.products?.artwork_code || '-'}</div>
+                                                                </div>
+                                                                <div className="flex gap-2 mt-2">
+                                                                    {order.products?.artwork_pdf && (
+                                                                        <a href={`/uploads/${order.products.artwork_pdf}`} target="_blank" className="text-red-500 hover:text-red-700 flex items-center text-[10px] font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
+                                                                            <FileText className="w-3 h-3 mr-1" /> PDF
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top font-mono font-bold text-slate-700 text-base">
+                                                                {order.quantity?.toLocaleString() || '-'}
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top">
+                                                                {editingOrderId === order.id ? (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <select
+                                                                            value={editProgress}
+                                                                            onChange={e => setEditProgress(e.target.value)}
+                                                                            className="text-xs border border-slate-300 rounded px-2 py-1 w-full"
+                                                                            autoFocus
+                                                                        >
+                                                                            {PROCESS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                                                                        </select>
+                                                                        <button onClick={() => handleQuickUpdate(order.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-4 h-4" /></button>
+                                                                        <button onClick={() => setEditingOrderId(null)} className="text-slate-400 hover:bg-slate-100 p-1 rounded"><X className="w-4 h-4" /></button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => toggleQuickEdit(order)}
+                                                                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${getProgressColor(order.progress)} hover:ring-opacity-50 transition-all shadow-sm`}
+                                                                    >
+                                                                        {order.progress?.toUpperCase() || '-'}
+                                                                        <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                                                                    </button>
+                                                                )}
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top">
+                                                                <div className="text-[11px] text-slate-600 leading-tight max-h-[60px] overflow-y-auto scrollbar-thin whitespace-pre-wrap font-medium">
+                                                                    {order.products?.specs || '-'}
+                                                                </div>
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top font-mono text-xs font-semibold text-slate-500">
+                                                                {order.total_print_qty?.toLocaleString() || '-'}
+                                                            </td>
+
+                                                            <td className="px-4 py-4 align-top text-right">
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    {(!order.status || order.status !== 'Completed') && (
+                                                                        <button
+                                                                            onClick={() => handleMarkComplete(order.id)}
+                                                                            className="flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm"
+                                                                        >
+                                                                            <CheckCircle className="w-3.5 h-3.5" />
+                                                                            COMPLETE
+                                                                        </button>
+                                                                    )}
+                                                                    <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-white hover:bg-indigo-600 text-[10px] font-bold border border-indigo-200 rounded-lg px-2.5 py-1.5 transition-all shadow-sm">
+                                                                        EDIT
+                                                                    </Link>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        {isExpanded && (
+                                                            <tr className="bg-slate-50 border-x-4 border-indigo-500/20">
+                                                                <td colSpan={7} className="px-8 py-6">
+                                                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                                                                        <DetailGroup title="Logistics" items={[
+                                                                            { label: 'Printer', value: order.printer_name },
+                                                                            { label: 'Printer Mob', value: order.printer_mobile },
+                                                                            { label: 'Del. Date', value: order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : '-' },
+                                                                            { label: 'Invoice', value: order.invoice_no },
+                                                                        ]} />
+                                                                        <DetailGroup title="Paper Details" items={[
+                                                                            { label: 'Paper Wala', value: order.paperwala_name },
+                                                                            { label: 'Paper Size', value: order.paper_order_size },
+                                                                            { label: 'Paper Required', value: order.paper_required },
+                                                                            { label: 'Gross Print', value: order.gross_print_qty },
+                                                                        ]} />
+                                                                        <DetailGroup title="Production" items={[
+                                                                            { label: 'Current Progress', value: order.progress },
+                                                                            { label: 'Qty Delivered', value: order.qty_delivered },
+                                                                            { label: 'Packing Detail', value: order.packing_detail },
+                                                                            { label: 'Batch No', value: order.batch_no },
+                                                                        ]} />
+                                                                        <div className="space-y-3">
+                                                                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Documents</h4>
+                                                                            <div className="flex flex-wrap gap-2">
+                                                                                {order.coa_file && <DocBadge label="COA" />}
+                                                                                {order.del_label_file && <DocBadge label="Label" />}
+                                                                                {order.shade_card_file && <DocBadge label="Shade" />}
+                                                                                {!order.coa_file && !order.del_label_file && !order.shade_card_file && <span className="text-xs text-slate-300">No docs attached</span>}
+                                                                            </div>
+                                                                            <div className="pt-4 flex flex-col gap-2">
+                                                                                <Link href={`/orders/${order.id}`} className="inline-flex items-center justify-center bg-indigo-600 text-white rounded-lg px-4 py-2 text-xs font-bold hover:bg-indigo-700 shadow-md transition-colors">
+                                                                                    VIEW FULL ORDER DETAILS
+                                                                                </Link>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </Fragment>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -382,17 +418,17 @@ export default function OrdersPage() {
                                 <button
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                     disabled={page === 1}
-                                    className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50"
+                                    className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50 shadow-sm"
                                 >
                                     Previous
                                 </button>
-                                <span className="text-sm text-slate-600">
+                                <span className="text-sm font-medium text-slate-600">
                                     Page {page} of {totalPages}
                                 </span>
                                 <button
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                     disabled={page === totalPages}
-                                    className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50"
+                                    className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50 shadow-sm"
                                 >
                                     Next
                                 </button>
@@ -402,5 +438,30 @@ export default function OrdersPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+// Sub-components for better organization
+function DetailGroup({ title, items }: { title: string, items: { label: string, value: any }[] }) {
+    return (
+        <div className="space-y-3">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</h4>
+            <div className="space-y-2">
+                {items.map((it, i) => (
+                    <div key={i} className="flex justify-between text-xs border-b border-slate-100 pb-1">
+                        <span className="text-slate-500">{it.label}</span>
+                        <span className="font-semibold text-slate-800">{it.value || '-'}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function DocBadge({ label }: { label: string }) {
+    return (
+        <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded text-[10px] font-bold">
+            {label}
+        </span>
     );
 }

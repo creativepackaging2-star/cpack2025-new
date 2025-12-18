@@ -82,7 +82,10 @@ export default function ProductsPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-800">Products</h2>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                    Product Catalog
+                    <span className="text-[10px] text-emerald-600 font-mono ml-2 border border-emerald-200 bg-emerald-50 px-1 rounded">v11:07 OrdersLink</span>
+                </h1>
                 <Link
                     href="/products/new"
                     className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 transition-colors"
@@ -232,6 +235,11 @@ export default function ProductsPage() {
                                         {/* 5. Action */}
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Link href={`/orders/new?product_id=${product.id}`}>
+                                                    <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-colors" title="Create Order">
+                                                        <ShoppingCart className="h-4 w-4" />
+                                                    </button>
+                                                </Link>
                                                 <Link href={`/products/${product.id}/edit`}>
                                                     <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Edit">
                                                         <Edit2 className="h-4 w-4" />
