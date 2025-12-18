@@ -1,0 +1,84 @@
+/* Order Management System - Premium Design System */
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+  --success: #10b981;
+  --bg-main: #f8fafc;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --accent-text: #64748b;
+  --main-text: #0f172a;
+}
+
+/* Glassmorphism Card Style */
+.premium-card {
+  background: white;
+  border-radius: 1.25rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.premium-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+/* Modern Input Fields */
+.premium-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1.5px solid #f1f5f9;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  color: #0f172a;
+}
+
+.premium-input:focus {
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  outline: none;
+}
+
+.premium-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Grid & Layout */
+.layout-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Table Enhancements */
+.premium-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.premium-table tr {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.premium-table td {
+  padding: 1rem 1.5rem;
+  transition: all 0.2s;
+}
+
+.premium-table tr:hover td {
+  background: #f8fafc;
+}

@@ -50,100 +50,90 @@ const OrderRow = memo(({
         <Fragment>
             <tr className={getRowStyle(order)}>
                 <td className="px-2 py-4 align-top">
-                    <button onClick={() => toggleRow(order.id)} className="p-1 hover:bg-slate-200 rounded text-slate-400 transition-colors">
-                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <button onClick={() => toggleRow(order.id)} className="p-1.5 hover:bg-slate-200/50 rounded-lg text-slate-400 transition-all active:scale-90">
+                        {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-500" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
                 </td>
-                <td className="px-2 py-4 align-top">
-                    <div className="font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">
-                        {order.products?.product_name || order.product_sku || 'Unknown Product'}
+                <td className="px-3 py-4 align-top">
+                    <div className="font-black text-slate-900 leading-tight tracking-tight uppercase group-hover:text-indigo-600 transition-colors">
+                        {order.products?.product_name || order.product_sku || 'Untitled Product'}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <div className="text-[10px] text-indigo-600 font-black bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">JOB: {order.order_id || '-'}</div>
-                        <div className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-tighter">
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className="text-[9px] font-black text-white bg-slate-900 px-1.5 py-0.5 rounded tracking-tighter shadow-sm">JOB: {order.order_id || 'N/A'}</span>
+                        <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-tighter">
                             {order.artwork_code || order.products?.artwork_code || '-'}
-                        </div>
-                        <div className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tighter">
-                            {order.customer_name || 'No Customer'}
-                        </div>
+                        </span>
+                        <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tighter">
+                            {order.customer_name || 'Generic'}
+                        </span>
                     </div>
-                    {(order.artwork_pdf || order.products?.artwork_pdf) && (
-                        <div className="flex gap-2 mt-2">
-                            <a href={`/uploads/${order.artwork_pdf || order.products.artwork_pdf}`} target="_blank" className="text-red-500 hover:text-white hover:bg-red-500 flex items-center text-[10px] font-black bg-red-50 px-2 py-0.5 rounded border border-red-100 transition-all shadow-sm">
-                                <FileText className="w-3 h-3 mr-1" /> PDF ARTWORK
-                            </a>
-                        </div>
-                    )}
                 </td>
 
-                <td className="px-4 py-4 align-top font-mono font-bold text-slate-700 text-base">
-                    {order.quantity?.toLocaleString() || '-'}
+                <td className="px-4 py-4 align-top">
+                    <div className="font-mono font-black text-lg text-slate-800 leading-none tabular-nums tracking-tighter">
+                        {order.quantity?.toLocaleString() || '0'}
+                    </div>
+                    {order.rate && <div className="text-[10px] text-slate-400 font-bold mt-1 tracking-widest">₹{order.rate}</div>}
                 </td>
 
                 <td className="px-4 py-4 align-top">
                     {editingOrderId === order.id ? (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 animate-in zoom-in-95 duration-150">
                             <select
                                 value={editProgress}
                                 onChange={e => setEditProgress(e.target.value)}
-                                className="text-xs border border-slate-300 rounded px-2 py-1 w-full bg-white shadow-inner"
+                                className="text-[11px] font-bold border-2 border-indigo-200 rounded-lg px-2 py-1.5 w-full bg-white shadow-xl focus:border-indigo-500 outline-none transition-all"
                                 autoFocus
                             >
                                 {PROCESS_OPTIONS.map((s: string) => <option key={s} value={s}>{s}</option>)}
                             </select>
-                            <button onClick={() => handleQuickUpdate(order.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded transition-colors"><Save className="w-4 h-4" /></button>
-                            <button onClick={() => setEditingOrderId(null)} className="text-slate-400 hover:bg-slate-100 p-1 rounded transition-colors"><X className="w-4 h-4" /></button>
+                            <button onClick={() => handleQuickUpdate(order.id)} className="p-1.5 bg-emerald-500 text-white rounded-lg shadow-lg hover:bg-emerald-600 active:scale-95 transition-all"><Save className="w-3.5 h-3.5" /></button>
                         </div>
                     ) : (
                         <button
                             onClick={() => toggleQuickEdit(order)}
-                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${getProgressColor(order.progress)} hover:ring-opacity-50 transition-all shadow-sm`}
+                            className={`inline-flex items-center rounded-lg px-3 py-1.5 text-[10px] font-black tracking-widest ring-1 ring-inset ${getProgressColor(order.progress)} hover:shadow-md active:scale-95 transition-all uppercase`}
                         >
-                            {order.progress?.toUpperCase() || '-'}
-                            <ChevronDown className="ml-1 h-3 w-3 opacity-50" />
+                            {order.progress || 'Pending'}
+                            <ChevronDown className="ml-1.5 h-3 w-3 opacity-40" />
                         </button>
                     )}
                 </td>
 
                 <td className="px-4 py-4 align-top">
-                    <div className="text-[11px] text-slate-600 leading-tight max-h-[80px] overflow-y-auto scrollbar-thin whitespace-pre-wrap font-medium">
-                        <div className="font-bold text-indigo-700 mb-1">{order.paper_type_name || order.products?.paper_type?.name || '-'} {order.gsm_value || '-'}</div>
-                        <div className="text-[10px] text-slate-500">
-                            Dim: {order.dimension || '-'} | Ink: {order.ink || '-'}
+                    <div className="grid grid-cols-1 gap-1.5 min-w-[150px]">
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded leading-none border border-indigo-100 uppercase tracking-tighter">
+                                {order.gsm_value || '-'} {order.paper_type_name || '-'}
+                            </span>
                         </div>
-                        <div className="text-[9px] text-slate-400 mt-1 italic">
-                            Spec: {order.specification || order.products?.specs?.substring(0, 50) + '...' || '-'}
+                        <div className="flex gap-2 flex-wrap">
+                            {order.dimension && <div className="text-[9px] text-slate-500 font-bold border border-slate-200 px-1.5 rounded uppercase tracking-tighter">{order.dimension}</div>}
+                            {order.ink && <div className="text-[9px] text-slate-400 font-medium italic border-l-2 border-indigo-200 pl-1.5 leading-none">{order.ink}</div>}
                         </div>
                     </div>
                 </td>
 
-                <td className="px-4 py-4 align-top font-mono text-xs font-semibold text-slate-500 text-center uppercase tracking-tighter">
-                    {order.total_print_qty?.toLocaleString() || '-'}
+                <td className="px-4 py-4 align-top text-center">
+                    <div className="font-mono text-[11px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 inline-block">
+                        {order.total_print_qty?.toLocaleString() || '-'}
+                    </div>
                 </td>
 
-                <td className="px-4 py-4 align-top text-right">
-                    <div className="flex items-center justify-end gap-2">
+                <td className="px-3 py-4 align-top text-right">
+                    <div className="flex flex-col items-end gap-2">
                         {(!order.status || order.status !== 'Complete') && (
                             <button
                                 onClick={() => handleMarkComplete(order.id)}
                                 disabled={isUpdating === order.id}
-                                className={`flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${isUpdating === order.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`group flex items-center gap-1.5 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white border-2 border-emerald-100 hover:border-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black transition-all shadow-sm active:scale-95 ${isUpdating === order.id ? 'opacity-50 grayscale' : ''}`}
                             >
-                                {isUpdating === order.id ? (
-                                    <>
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        SAVING...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle className="w-3.5 h-3.5" />
-                                        COMPLETE
-                                    </>
-                                )}
+                                {isUpdating === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3 group-hover:scale-125 transition-transform" />}
+                                COMPLETE
                             </button>
                         )}
-                        <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-white hover:bg-indigo-600 text-[10px] font-bold border border-indigo-200 rounded-lg px-2.5 py-1.5 transition-all shadow-sm">
-                            EDIT
+                        <Link href={`/orders/${order.id}`} className="text-slate-400 hover:text-indigo-600 text-[10px] font-bold tracking-widest uppercase hover:underline p-1 transition-all">
+                            Edit Order
                         </Link>
                     </div>
                 </td>
@@ -286,6 +276,13 @@ export default function OrdersPage() {
             setError(ordersRes.error.message);
         } else {
             console.log('Orders loaded:', ordersRes.data?.length);
+            // Debugging status issue
+            if (ordersRes.data && ordersRes.data.length > 0) {
+                console.log('TOP 3 ORDERS STATUS CHECK:');
+                ordersRes.data.slice(0, 3).forEach(o => {
+                    console.log(`Order ID: ${o.id}, Job ID: ${o.order_id}, Status: '${o.status}', Progress: '${o.progress}'`);
+                });
+            }
             setOrders(ordersRes.data || []);
         }
 
@@ -315,29 +312,39 @@ export default function OrdersPage() {
     };
 
     const handleMarkComplete = async (id: number) => {
-        if (!window.confirm('Mark this order as Completed? It will move to the Completed view.')) return;
+        if (!window.confirm('Are you sure you want to mark this order as Complete?')) return;
 
         setIsUpdating(id);
-        console.log(`Updating order ${id} to status: 'Complete'`);
-        const { error } = await supabase
-            .from('orders')
-            .update({ status: 'Complete' })
-            .eq('id', id);
 
-        if (!error) {
-            const { data, error: checkError } = await supabase.from('orders').select('status').eq('id', id).single();
-            console.log('Verification check result:', data?.status);
-            if (data?.status !== 'Complete') {
-                alert(`WARNING: Status update successful but DB reports: '${data?.status}'. Check for triggers.`);
+        try {
+            // 1. Perform Update
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({ status: 'Complete' })
+                .eq('id', id);
+
+            if (updateError) throw updateError;
+
+            // 2. Immediate Server-Side Verification Check
+            const { data: verifyData, error: verifyError } = await supabase
+                .from('orders')
+                .select('status')
+                .eq('id', id)
+                .single();
+
+            if (verifyError) throw verifyError;
+
+            if (verifyData.status !== 'Complete') {
+                throw new Error(`Critical Reversion Detected: Database is still reporting '${verifyData.status}'. Please check DB triggers/constraints.`);
             }
-        }
 
-        if (error) {
-            alert('Error updating status: ' + error.message);
-            setIsUpdating(null);
-        } else {
-            // Force local update immediately for fast feedback
+            // 3. Update Local UI state only if server confirmed
             setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete' } : o));
+
+        } catch (err: any) {
+            console.error('Persistence Failure:', err);
+            alert('SYSTEM ERROR: ' + (err.message || 'The status could not be saved permanently.'));
+        } finally {
             setIsUpdating(null);
         }
     };
