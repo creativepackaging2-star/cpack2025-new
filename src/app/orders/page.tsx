@@ -30,6 +30,20 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 ));
 DetailGroup.displayName = 'DetailGroup';
 
+const PROCESS_OPTIONS = [
+    'Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'
+];
+
+const getProgressColor = (progress: string | null) => {
+    const s = progress?.toLowerCase() || '';
+    if (s === 'ready') return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20 font-bold';
+    if (s === 'hold') return 'bg-red-100 text-red-800 ring-red-600/20 font-bold';
+    if (['paper', 'plate', 'print', 'varnish', 'foil', 'pasting', 'folding'].some(p => s.includes(p))) {
+        return 'bg-blue-50 text-blue-700 ring-blue-600/20';
+    }
+    return 'bg-slate-50 text-slate-600 ring-slate-500/10';
+};
+
 const OrderRow = memo(({
     order,
     isExpanded,
@@ -37,18 +51,21 @@ const OrderRow = memo(({
     handleMarkComplete,
     toggleQuickEdit,
     isUpdating,
-    editingOrderId,
+    isEditing,
     editProgress,
     setEditProgress,
     handleQuickUpdate,
-    setEditingOrderId,
-    getProgressColor,
-    getRowStyle,
-    PROCESS_OPTIONS
 }: any) => {
+    const s = order.progress?.toLowerCase() || '';
+    const rowBaseStyle = isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50/80';
+    let rowClassName = `${rowBaseStyle} transition-colors group`;
+
+    if (s === 'hold') rowClassName = `bg-red-50 hover:bg-red-100 ring-1 ring-inset ring-red-200 group`;
+    else if (s === 'ready') rowClassName = `bg-emerald-50 hover:bg-emerald-100 ring-1 ring-inset ring-emerald-200 group`;
+
     return (
         <Fragment>
-            <tr className={getRowStyle(order)}>
+            <tr className={rowClassName}>
                 <td className="px-2 py-4 align-top">
                     <button onClick={() => toggleRow(order.id)} className="p-1.5 hover:bg-slate-200/50 rounded-lg text-slate-400 transition-all active:scale-90">
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-500" /> : <ChevronRight className="w-4 h-4" />}
@@ -77,7 +94,7 @@ const OrderRow = memo(({
                 </td>
 
                 <td className="px-4 py-4 align-top">
-                    {editingOrderId === order.id ? (
+                    {isEditing ? (
                         <div className="flex items-center gap-1 animate-in zoom-in-95 duration-150">
                             <select
                                 value={editProgress}
@@ -215,10 +232,6 @@ export default function OrdersPage() {
     // Quick Edit State
     const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
     const [editProgress, setEditProgress] = useState('');
-
-    const PROCESS_OPTIONS = [
-        'Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'
-    ];
 
     // Expanded Rows State
     const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -408,26 +421,6 @@ export default function OrdersPage() {
             : { 'All Orders': paginatedOrders };
     }, [groupByCategory, paginatedOrders, categoryMap]);
 
-    const getRowStyle = (order: Order) => {
-        const s = order.progress?.toLowerCase() || '';
-        const isExpanded = expandedOrderId === order.id;
-        let base = isExpanded ? 'bg-indigo-50/50' : 'hover:bg-slate-50/80';
-
-        if (s === 'hold') return `bg-red-50 hover:bg-red-100 ring-1 ring-inset ring-red-200 group`;
-        if (s === 'ready') return `bg-emerald-50 hover:bg-emerald-100 ring-1 ring-inset ring-emerald-200 group`;
-        return `${base} transition-colors group`;
-    };
-
-    const getProgressColor = (progress: string | null) => {
-        const s = progress?.toLowerCase() || '';
-        if (s === 'ready') return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20 font-bold';
-        if (s === 'hold') return 'bg-red-100 text-red-800 ring-red-600/20 font-bold';
-        if (['paper', 'plate', 'print', 'varnish', 'foil', 'pasting', 'folding'].some(p => s.includes(p))) {
-            return 'bg-blue-50 text-blue-700 ring-blue-600/20';
-        }
-        return 'bg-slate-50 text-slate-600 ring-slate-500/10';
-    };
-
     const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
 
     return (
@@ -523,15 +516,11 @@ export default function OrdersPage() {
                                                     toggleRow={toggleRow}
                                                     handleMarkComplete={handleMarkComplete}
                                                     toggleQuickEdit={toggleQuickEdit}
-                                                    isUpdating={isUpdating}
-                                                    editingOrderId={editingOrderId}
+                                                    isUpdating={isUpdating === order.id}
+                                                    isEditing={editingOrderId === order.id}
                                                     editProgress={editProgress}
                                                     setEditProgress={setEditProgress}
                                                     handleQuickUpdate={handleQuickUpdate}
-                                                    setEditingOrderId={setEditingOrderId}
-                                                    getProgressColor={getProgressColor}
-                                                    getRowStyle={getRowStyle}
-                                                    PROCESS_OPTIONS={PROCESS_OPTIONS}
                                                 />
                                             ))}
                                         </tbody>
