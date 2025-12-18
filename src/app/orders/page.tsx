@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState, useMemo, Fragment } from 'react';
+import { useEffect, useState, useMemo, Fragment, useTransition } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, Filter, FileText, Upload, ChevronDown, ChevronRight, Save, X, CheckCircle, ShoppingCart } from 'lucide-react';
+import { Search, Plus, Filter, FileText, Upload, ChevronDown, ChevronRight, Save, X, CheckCircle, ShoppingCart, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OrdersPage() {
     // Data State
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState<number | null>(null); // Track ID being updated
     const [error, setError] = useState<string | null>(null);
     const [categoryMap, setCategoryMap] = useState<Record<number, string>>({});
 
@@ -17,6 +18,7 @@ export default function OrdersPage() {
     const [showCompleted, setShowCompleted] = useState(false);
     const [groupByCategory, setGroupByCategory] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isPending, startTransition] = useTransition();
 
     // Pagination State
     const [page, setPage] = useState(1);
@@ -37,6 +39,23 @@ export default function OrdersPage() {
     useEffect(() => {
         fetchOrders();
     }, []);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+    };
+
+    const handleToggleCompleted = (checked: boolean) => {
+        startTransition(() => {
+            setShowCompleted(checked);
+        });
+    };
+
+    const handleToggleGrouping = (checked: boolean) => {
+        startTransition(() => {
+            setGroupByCategory(checked);
+        });
+    };
 
     async function fetchOrders() {
         setLoading(true);
@@ -107,6 +126,7 @@ export default function OrdersPage() {
     const handleMarkComplete = async (id: number) => {
         if (!window.confirm('Mark this order as Completed? It will move to the Completed view.')) return;
 
+        setIsUpdating(id);
         const { error } = await supabase
             .from('orders')
             .update({ status: 'Completed' })
@@ -114,8 +134,12 @@ export default function OrdersPage() {
 
         if (error) {
             alert('Error updating status: ' + error.message);
+            setIsUpdating(null);
         } else {
-            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Completed' } : o));
+            startTransition(() => {
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Completed' } : o));
+                setIsUpdating(null);
+            });
         }
     };
 
@@ -200,7 +224,7 @@ export default function OrdersPage() {
     const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-12 px-4">
+        <div className={`space-y-6 max-w-[1600px] mx-auto pb-12 px-4 transition-opacity duration-200 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
 
 
             {error && (
@@ -213,14 +237,14 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-1 rounded">v11:07 Enhanced</span>
+                    <span className="text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-1 rounded">v11:28 Opt</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
                         <input
                             type="checkbox"
                             checked={showCompleted}
-                            onChange={e => setShowCompleted(e.target.checked)}
+                            onChange={e => handleToggleCompleted(e.target.checked)}
                             className="rounded text-indigo-600 focus:ring-indigo-500"
                         />
                         Show Completed
@@ -229,7 +253,7 @@ export default function OrdersPage() {
                         <input
                             type="checkbox"
                             checked={groupByCategory}
-                            onChange={e => setGroupByCategory(e.target.checked)}
+                            onChange={e => handleToggleGrouping(e.target.checked)}
                             className="rounded text-indigo-600 focus:ring-indigo-500"
                         />
                         Group by Category
@@ -248,7 +272,7 @@ export default function OrdersPage() {
                     placeholder="Search by Product Name, Order ID, or Printer..."
                     className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
+                    onChange={handleSearchChange}
                 />
             </div>
 
@@ -352,10 +376,20 @@ export default function OrdersPage() {
                                                                     {(!order.status || order.status !== 'Completed') && (
                                                                         <button
                                                                             onClick={() => handleMarkComplete(order.id)}
-                                                                            className="flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm"
+                                                                            disabled={isUpdating === order.id}
+                                                                            className={`flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${isUpdating === order.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                         >
-                                                                            <CheckCircle className="w-3.5 h-3.5" />
-                                                                            COMPLETE
+                                                                            {isUpdating === order.id ? (
+                                                                                <>
+                                                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                                    SAVING...
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <CheckCircle className="w-3.5 h-3.5" />
+                                                                                    COMPLETE
+                                                                                </>
+                                                                            )}
                                                                         </button>
                                                                     )}
                                                                     <Link href={`/orders/${order.id}`} className="text-indigo-600 hover:text-white hover:bg-indigo-600 text-[10px] font-bold border border-indigo-200 rounded-lg px-2.5 py-1.5 transition-all shadow-sm">
