@@ -232,8 +232,15 @@ const OrderRow = memo(({
                                     <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Coating:</span> <span className="font-semibold">{order.coating || '-'}</span></div>
                                     <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Pasting:</span> <span className="font-semibold">{order.pasting_type || '-'}</span></div>
                                     <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Construction:</span> <span className="font-semibold">{order.construction_type || '-'}</span></div>
+                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Specification:</span> <span className="font-semibold">{order.specification || '-'}</span></div>
                                     <div className="flex justify-between pb-1"><span className="text-slate-500">Dim:</span> <span className="font-mono font-bold text-indigo-600">{order.dimension || '-'}</span></div>
                                 </div>
+                                {order.specs && (
+                                    <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-200 mt-2">
+                                        <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mb-1">Full Specs</div>
+                                        <div className="text-xs text-slate-700 font-mono leading-relaxed">{order.specs}</div>
+                                    </div>
+                                )}
                                 <div className="flex flex-wrap gap-2 pt-2">
                                     {order.artwork_pdf && <Link href={`/uploads/${order.artwork_pdf}`} target="_blank"><DocBadge label="PDF" /></Link>}
                                     {order.artwork_cdr && <Link href={`/uploads/${order.artwork_cdr}`} target="_blank"><DocBadge label="CDR" /></Link>}
@@ -469,7 +476,7 @@ export default function OrdersPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Production Orders
                     <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-emerald-600 font-mono ml-2 border border-emerald-200 bg-emerald-50 px-2 py-0.5 rounded shadow-sm font-bold">v14:24 RLS-FIXED ✓</span>
+                    <span className="text-[10px] text-purple-600 font-mono ml-2 border border-purple-200 bg-purple-50 px-2 py-0.5 rounded shadow-sm font-bold">v15:12 ALL-COLUMNS ✓</span>
                 </h2>
                 <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
