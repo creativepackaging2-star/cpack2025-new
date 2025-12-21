@@ -201,6 +201,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 delivery_address: addr.data?.address || '',
                 artwork_pdf: prod.artwork_pdf || '',
                 artwork_cdr: prod.artwork_cdr || '',
+                category_name: cat.data?.name || '',
                 specs: prod.specs || '',
                 ups: prod.ups || null,
                 batch_no: prev.batch_no || generateBatchNo({ ...prod, category: cat.data })
@@ -432,11 +433,23 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
                         <div>
                             <label className="label">Status</label>
-                            <select name="status" value={formData.status || ''} onChange={handleChange} className="input-field font-black">
+                            <select name="status" value={formData.status || ''} onChange={handleChange} className="input-field font-black text-slate-900 bg-white">
                                 <option value="In Production">In Production</option>
                                 <option value="Complete">Complete</option>
                                 <option value="Hold">Hold</option>
                             </select>
+                        </div>
+                        <div>
+                            <label className="label">Category</label>
+                            <input
+                                type="text"
+                                name="category_name"
+                                value={formData.category_name || ''}
+                                onChange={handleChange}
+                                className="input-field bg-slate-50 font-medium"
+                                placeholder="Auto-filled..."
+                                readOnly
+                            />
                         </div>
                         <div>
                             <label className="label">from our co.</label>
@@ -619,6 +632,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-6">
                             {[
                                 { label: 'UPS', name: 'ups' },
+                                { label: 'Category', name: 'category_name' },
                                 { label: 'Customer', name: 'customer_name' },
                                 { label: 'Paper', name: 'paper_type_name' },
                                 { label: 'GSM', name: 'gsm_value' },

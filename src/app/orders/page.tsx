@@ -159,8 +159,8 @@ const OrderRow = memo(({
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
-                    <div className="text-[10px] text-slate-500 line-clamp-1 flex-1">{order.specs || '-'}</div>
-                    <div className="text-sm font-black text-indigo-600 ml-2">{(order.quantity || 0).toLocaleString()}</div>
+                    <div className="text-xs text-slate-700 line-clamp-1 flex-1">{order.specs || '-'}</div>
+                    <div className="text-sm font-semibold text-slate-900 ml-2">{(order.quantity || 0).toLocaleString()}</div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3">
@@ -229,12 +229,12 @@ const OrderRow = memo(({
                 </td>
 
                 <td className="px-3 py-4">
-                    <div className="text-sm font-black text-indigo-600">{(order.quantity || 0).toLocaleString()}</div>
+                    <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
                 {/* 2. Specs */}
                 <td className="px-3 py-4 max-w-[300px]">
-                    <div className="text-[10px] text-slate-600 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
+                    <div className="text-xs text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>

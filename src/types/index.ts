@@ -92,6 +92,7 @@ export type Order = {
     artwork_pdf: string | null
     artwork_cdr: string | null
     product_name: string | null
+    category_name: string | null
     specs: string | null
     ups: number | null
     created_at: string
