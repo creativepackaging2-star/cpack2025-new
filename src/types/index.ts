@@ -88,6 +88,9 @@ export type Order = {
     delivery_address: string | null
     artwork_pdf: string | null
     artwork_cdr: string | null
+    product_name: string | null
+    specs: string | null
+    ups: number | null
     created_at: string
     updated_at: string
 }

@@ -90,9 +90,10 @@ export default function ProductForm({ initialData }: Props) {
                 supabase.from('special_effects').select('id, name'),
                 supabase.from('specifications').select('id, name'),
                 supabase.from('delivery_addresses').select('id, name'),
+                supabase.from('products').select('sku').order('sku', { ascending: false }).limit(20)
             ]);
 
-            const [cat, cust, paper, gsm, size, cons, past, eff, specs, addr] = results;
+            const [cat, cust, paper, gsm, size, cons, past, eff, specs, addr, existingSkus] = results;
 
             if (cat.status === 'fulfilled' && cat.value.data) setCategories(cat.value.data);
             if (cust.status === 'fulfilled' && cust.value.data) setCustomers(cust.value.data);
@@ -104,6 +105,13 @@ export default function ProductForm({ initialData }: Props) {
             if (eff.status === 'fulfilled' && eff.value.data) setSpecialEffects(eff.value.data);
             if (specs.status === 'fulfilled' && specs.value.data) setSpecifications(specs.value.data);
             if (addr.status === 'fulfilled' && addr.value.data) setDeliveryAddresses(addr.value.data);
+
+            // Auto-sku for NEW products
+            if (!initialData && existingSkus.status === 'fulfilled' && existingSkus.value.data) {
+                const skus = existingSkus.value.data.map(p => parseInt(p.sku)).filter(n => !isNaN(n));
+                const nextSku = skus.length > 0 ? Math.max(...skus) + 1 : 1001;
+                setFormData(prev => ({ ...prev, sku: String(nextSku) }));
+            }
 
         } catch (e) {
             console.error('Error fetching dropdowns', e);
@@ -230,9 +238,9 @@ export default function ProductForm({ initialData }: Props) {
                             <label className="label">Artwork Code</label>
                             <input name="artwork_code" value={formData.artwork_code || ''} onChange={handleChange} className="input-field" />
                         </div>
-                        <div style={{ display: 'none' }}>
+                        <div className="lg:col-span-1">
                             <label className="label">SKU (Auto)</label>
-                            <input name="sku" value={formData.sku || ''} onChange={handleChange} className="input-field" />
+                            <input name="sku" value={formData.sku || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono text-xs" readOnly={!!initialData} />
                         </div>
                         <div>
                             <label className="label">UPS (Units/Sheet)</label>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2 } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette } from 'lucide-react';
 import Link from 'next/link';
 
 // --- Memoized Components for Performance ---
@@ -39,15 +39,15 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                     {catOrders.length}
                 </span>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto hidden md:block">
                 <table className="min-w-full divide-y divide-slate-200">
                     <thead className="bg-slate-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-[40px]"></th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Job / Date</th>
                             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Product</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Qty / Rate</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Specs</th>
                             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Process</th>
+                            <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Files</th>
                             <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Action</th>
                         </tr>
                     </thead>
@@ -65,10 +65,31 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                 editProgress={editProgress}
                                 setEditProgress={setEditProgress}
                                 handleQuickUpdate={handleQuickUpdate}
+                                view="table"
                             />
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile View - Cards */}
+            <div className="md:hidden divide-y divide-slate-100">
+                {catOrders.map((order: any) => (
+                    <OrderRow
+                        key={order.id}
+                        order={order}
+                        isExpanded={expandedOrderId === order.id}
+                        toggleRow={toggleRow}
+                        handleMarkComplete={handleMarkComplete}
+                        toggleQuickEdit={toggleQuickEdit}
+                        isUpdating={isUpdating === order.id}
+                        isEditing={editingOrderId === order.id}
+                        editProgress={editProgress}
+                        setEditProgress={setEditProgress}
+                        handleQuickUpdate={handleQuickUpdate}
+                        view="mobile"
+                    />
+                ))}
             </div>
         </div>
     );
@@ -100,11 +121,12 @@ const OrderRow = memo(({
     editProgress,
     setEditProgress,
     handleQuickUpdate,
+    view = "table"
 }: any) => {
     const [confirming, setConfirming] = useState(false);
     const s = order.progress?.toLowerCase() || '';
 
-    // Row style based on progress, matching Product Page layout but keeping highlights
+    // Row style based on progress
     const baseRowClass = isExpanded ? 'bg-indigo-50/30' : 'hover:bg-slate-50 transition-colors cursor-pointer';
     let rowClassName = baseRowClass;
     if (s === 'hold') rowClassName = `${baseRowClass} bg-red-50/50`;
@@ -121,6 +143,70 @@ const OrderRow = memo(({
         }
     };
 
+    if (view === "mobile") {
+        return (
+            <div className={`p-4 ${isExpanded ? 'bg-indigo-50/30' : 'bg-white'} border-l-4 ${s === 'hold' ? 'border-red-500' : s === 'ready' ? 'border-emerald-500' : 'border-transparent'}`} onClick={() => toggleRow(order.id)}>
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                        <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled'}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                                {order.artwork_code || order.products?.artwork_code || '-'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-3">
+                    <div className="text-[10px] text-slate-500 line-clamp-1">{order.specs || '-'}</div>
+                </div>
+
+                <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); toggleQuickEdit(order); }}
+                            className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)}`}
+                        >
+                            {order.progress || 'Pending'}
+                        </button>
+
+                        <div className="flex items-center gap-2 ml-2">
+                            {order.coa_file && <FileText className="w-3 h-3 text-indigo-400" />}
+                            {order.del_label_file && <Truck className="w-3 h-3 text-blue-400" />}
+                            {order.shade_card_file && <Palette className="w-3 h-3 text-emerald-400" />}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                        {(!order.status || order.status !== 'Complete') && (
+                            <button
+                                onClick={onCompleteClick}
+                                className={`p-1.5 rounded-full border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100'}`}
+                            >
+                                {confirming ? <CheckCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                            </button>
+                        )}
+                        <Link href={`/orders/${order.id}`} className="p-1.5 text-slate-400 border border-slate-100 rounded-full">
+                            <Edit className="w-4 h-4" />
+                        </Link>
+                    </div>
+                </div>
+
+                {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 gap-2 animate-in fade-in slide-in-from-top-2">
+                        <div className="text-[10px] font-medium text-slate-500">
+                            {order.specs}
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-slate-400 pt-2">
+                            <span>ID: {order.order_id}</span>
+                            <span>Date: {order.order_date}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <Fragment>
             <tr className={rowClassName} onClick={() => toggleRow(order.id)}>
@@ -130,34 +216,24 @@ const OrderRow = memo(({
                     </button>
                 </td>
 
-                {/* 1. Job / Date */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-slate-900">{order.order_id || 'N/A'}</div>
-                    <div className="text-xs text-slate-500">{order.order_date || '-'}</div>
-                </td>
-
-                {/* 2. Product */}
+                {/* 1. Product */}
                 <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.artwork_code || order.products?.artwork_code || '-'}
                         </span>
-                        <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase">
-                            {order.customer_name || '-'}
-                        </span>
                     </div>
                 </td>
 
-                {/* 3. Qty / Rate */}
-                <td className="px-6 py-4 text-center whitespace-nowrap">
-                    <div className="text-sm font-bold text-slate-900 tabular-nums">
-                        {order.quantity?.toLocaleString() || '0'}
+                {/* 2. Specs */}
+                <td className="px-6 py-4">
+                    <div className="text-xs text-slate-600 line-clamp-1 max-w-[200px]" title={order.specs || ''}>
+                        {order.specs || '-'}
                     </div>
-                    {order.rate && <div className="text-[10px] text-slate-400 font-medium">₹{order.rate}</div>}
                 </td>
 
-                {/* 4. Process */}
+                {/* 3. Process */}
                 <td className="px-6 py-4">
                     {isEditing ? (
                         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
@@ -182,20 +258,45 @@ const OrderRow = memo(({
                     )}
                 </td>
 
+                {/* 4. Files */}
+                <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                        {order.coa_file && (
+                            <a href={`/uploads/${order.coa_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="COA File">
+                                <FileText className="w-4 h-4 text-indigo-500 hover:text-indigo-700" />
+                            </a>
+                        )}
+                        {order.del_label_file && (
+                            <a href={`/uploads/${order.del_label_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="Delivery Label">
+                                <Truck className="w-4 h-4 text-blue-500 hover:text-blue-700" />
+                            </a>
+                        )}
+                        {order.shade_card_file && (
+                            <a href={`/uploads/${order.shade_card_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="Shade Card">
+                                <Palette className="w-4 h-4 text-emerald-500 hover:text-emerald-700" />
+                            </a>
+                        )}
+                        {!order.coa_file && !order.del_label_file && !order.shade_card_file && (
+                            <span className="text-xs text-slate-300">-</span>
+                        )}
+                    </div>
+                </td>
+
+                {/* 5. Action */}
                 <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
                         {(!order.status || order.status !== 'Complete') && (
                             <button
                                 onClick={onCompleteClick}
                                 disabled={isUpdating}
-                                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${confirming ? 'bg-orange-500 text-white border-orange-500 animate-pulse' : 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50'} ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                className={`p-1.5 rounded-full transition-all border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100 hover:bg-emerald-50'} ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                title={confirming ? 'Click again to confirm complete' : 'Mark as Complete'}
                             >
-                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-                                {confirming ? 'SURE?' : 'COMPLETE'}
+                                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                             </button>
                         )}
-                        <Link href={`/orders/${order.id}`} className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors">
-                            <Plus className="w-4 h-4" />
+                        <Link href={`/orders/${order.id}`} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
+                            <Edit className="w-4 h-4" />
                         </Link>
                     </div>
                 </td>
@@ -432,10 +533,11 @@ export default function OrdersPage() {
 
             if (!searchTerm) return true;
             const search = searchTerm.toLowerCase();
-            const pName = order.products?.product_name?.toLowerCase() || '';
+            const pNameSnapshot = order.product_name?.toLowerCase() || '';
+            const pNameRaw = order.products?.product_name?.toLowerCase() || '';
             const oId = order.order_id?.toLowerCase() || '';
             const printer = order.printer_name?.toLowerCase() || '';
-            return pName.includes(search) || oId.includes(search) || printer.includes(search);
+            return pNameSnapshot.includes(search) || pNameRaw.includes(search) || oId.includes(search) || printer.includes(search);
         });
     }, [orders, searchTerm, showCompleted]);
 

@@ -28,6 +28,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         initialData || {
             order_id: '',
             product_id: productId || '',
+            product_name: '',
             quantity: 0,
             status: 'In Production',
             progress: 'Paper',
@@ -84,6 +85,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         if (productId) {
             fetchProduct(productId);
         }
+        // Auto-generate order_id if new order
+        if (!initialData && !formData.order_id) {
+            const timestamp = Date.now().toString(36);
+            const random = Math.random().toString(36).substring(2, 6);
+            setFormData(prev => ({ ...prev, order_id: `ORD-${timestamp}-${random}`.toUpperCase() }));
+        }
     }, [productId]);
 
     async function fetchProductList() {
@@ -128,6 +135,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             setFormData(prev => ({
                 ...prev,
                 product_id: data.id,
+                product_name: prev.product_name || data.product_name || '',
                 // Snapshot values from linked product
                 customer_name: prev.customer_name || data.customer?.name || '',
                 paper_type_name: prev.paper_type_name || data.paper_type?.name || '',
@@ -145,6 +153,8 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 delivery_address: prev.delivery_address || data.delivery_address?.address || '',
                 artwork_pdf: prev.artwork_pdf || data.artwork_pdf || '',
                 artwork_cdr: prev.artwork_cdr || data.artwork_cdr || '',
+                specs: prev.specs || data.specs || '',
+                ups: prev.ups || data.ups || null,
                 // Auto-generate Batch No
                 batch_no: prev.batch_no || generateBatchNo(data)
             }));
@@ -266,7 +276,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                             <label className="label">Product</label>
                             <input
                                 type="text"
-                                className="input-field border-indigo-100 bg-indigo-50/10"
+                                className="input-field border-indigo-100 bg-indigo-50/10 font-bold"
                                 placeholder="Search Product..."
                                 value={productSearch || (product?.product_name || '')}
                                 onChange={(e) => {
@@ -274,8 +284,9 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                                     setShowProductDropdown(true);
                                 }}
                                 onFocus={() => setShowProductDropdown(true)}
+                                readOnly={!!initialData}
                             />
-                            {showProductDropdown && filteredProducts.length > 0 && (
+                            {!initialData && showProductDropdown && filteredProducts.length > 0 && (
                                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
                                     {filteredProducts.map(p => (
                                         <div
@@ -296,10 +307,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         </div>
 
                         <SectionHeader icon={Layers} title="Core Details" />
-                        <div>
-                            <label className="label">OrderID</label>
-                            <input name="order_id" value={formData.order_id || ''} onChange={handleChange} className="input-field font-bold uppercase text-indigo-700" placeholder="Job No" required />
-                        </div>
+                        <input type="hidden" name="order_id" value={formData.order_id || ''} />
                         <div>
                             <label className="label">order date</label>
                             <input type="date" name="order_date" value={formData.order_date || ''} onChange={handleChange} className="input-field" />
@@ -446,6 +454,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 bg-slate-50 p-6 rounded-xl border border-slate-100 italic text-[11px]">
                             {[
                                 { label: 'Customer', name: 'customer_name' },
+                                { label: 'Product Name', name: 'product_name' },
                                 { label: 'Paper', name: 'paper_type_name' },
                                 { label: 'GSM', name: 'gsm_value' },
                                 { label: 'Print Size', name: 'print_size' },

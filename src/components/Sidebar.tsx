@@ -49,7 +49,7 @@ export function Sidebar() {
                     })}
                 </nav>
             </div>
-            <div className="absolute bottom-4 left-0 right-0 px-6">
+            <div className="absolute bottom-4 left-0 right-0 px-6 space-y-4">
                 <div className="flex items-center gap-3 rounded-lg bg-slate-800/50 p-3">
                     <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
                         <span className="text-xs font-medium">U</span>
@@ -58,6 +58,9 @@ export function Sidebar() {
                         <p className="text-sm font-medium text-white">Admin User</p>
                         <p className="text-xs text-slate-400">admin@cpack.com</p>
                     </div>
+                </div>
+                <div className="text-[10px] text-slate-500 text-center font-mono uppercase tracking-widest">
+                    v0.2.0-stable
                 </div>
             </div>
         </div>
