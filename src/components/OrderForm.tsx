@@ -151,56 +151,68 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
     async function fetchProduct(id: string) {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('products')
-            .select(`
-                *,
-                customer:customer_id(name),
-                category:category_id(name),
-                paper_type:paper_type_id(name),
-                gsm:gsm_id(name),
-                size:size_id(name),
-                construction:construction_id(name),
-                specification:specification_id(name),
-                pasting:pasting_id(name),
-                delivery_address:delivery_address_id(address)
-            `)
-            .eq('id', id)
-            .single();
+        console.log('Fetching details for product:', id);
 
-        if (data) {
-            setProduct(data);
+        try {
+            // 1. Fetch raw product data
+            const { data: prod, error: pErr } = await supabase
+                .from('products')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (pErr) throw pErr;
+            if (!prod) throw new Error('Product not found');
+
+            // 2. Fetch all related labels manually (more reliable than nested joins)
+            const [cust, cat, paper, gsm, sz, cons, spec, past, addr] = await Promise.all([
+                prod.customer_id ? supabase.from('customers').select('name').eq('id', prod.customer_id).single() : Promise.resolve({ data: null }),
+                prod.category_id ? supabase.from('category').select('name').eq('id', prod.category_id).single() : Promise.resolve({ data: null }),
+                prod.paper_type_id ? supabase.from('paper_types').select('name').eq('id', prod.paper_type_id).single() : Promise.resolve({ data: null }),
+                prod.gsm_id ? supabase.from('gsm').select('name').eq('id', prod.gsm_id).single() : Promise.resolve({ data: null }),
+                prod.size_id ? supabase.from('sizes').select('name').eq('id', prod.size_id).single() : Promise.resolve({ data: null }),
+                prod.construction_id ? supabase.from('constructions').select('name').eq('id', prod.construction_id).single() : Promise.resolve({ data: null }),
+                prod.specification_id ? supabase.from('specifications').select('name').eq('id', prod.specification_id).single() : Promise.resolve({ data: null }),
+                prod.pasting_id ? supabase.from('pasting').select('name').eq('id', prod.pasting_id).single() : Promise.resolve({ data: null }),
+                prod.delivery_address_id ? supabase.from('delivery_addresses').select('address').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
+            ]);
+
+            setProduct(prod);
             setFormData(prev => ({
                 ...prev,
-                product_id: data.id,
-                product_name: prev.product_name || data.product_name || '',
-                // Snapshot values from linked product
-                customer_name: prev.customer_name || data.customer?.name || '',
-                paper_type_name: prev.paper_type_name || data.paper_type?.name || '',
-                gsm_value: prev.gsm_value || data.gsm?.name || '',
-                print_size: prev.print_size || data.size?.name || '',
-                dimension: prev.dimension || data.dimension || '',
-                // Also set paper order size id if it matches
-                paper_order_size_id: prev.paper_order_size_id || data.size_id || null,
-                paper_order_size: prev.paper_order_size || data.size?.name || '',
-                ink: prev.ink || data.ink || '',
-                plate_no: prev.plate_no || data.plate_no || '',
-                coating: prev.coating || data.coating || '',
-                special_effects: prev.special_effects || data.special_effects || '',
-                pasting_type: prev.pasting_type || data.pasting?.name || '',
-                construction_type: prev.construction_type || data.construction?.name || '',
-                specification: prev.specification || data.specification?.name || '',
-                artwork_code: prev.artwork_code || data.artwork_code || '',
-                delivery_address: prev.delivery_address || data.delivery_address?.address || '',
-                artwork_pdf: prev.artwork_pdf || data.artwork_pdf || '',
-                artwork_cdr: prev.artwork_cdr || data.artwork_cdr || '',
-                specs: prev.specs || data.specs || '',
-                ups: prev.ups || data.ups || null,
-                // Auto-generate Batch No
-                batch_no: prev.batch_no || generateBatchNo(data)
+                product_id: prod.id,
+                product_name: prod.product_name || '',
+                // Snapshot values from linked lookups
+                customer_name: cust.data?.name || '',
+                paper_type_name: paper.data?.name || '',
+                gsm_value: gsm.data?.name || '',
+                print_size: sz.data?.name || '',
+                dimension: prod.dimension || '',
+                paper_order_size_id: prod.size_id || null, // Auto-select same size for paper
+                paper_order_size: sz.data?.name || '',
+                ink: prod.ink || '',
+                plate_no: prod.plate_no || '',
+                coating: prod.coating || '',
+                special_effects: prod.special_effects || '',
+                pasting_type: past.data?.name || '',
+                construction_type: cons.data?.name || '',
+                specification: spec.data?.name || '',
+                artwork_code: prod.artwork_code || '',
+                delivery_address: addr.data?.address || '',
+                artwork_pdf: prod.artwork_pdf || '',
+                artwork_cdr: prod.artwork_cdr || '',
+                specs: prod.specs || '',
+                ups: prod.ups || null,
+                batch_no: prev.batch_no || generateBatchNo({ ...prod, category: cat.data })
             }));
+
+            console.log('Successfully auto-filled from product details');
+        } catch (err: any) {
+            console.error('Error fetching product details:', err);
+            alert(`Error loading product details: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     const generateBatchNo = (prod: any) => {
@@ -253,6 +265,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         setSaving(true);
         try {
             const payload = { ...formData };
+            console.log('Final Payload before save:', payload);
             const numFields = ['quantity', 'rate', 'value', 'gross_print_qty', 'paper_ups', 'total_print_qty', 'extra', 'paper_required', 'paper_order_qty', 'qty_delivered'];
             numFields.forEach(f => {
                 const val = (payload as any)[f];
@@ -264,29 +277,46 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             if (payload.billed === 'true') (payload as any).billed = true;
             else if (payload.billed === 'false') (payload as any).billed = false;
 
-            // CLEAN PAYLOAD: Removing empty IDs to prevent foreign key errors and duplicate ID errors
+            // CLEAN PAYLOAD: Removing empty IDs and handling foreign keys
             if (!initialData?.id) {
                 delete (payload as any).id;
             }
 
+            // Ensure foreign keys are null if empty, not empty string
+            const fkFields = ['printer_id', 'paperwala_id', 'paper_order_size_id'];
+            fkFields.forEach(f => {
+                if (!(payload as any)[f]) {
+                    (payload as any)[f] = null;
+                }
+            });
+
+            // Ensure order_id is never empty
+            if (!payload.order_id) {
+                payload.order_id = `ORD-${Date.now().toString(36).toUpperCase()}`;
+            }
+
             if (initialData?.id) {
+                console.log('Updating existing order:', initialData.id);
                 const { error } = await supabase.from('orders').update(payload).eq('id', initialData.id);
                 if (error) {
-                    console.error('Update Error:', error);
+                    console.error('Update Error Detail:', error);
+                    alert(`Update Error: [${error.code}] ${error.message}`);
                     throw error;
                 }
             } else {
+                console.log('Inserting new order...');
                 const { error } = await supabase.from('orders').insert([payload]);
                 if (error) {
-                    console.error('Insert Error:', error);
+                    console.error('Insert Error Detail:', error);
+                    alert(`Insert Error: [${error.code}] ${error.message}\n\nHint: Check if Order ID already exists.`);
                     throw error;
                 }
             }
             router.refresh();
             router.push('/orders');
-        } catch (error) {
-            console.error('Error saving order:', error);
-            alert('Failed to save order.');
+        } catch (error: any) {
+            console.error('Submit execution error:', error);
+            // alert('Failed to save order.'); // Already showed specific alerts above
         } finally {
             setSaving(false);
         }
