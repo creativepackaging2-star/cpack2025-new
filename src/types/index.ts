@@ -37,8 +37,10 @@ export type Order = {
     cdr: string | null
     order_date: string | null // Format: DD-MM-YY based on sample
     printer_name: string | null
+    printer_id: number | null
     printer_mobile: string | null
     paperwala_name: string | null
+    paperwala_id: number | null
     paperwala_mobile: string | null
     status: string | null
     quantity: number | null
@@ -49,6 +51,7 @@ export type Order = {
     total_print_qty: number | null
     extra: number | null
     paper_order_size: string | null
+    paper_order_size_id: number | null
     paper_required: number | null
     paper_order_qty: number | null
     ready_delivery: string | null

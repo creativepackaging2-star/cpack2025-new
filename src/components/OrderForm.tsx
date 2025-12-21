@@ -34,8 +34,10 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             progress: 'Paper',
             order_date: new Date().toISOString().split('T')[0],
             printer_name: '',
+            printer_id: null,
             printer_mobile: '',
             paperwala_name: '',
+            paperwala_id: null,
             paperwala_mobile: '',
             rate: 0,
             value: 0,
@@ -44,6 +46,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             total_print_qty: 0,
             extra: 0,
             paper_order_size: '',
+            paper_order_size_id: null,
             paper_required: 0,
             paper_order_qty: 0,
             ready_delivery: '',
@@ -80,8 +83,16 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }
     );
 
+    const [printers, setPrinters] = useState<any[]>([]);
+    const [paperwalas, setPaperwalas] = useState<any[]>([]);
+    const [sizes, setSizes] = useState<any[]>([]);
+
     useEffect(() => {
         fetchProductList();
+        fetchDropdowns();
+    }, []);
+
+    useEffect(() => {
         if (productId) {
             fetchProduct(productId);
         }
@@ -92,6 +103,33 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             setFormData(prev => ({ ...prev, order_id: `ORD-${timestamp}-${random}`.toUpperCase() }));
         }
     }, [productId]);
+
+    async function fetchDropdowns() {
+        console.log('Fetching dropdowns...');
+        try {
+            const [pRes, wRes, sRes] = await Promise.all([
+                supabase.from('printers').select('id, name, phone').order('name'),
+                supabase.from('paperwala').select('id, name, phone').order('name'),
+                supabase.from('sizes').select('id, name').order('name')
+            ]);
+
+            console.log('Dropdown Results:', {
+                printers: pRes.data?.length,
+                paperwalas: wRes.data?.length,
+                sizes: sRes.data?.length
+            });
+
+            if (pRes.error) console.error('Printers Fetch Error:', pRes.error);
+            if (wRes.error) console.error('Paperwala Fetch Error:', wRes.error);
+            if (sRes.error) console.error('Sizes Fetch Error:', sRes.error);
+
+            if (pRes.data) setPrinters(pRes.data);
+            if (wRes.data) setPaperwalas(wRes.data);
+            if (sRes.data) setSizes(sRes.data);
+        } catch (err) {
+            console.error('Fatal Error in fetchDropdowns:', err);
+        }
+    }
 
     async function fetchProductList() {
         const { data, error } = await supabase
@@ -142,6 +180,9 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 gsm_value: prev.gsm_value || data.gsm?.name || '',
                 print_size: prev.print_size || data.size?.name || '',
                 dimension: prev.dimension || data.dimension || '',
+                // Also set paper order size id if it matches
+                paper_order_size_id: prev.paper_order_size_id || data.size_id || null,
+                paper_order_size: prev.paper_order_size || data.size?.name || '',
                 ink: prev.ink || data.ink || '',
                 plate_no: prev.plate_no || data.plate_no || '',
                 coating: prev.coating || data.coating || '',
@@ -179,7 +220,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         const paperUps = parseFloat(String(formData.paper_ups)) || 1;
 
         const value = parseFloat((qty * rate).toFixed(2));
-        const grossPrint = Math.ceil(qty / ups);
+        const grossPrint = ups > 0 ? Math.ceil(qty / ups) : 0;
         const totalPrint = Math.ceil(grossPrint + extra);
         const paperReq = Math.ceil(totalPrint / paperUps);
 
@@ -223,12 +264,23 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             if (payload.billed === 'true') (payload as any).billed = true;
             else if (payload.billed === 'false') (payload as any).billed = false;
 
+            // CLEAN PAYLOAD: Removing empty IDs to prevent foreign key errors and duplicate ID errors
+            if (!initialData?.id) {
+                delete (payload as any).id;
+            }
+
             if (initialData?.id) {
                 const { error } = await supabase.from('orders').update(payload).eq('id', initialData.id);
-                if (error) throw error;
+                if (error) {
+                    console.error('Update Error:', error);
+                    throw error;
+                }
             } else {
                 const { error } = await supabase.from('orders').insert([payload]);
-                if (error) throw error;
+                if (error) {
+                    console.error('Insert Error:', error);
+                    throw error;
+                }
             }
             router.refresh();
             router.push('/orders');
@@ -257,8 +309,11 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                     <h1 className="text-2xl font-black text-slate-900 uppercase">
                         {initialData ? 'Update Order' : 'New Order Entry'}
                     </h1>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        System Version v16:00 | {product?.product_name || 'Select Product'}
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-4">
+                        <span>Version v0.2.0-stable | {product?.product_name || 'Select Product'}</span>
+                        <span className={`px-2 py-0.5 rounded border ${printers.length > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                            Data: P({printers.length}) W({paperwalas.length}) S({sizes.length})
+                        </span>
                     </p>
                 </div>
                 <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X className="w-6 h-6" /></Link>
@@ -346,19 +401,53 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         <SectionHeader icon={Truck} title="Partners" />
                         <div>
                             <label className="label">printer</label>
-                            <input name="printer_name" value={formData.printer_name || ''} onChange={handleChange} className="input-field" placeholder="Printer Table" />
+                            <select
+                                name="printer_id"
+                                value={formData.printer_id || ''}
+                                onChange={(e) => {
+                                    const id = parseInt(e.target.value);
+                                    const matched = printers.find(p => p.id === id);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        printer_id: id || null,
+                                        printer_name: matched?.name || '',
+                                        printer_mobile: matched?.phone || prev.printer_mobile
+                                    }));
+                                }}
+                                className="input-field appearance-auto"
+                            >
+                                <option value="">{printers.length === 0 ? 'Loading Printers...' : 'Select Printer...'}</option>
+                                {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
                         </div>
                         <div>
                             <label className="label">printer mobile</label>
-                            <input name="printer_mobile" value={formData.printer_mobile || ''} onChange={handleChange} className="input-field" />
+                            <input name="printer_mobile" value={formData.printer_mobile || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono" />
                         </div>
                         <div>
                             <label className="label">paperwala</label>
-                            <input name="paperwala_name" value={formData.paperwala_name || ''} onChange={handleChange} className="input-field" placeholder="Paper Wala Table" />
+                            <select
+                                name="paperwala_id"
+                                value={formData.paperwala_id || ''}
+                                onChange={(e) => {
+                                    const id = parseInt(e.target.value);
+                                    const matched = paperwalas.find(p => p.id === id);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        paperwala_id: id || null,
+                                        paperwala_name: matched?.name || '',
+                                        paperwala_mobile: matched?.phone || prev.paperwala_mobile
+                                    }));
+                                }}
+                                className="input-field appearance-auto"
+                            >
+                                <option value="">{paperwalas.length === 0 ? 'Loading...' : 'Select Paperwala...'}</option>
+                                {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
                         </div>
                         <div>
-                            <label className="label">paperwala mbile</label>
-                            <input name="paperwala_mobile" value={formData.paperwala_mobile || ''} onChange={handleChange} className="input-field" />
+                            <label className="label">paperwala mobile</label>
+                            <input name="paperwala_mobile" value={formData.paperwala_mobile || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono" />
                         </div>
                         <div className="lg:col-span-1"></div>
 
@@ -403,7 +492,23 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         </div>
                         <div>
                             <label className="label">paper order size</label>
-                            <input name="paper_order_size" value={formData.paper_order_size || ''} onChange={handleChange} className="input-field" placeholder="Dropdown table size" />
+                            <select
+                                name="paper_order_size_id"
+                                value={formData.paper_order_size_id || ''}
+                                onChange={(e) => {
+                                    const id = parseInt(e.target.value);
+                                    const matched = sizes.find(s => s.id === id);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        paper_order_size_id: id || null,
+                                        paper_order_size: matched?.name || ''
+                                    }));
+                                }}
+                                className="input-field"
+                            >
+                                <option value="">Select Size...</option>
+                                {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
                         </div>
 
                         <SectionHeader icon={FileText} title="Invoicing & Delivery" />
@@ -451,8 +556,9 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         </div>
 
                         <SectionHeader icon={Edit3} title="Product Snapshots" />
-                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 bg-slate-50 p-6 rounded-xl border border-slate-100 italic text-[11px]">
+                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3 bg-slate-50 p-6 rounded-xl border border-slate-100 italic text-[11px]">
                             {[
+                                { label: 'UPS', name: 'ups' },
                                 { label: 'Customer', name: 'customer_name' },
                                 { label: 'Product Name', name: 'product_name' },
                                 { label: 'Paper', name: 'paper_type_name' },
@@ -539,7 +645,8 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
             <style jsx>{`
                 .label { font-size: 0.65rem; font-weight: 800; color: #64748b; display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
-                .input-field { display: block; width: 100%; border-radius: 0.75rem; border: 1.5px solid #f1f5f9; padding: 0.625rem 0.875rem; font-size: 0.875rem; background-color: #f8fafc; transition: all 0.2s; color: #1e293b; }
+                .input-field { display: block; width: 100%; border-radius: 0.75rem; border: 1.5px solid #f1f5f9; padding: 0.625rem 0.875rem; font-size: 0.875rem; background-color: #f8fafc; transition: all 0.2s; color: #1e293b; min-height: 42px; }
+                .appearance-auto { appearance: auto !important; }
                 .input-field:focus { border-color: #6366f1; background-color: #fff; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
             `}</style>
         </form>
