@@ -43,12 +43,13 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                 <table className="min-w-full divide-y divide-slate-200">
                     <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-[40px]"></th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Product</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Specs</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Process</th>
-                            <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Files</th>
-                            <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Action</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[40px]"></th>
+                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Product</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Qty</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Specs</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Process</th>
+                            <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">Files</th>
+                            <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">
@@ -157,8 +158,9 @@ const OrderRow = memo(({
                     </div>
                 </div>
 
-                <div className="mt-3">
-                    <div className="text-[10px] text-slate-500 line-clamp-1">{order.specs || '-'}</div>
+                <div className="mt-3 flex items-center justify-between">
+                    <div className="text-[10px] text-slate-500 line-clamp-1 flex-1">{order.specs || '-'}</div>
+                    <div className="text-sm font-black text-indigo-600 ml-2">{(order.quantity || 0).toLocaleString()}</div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3">
@@ -217,7 +219,7 @@ const OrderRow = memo(({
                 </td>
 
                 {/* 1. Product */}
-                <td className="px-6 py-4">
+                <td className="px-3 py-4">
                     <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
@@ -226,15 +228,19 @@ const OrderRow = memo(({
                     </div>
                 </td>
 
+                <td className="px-3 py-4">
+                    <div className="text-sm font-black text-indigo-600">{(order.quantity || 0).toLocaleString()}</div>
+                </td>
+
                 {/* 2. Specs */}
-                <td className="px-6 py-4">
-                    <div className="text-xs text-slate-600 line-clamp-1 max-w-[200px]" title={order.specs || ''}>
+                <td className="px-3 py-4 max-w-[300px]">
+                    <div className="text-[10px] text-slate-600 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>
 
                 {/* 3. Process */}
-                <td className="px-6 py-4">
+                <td className="px-3 py-4">
                     {isEditing ? (
                         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                             <select
@@ -259,7 +265,7 @@ const OrderRow = memo(({
                 </td>
 
                 {/* 4. Files */}
-                <td className="px-6 py-4">
+                <td className="px-3 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                         {order.coa_file && (
                             <a href={`/uploads/${order.coa_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="COA File">
@@ -283,7 +289,7 @@ const OrderRow = memo(({
                 </td>
 
                 {/* 5. Action */}
-                <td className="px-6 py-4 text-right">
+                <td className="px-3 py-4 text-right">
                     <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
                         {(!order.status || order.status !== 'Complete') && (
                             <button

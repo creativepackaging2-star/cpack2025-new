@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order, Product } from '@/types';
-import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search } from 'lucide-react';
+import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search, Zap, Palette } from 'lucide-react';
 import Link from 'next/link';
 
 type Props = {
@@ -262,6 +262,23 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 1. Check for duplicate order_id (if new order)
+        if (!initialData?.id && formData.order_id) {
+            setSaving(true);
+            const { data: existing, error: checkErr } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('order_id', formData.order_id)
+                .maybeSingle();
+
+            if (existing) {
+                alert(`Error: Order ID "${formData.order_id}" already exists. Please use a unique ID.`);
+                setSaving(false);
+                return;
+            }
+        }
+
         setSaving(true);
         try {
             const payload = { ...formData };
@@ -300,7 +317,11 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 const { error } = await supabase.from('orders').update(payload).eq('id', initialData.id);
                 if (error) {
                     console.error('Update Error Detail:', error);
-                    alert(`Update Error: [${error.code}] ${error.message}`);
+                    if (error.code === '42501') {
+                        alert('🔴 SECURITY ERROR (RLS): You do not have permission to save this order. Please ensure RLS policies allow updates on the "orders" table.');
+                    } else {
+                        alert(`Update Error: [${error.code}] ${error.message}`);
+                    }
                     throw error;
                 }
             } else {
@@ -308,7 +329,11 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 const { error } = await supabase.from('orders').insert([payload]);
                 if (error) {
                     console.error('Insert Error Detail:', error);
-                    alert(`Insert Error: [${error.code}] ${error.message}\n\nHint: Check if Order ID already exists.`);
+                    if (error.code === '42501') {
+                        alert('🔴 SECURITY ERROR (RLS): You do not have permission to add this order. Your database RLS policy is blocking the save.');
+                    } else {
+                        alert(`Insert Error: [${error.code}] ${error.message}\n\nHint: Check if Order ID already exists.`);
+                    }
                     throw error;
                 }
             }
@@ -316,23 +341,22 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             router.push('/orders');
         } catch (error: any) {
             console.error('Submit execution error:', error);
-            // alert('Failed to save order.'); // Already showed specific alerts above
         } finally {
             setSaving(false);
         }
     };
 
     const SectionHeader = ({ icon: Icon, title, className = "" }: { icon: any, title: string, className?: string }) => (
-        <div className={`flex items-center gap-2 border-b border-slate-100 pb-2 mt-4 mb-4 col-span-full ${className}`}>
-            <Icon className="w-4 h-4 text-indigo-500" />
-            <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{title}</h3>
+        <div className={`flex items-center gap-2 border-b border-slate-100 pb-1.5 mt-2 mb-3 col-span-full ${className}`}>
+            <Icon className="w-3.5 h-3.5 text-indigo-500" />
+            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{title}</h3>
         </div>
     );
 
     if (loading) return <div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-indigo-600" /><span className="text-slate-500 font-medium">Fetching Product Details...</span></div>;
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-xl">
+        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
             {/* --- HEADER SECTION --- */}
             <div className="flex justify-between items-center border-b border-slate-100 pb-6">
                 <div className="space-y-1">
@@ -349,10 +373,10 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X className="w-6 h-6" /></Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* --- MAIN FORM --- */}
-                <div className="lg:col-span-8 space-y-10">
+                <div className="lg:col-span-8 space-y-6">
 
                     {/* SECTION 1: PRODUCT & LOGISTICS */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -577,86 +601,70 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                             <input name="file_no" value={formData.file_no || ''} onChange={handleChange} className="input-field" />
                         </div>
                         <div>
-                            <label className="label">Shade Card</label>
+                            <label className="label">Shade Card (Manual)</label>
                             <input name="shade_card" value={formData.shade_card || ''} onChange={handleChange} className="input-field" />
                         </div>
                         <div className="lg:col-span-2">
                             <label className="label">Remarks / Comments</label>
                             <textarea name="remarks" value={(formData as any).remarks || ''} onChange={handleChange} className="input-field h-10 min-h-[40px] py-2" placeholder="Any additional instructions..." />
                         </div>
-
-                        <SectionHeader icon={Edit3} title="Product Snapshots" />
-                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3 bg-slate-50 p-6 rounded-xl border border-slate-100 italic text-[11px]">
-                            {[
-                                { label: 'UPS', name: 'ups' },
-                                { label: 'Customer', name: 'customer_name' },
-                                { label: 'Product Name', name: 'product_name' },
-                                { label: 'Paper', name: 'paper_type_name' },
-                                { label: 'GSM', name: 'gsm_value' },
-                                { label: 'Print Size', name: 'print_size' },
-                                { label: 'Dimension', name: 'dimension' },
-                                { label: 'ink', name: 'ink' },
-                                { label: 'Plate No', name: 'plate_no' },
-                                { label: 'Coating', name: 'coating' },
-                                { label: 'Special Effects', name: 'special_effects' },
-                                { label: 'Pasting', name: 'pasting_type' },
-                                { label: 'folding dimention', name: 'folding_dimension' },
-                                { label: 'Construction', name: 'construction_type' },
-                                { label: 'Specification', name: 'specification' },
-                                { label: 'ArtworkCode', name: 'artwork_code' },
-                                { label: 'del address', name: 'delivery_address' }
-                            ].map(f => (
-                                <div key={f.name}>
-                                    <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">{f.label}</label>
-                                    <input name={f.name} value={(formData as any)[f.name] || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-2 py-1 uppercase" />
-                                </div>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
-                {/* --- SIDEBAR --- */}
-                <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl">
-                        <SectionHeader icon={LinkIcon} title="Assets & Reference" className="border-slate-800 text-slate-400" />
+                {/* --- SIDEBAR: Product Snapshot --- */}
+                <div className="lg:col-span-4 space-y-4">
+                    <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <SectionHeader icon={Settings} title="Product Snapshot" />
 
-                        {product?.product_image && (
-                            <div className="mb-6 rounded-xl overflow-hidden bg-white/10 p-2">
-                                <img src={`/uploads/${product.product_image}`} alt="Ref" className="w-full h-48 object-contain" />
-                            </div>
-                        )}
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-[9px] font-black text-slate-500 uppercase block mb-1">SKU</label>
-                                <span className="font-mono text-xs bg-black/30 px-2 py-1 rounded block">{product?.sku || '-'}</span>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3">
-                                {product?.artwork_pdf && (
-                                    <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="flex items-center justify-between bg-white/5 border border-white/10 p-3 rounded-lg text-xs font-bold hover:bg-white/10 transition-all">
-                                        ArtworkPDF <FileText className="w-4 h-4 text-red-500" />
-                                    </a>
-                                )}
-                                {product?.artwork_cdr && (
-                                    <a href={`/uploads/${product.artwork_cdr}`} download className="flex items-center justify-between bg-white/5 border border-white/10 p-3 rounded-lg text-xs font-bold hover:bg-white/10 transition-all">
-                                        ArtworkCDR <LinkIcon className="w-4 h-4 text-blue-400" />
-                                    </a>
-                                )}
-                            </div>
-
-                            <SectionHeader icon={FileText} title="File Uploads" className="border-slate-800 mt-6" />
-                            <div className="space-y-2">
-                                <label className="label text-slate-500">Shade card file</label>
-                                <input type="file" className="block w-full text-[10px] text-slate-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
-
-                                <label className="label text-slate-500">Del label file</label>
-                                <input type="file" className="block w-full text-[10px] text-slate-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
-
-                                <label className="label text-slate-500">COA file</label>
-                                <input type="file" className="block w-full text-[10px] text-slate-400 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-6">
+                            {[
+                                { label: 'UPS', name: 'ups' },
+                                { label: 'Customer', name: 'customer_name' },
+                                { label: 'Paper', name: 'paper_type_name' },
+                                { label: 'GSM', name: 'gsm_value' },
+                                { label: 'Size', name: 'print_size' },
+                                { label: 'Dim.', name: 'dimension' },
+                                { label: 'ink', name: 'ink' },
+                                { label: 'Plate', name: 'plate_no' },
+                                { label: 'Spec.', name: 'specification' },
+                                { label: 'Artwork', name: 'artwork_code' }
+                            ].map(f => (
+                                <div key={f.name} className="col-span-1">
+                                    <label className="text-[8px] font-black text-slate-400 uppercase">{f.label}</label>
+                                    <input name={f.name} value={(formData as any)[f.name] || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium focus:ring-1 focus:ring-indigo-500 outline-none" />
+                                </div>
+                            ))}
+                            <div className="col-span-2">
+                                <label className="text-[8px] font-black text-slate-400 uppercase">Special Effects</label>
+                                <input name="special_effects" value={formData.special_effects || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium" />
                             </div>
                         </div>
+
+                        <SectionHeader icon={Zap} title="Automation Sync" />
+                        <div className="flex items-center gap-3">
+                            <div className="flex flex-col items-center gap-1 group">
+                                <FileText className="w-8 h-8 text-slate-200 group-hover:text-indigo-400 transition-colors" />
+                                <span className="text-[8px] font-black text-slate-400 uppercase">COA</span>
+                                <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">v0.2.0-auto</div>
+                            </div>
+                            <div className="flex flex-col items-center gap-1 group">
+                                <Truck className="w-8 h-8 text-slate-200 group-hover:text-blue-400 transition-colors" />
+                                <span className="text-[8px] font-black text-slate-400 uppercase">Del. Label</span>
+                                <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">v0.2.0-auto</div>
+                            </div>
+                            <div className="flex flex-col items-center gap-1 group">
+                                <Palette className="w-8 h-8 text-slate-200 group-hover:text-emerald-400 transition-colors" />
+                                <span className="text-[8px] font-black text-slate-400 uppercase">Shade Card</span>
+                                <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">v0.2.0-auto</div>
+                            </div>
+                        </div>
+
+                        {product?.product_image && (
+                            <div className="mt-6 rounded-lg overflow-hidden bg-white border border-slate-100 p-1">
+                                <img src={`/uploads/${product.product_image}`} alt="Ref" className="w-full h-32 object-contain" />
+                                <div className="text-[8px] text-center text-slate-300 font-bold uppercase mt-1">Ref Image</div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
