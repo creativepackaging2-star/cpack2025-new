@@ -259,20 +259,20 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         });
     }, [formData.quantity, formData.rate, formData.extra, formData.paper_ups, product?.ups]);
 
-    const calculateBatchNo = (product: string | null, category: string | null, dateStr: string | null) => {
+    const calculateBatchNo = (product: string | null | undefined, category: string | null | undefined, dateStr: string | null | undefined) => {
         if (!product) return '';
         const cleanProduct = product.replace(/[\s-]/g, '').substring(0, 6).toUpperCase();
         const catLetter = (category || '').substring(0, 1).toUpperCase();
 
         let datePart = '';
-        if (dateStr) {
-            const date = new Date(dateStr);
-            if (!isNaN(date.getTime())) {
-                const dd = String(date.getDate()).padStart(2, '0');
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const yy = String(date.getFullYear()).slice(-2);
-                datePart = `${dd}${mm}${yy}`;
-            }
+        // Default to today if dateStr is missing to ensure DDMMYY is always present
+        const effectiveDateStr = dateStr || new Date().toISOString().split('T')[0];
+        const date = new Date(effectiveDateStr);
+        if (!isNaN(date.getTime())) {
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yy = String(date.getFullYear()).slice(-2);
+            datePart = `${dd}${mm}${yy}`;
         }
 
         return `${cleanProduct}${datePart}${catLetter}`;
