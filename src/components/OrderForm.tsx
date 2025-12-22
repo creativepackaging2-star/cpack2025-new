@@ -178,33 +178,41 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             ]);
 
             setProduct(prod);
+            // Auto-fill category and recalculate batch
+            const categoryName = cat.data?.name || '';
+            const newBatchNo = calculateBatchNo(prod.product_name, categoryName, formData.order_date);
+
             setFormData(prev => ({
                 ...prev,
                 product_id: prod.id,
                 product_name: prod.product_name || '',
+                category_name: categoryName,
+                batch_no: newBatchNo,
+                specs: prod.specs || null,
+                dimension: prod.dimension || null,
+                gsm_value: gsm.data?.name || null,
+                paper_type_name: paper.data?.name || null,
+                // Assuming these fields exist in 'prod' or can be derived
+                // paperwala_mobile: prod.paperwala_mobile || null, // Not directly from product
+                // printer_mobile: prod.supervisor_mobile || null, // Not directly from product
+                // printer_name: prod.printer_name || null, // Not directly from product
+                paper_order_size: sz.data?.name || null,
+                ink: prod.ink || null,
+                plate_no: prod.plate_no || null,
+                artwork_code: prod.artwork_code || prod.sku || null, // Use artwork_code from product, fallback to sku
                 // Snapshot values from linked lookups
                 customer_name: cust.data?.name || '',
-                paper_type_name: paper.data?.name || '',
-                gsm_value: gsm.data?.name || '',
                 print_size: sz.data?.name || '',
-                dimension: prod.dimension || '',
                 paper_order_size_id: prod.size_id || null, // Auto-select same size for paper
-                paper_order_size: sz.data?.name || '',
-                ink: prod.ink || '',
-                plate_no: prod.plate_no || '',
                 coating: prod.coating || '',
                 special_effects: prod.special_effects || '',
                 pasting_type: past.data?.name || '',
                 construction_type: cons.data?.name || '',
                 specification: spec.data?.name || '',
-                artwork_code: prod.artwork_code || '',
                 delivery_address: addr.data?.address || '',
                 artwork_pdf: prod.artwork_pdf || '',
                 artwork_cdr: prod.artwork_cdr || '',
-                category_name: cat.data?.name || '',
-                specs: prod.specs || '',
                 ups: prod.ups || null,
-                batch_no: prev.batch_no || generateBatchNo({ ...prod, category: cat.data })
             }));
 
             console.log('Successfully auto-filled from product details');
@@ -250,6 +258,24 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             return prev;
         });
     }, [formData.quantity, formData.rate, formData.extra, formData.paper_ups, product?.ups]);
+
+    const calculateBatchNo = (product: string | null, category: string | null, dateStr: string | null) => {
+        if (!product) return '';
+        const cleanProduct = product.replace(/[\s-]/g, '').substring(0, 6).toUpperCase();
+        const catLetter = (category || '').substring(0, 1).toUpperCase();
+
+        let datePart = '';
+        if (dateStr) {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const yy = String(date.getFullYear()).slice(-2);
+                datePart = `/${mm}/${yy}`;
+            }
+        }
+
+        return `${cleanProduct}${catLetter}${datePart}`;
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -504,8 +530,8 @@ Plate No   : ${formData.plate_no || '-'}`;
                             />
                         </div>
                         <div>
-                            <label className="label text-indigo-600">Batch No</label>
-                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field border-indigo-200 focus:ring-indigo-500" placeholder="e.g. BATCH-001" />
+                            <label className="label text-indigo-600">Batch No (Auto)</label>
+                            <input name="batch_no" value={formData.batch_no || ''} readOnly className="input-field bg-slate-50 border-indigo-100 text-slate-500 cursor-not-allowed" placeholder="MM/YY" />
                         </div>
                         <div>
                             <label className="label text-indigo-600">Invoice No</label>
