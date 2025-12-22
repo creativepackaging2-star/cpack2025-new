@@ -387,7 +387,16 @@ Plate No   : ${formData.plate_no || '-'}`;
     };
 
     const generateDoc = (type: string) => {
-        alert(`${type} generation will be available once templates are defined. Please provide the HTML/Google Template details.`);
+        if (!orderId) {
+            alert('Please save the order first before generating documents.');
+            return;
+        }
+
+        if (type === 'COA') {
+            window.open(`/orders/${orderId}/coa`, '_blank');
+        } else {
+            alert(`${type} generation will be available once templates are defined.`);
+        }
     };
 
     const SectionHeader = ({ icon: Icon, title, className = "" }: { icon: any, title: string, className?: string }) => (
@@ -495,7 +504,15 @@ Plate No   : ${formData.plate_no || '-'}`;
                             />
                         </div>
                         <div>
-                            <label className="label">from our co.</label>
+                            <label className="label text-indigo-600">Batch No</label>
+                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field border-indigo-200 focus:ring-indigo-500" placeholder="e.g. BATCH-001" />
+                        </div>
+                        <div>
+                            <label className="label text-indigo-600">Invoice No</label>
+                            <input name="inv_no" value={formData.inv_no || ''} onChange={handleChange} className="input-field border-indigo-200 focus:ring-indigo-500" placeholder="e.g. INV-123" />
+                        </div>
+                        <div>
+                            <label className="label">Invoicing & Delivery</label>
                             <select name="from_our_company" value={formData.from_our_company || ''} onChange={handleChange} className="input-field">
                                 <option value="">Select...</option>
                                 <option value="Printers">Printers</option>
