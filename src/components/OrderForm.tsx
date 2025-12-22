@@ -268,13 +268,14 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         if (dateStr) {
             const date = new Date(dateStr);
             if (!isNaN(date.getTime())) {
+                const dd = String(date.getDate()).padStart(2, '0');
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const yy = String(date.getFullYear()).slice(-2);
-                datePart = `/${mm}/${yy}`;
+                datePart = `${dd}${mm}${yy}`;
             }
         }
 
-        return `${cleanProduct}${catLetter}${datePart}`;
+        return `${cleanProduct}${datePart}${catLetter}`;
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
