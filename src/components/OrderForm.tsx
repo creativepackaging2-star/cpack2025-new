@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order, Product } from '@/types';
-import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search, Zap, Palette } from 'lucide-react';
+import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 
 type Props = {
@@ -347,6 +347,25 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }
     };
 
+    const sendToPaperwala = () => {
+        if (!formData.paperwala_mobile) {
+            alert('No mobile number found for Paperwala.');
+            return;
+        }
+
+        const msg = `*Paper Order Details*
+
+Paper Size  : ${formData.paper_order_size || '-'}
+Paper Qty   : ${formData.paper_order_qty || '-'}
+Paper       : ${formData.paper_type_name || '-'}
+GSM         : ${formData.gsm_value || '-'}
+Delivery At : ${formData.printer_name || '-'}`;
+
+        const phone = formData.paperwala_mobile.replace(/\D/g, '');
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    };
+
     const SectionHeader = ({ icon: Icon, title, className = "" }: { icon: any, title: string, className?: string }) => (
         <div className={`flex items-center gap-2 border-b border-slate-100 pb-1.5 mt-2 mb-3 col-span-full ${className}`}>
             <Icon className="w-3.5 h-3.5 text-indigo-500" />
@@ -666,10 +685,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                                 <span className="text-[8px] font-black text-slate-400 uppercase">Del. Label</span>
                                 <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">v0.2.0-auto</div>
                             </div>
-                            <div className="flex flex-col items-center gap-1 group">
-                                <Palette className="w-8 h-8 text-slate-200 group-hover:text-emerald-400 transition-colors" />
-                                <span className="text-[8px] font-black text-slate-400 uppercase">Shade Card</span>
-                                <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">v0.2.0-auto</div>
+                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPaperwala}>
+                                <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
+                                    <MessageCircle className="w-8 h-8 text-emerald-600" />
+                                </div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase">WhatsApp</span>
+                                <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">Paperwala</div>
                             </div>
                         </div>
 

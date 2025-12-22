@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 
 // --- Memoized Components for Performance ---
@@ -144,6 +144,26 @@ const OrderRow = memo(({
         }
     };
 
+    const sendToPaperwala = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!order.paperwala_mobile) {
+            alert('No mobile number found for Paperwala.');
+            return;
+        }
+
+        const msg = `*Paper Order Details*
+
+Paper Size  : ${order.paper_order_size || '-'}
+Paper Qty   : ${order.paper_order_qty || '-'}
+Paper       : ${order.paper_type_name || '-'}
+GSM         : ${order.gsm_value || '-'}
+Delivery At : ${order.printer_name || '-'}`;
+
+        const phone = order.paperwala_mobile.replace(/\D/g, '');
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    };
+
     if (view === "mobile") {
         return (
             <div className={`p-4 ${isExpanded ? 'bg-indigo-50/30' : 'bg-white'} border-l-4 ${s === 'hold' ? 'border-red-500' : s === 'ready' ? 'border-emerald-500' : 'border-transparent'}`} onClick={() => toggleRow(order.id)}>
@@ -154,6 +174,10 @@ const OrderRow = memo(({
                             <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.artwork_code || order.products?.artwork_code || '-'}
                             </span>
+                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                WhatsApp
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -282,7 +306,10 @@ const OrderRow = memo(({
                                 <Palette className="w-4 h-4 text-emerald-500 hover:text-emerald-700" />
                             </a>
                         )}
-                        {!order.coa_file && !order.del_label_file && !order.shade_card_file && (
+                        <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
+                            <MessageCircle className="w-4 h-4 text-emerald-600" />
+                        </button>
+                        {!order.coa_file && !order.del_label_file && !order.shade_card_file && !order.paperwala_mobile && (
                             <span className="text-xs text-slate-300">-</span>
                         )}
                     </div>
