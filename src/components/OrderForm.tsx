@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order, Product } from '@/types';
-import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle } from 'lucide-react';
+import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
 type Props = {
@@ -366,6 +366,30 @@ Delivery At : ${formData.printer_name || '-'}`;
         window.open(url, '_blank');
     };
 
+    const sendToPrinter = () => {
+        if (!formData.printer_mobile) {
+            alert('No mobile number found for Printer/Supervisor.');
+            return;
+        }
+
+        const msg = `Product    : *${formData.product_name || '-'}*
+Print Size : ${formData.print_size || '-'}
+Print Qty  : ${formData.total_print_qty || '-'}
+Paper.     : ${formData.paper_type_name || '-'}
+GSM.       : ${formData.gsm_value || '-'}
+Code.      : ${formData.artwork_code || '-'}
+Ink.       : ${formData.ink || '-'}
+Plate No   : ${formData.plate_no || '-'}`;
+
+        const phone = formData.printer_mobile.replace(/\D/g, '');
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    };
+
+    const generateDoc = (type: string) => {
+        alert(`${type} generation will be available once templates are defined. Please provide the HTML/Google Template details.`);
+    };
+
     const SectionHeader = ({ icon: Icon, title, className = "" }: { icon: any, title: string, className?: string }) => (
         <div className={`flex items-center gap-2 border-b border-slate-100 pb-1.5 mt-2 mb-3 col-span-full ${className}`}>
             <Icon className="w-3.5 h-3.5 text-indigo-500" />
@@ -689,8 +713,39 @@ Delivery At : ${formData.printer_name || '-'}`;
                                 <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
                                     <MessageCircle className="w-8 h-8 text-emerald-600" />
                                 </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">WhatsApp</span>
+                                <span className="text-[8px] font-black text-slate-400 uppercase">WA Paper</span>
                                 <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">Paperwala</div>
+                            </div>
+                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPrinter}>
+                                <div className="p-1 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                    <UserCheck className="w-8 h-8 text-blue-600" />
+                                </div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase">WA Printer</span>
+                                <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">Supervisor</div>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('COA')}>
+                                <div className="p-1 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                    <FileText className="w-8 h-8 text-indigo-600" />
+                                </div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
+                                <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">Auto-Gen</div>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Delivery Label')}>
+                                <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
+                                    <Truck className="w-8 h-8 text-amber-600" />
+                                </div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN Label</span>
+                                <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Auto-Gen</div>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Shade Card')}>
+                                <div className="p-1 bg-rose-50 rounded-lg group-hover:bg-rose-100 transition-colors">
+                                    <Palette className="w-8 h-8 text-rose-600" />
+                                </div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN Shade</span>
+                                <div className="text-[7px] bg-rose-50 text-rose-600 px-1 rounded font-bold border border-rose-100 italic">Auto-Gen</div>
                             </div>
                         </div>
 

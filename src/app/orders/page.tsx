@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
 // --- Memoized Components for Performance ---
@@ -164,6 +164,31 @@ Delivery At : ${order.printer_name || '-'}`;
         window.open(url, '_blank');
     };
 
+    const sendToPrinter = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!order.printer_mobile) {
+            alert('No mobile number found for Printer/Supervisor.');
+            return;
+        }
+
+        const msg = `Product    : *${order.product_name || '-'}*
+Print Size : ${order.print_size || '-'}
+Print Qty  : ${order.total_print_qty || '-'}
+Paper.     : ${order.paper_type_name || '-'}
+GSM.       : ${order.gsm_value || '-'}
+Code.      : ${order.artwork_code || '-'}
+Ink.       : ${order.ink || '-'}
+Plate No   : ${order.plate_no || '-'}`;
+
+        const phone = order.printer_mobile.replace(/\D/g, '');
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    };
+
+    const generateDoc = (type: string) => {
+        alert(`${type} generation will be available once templates are defined.`);
+    };
+
     if (view === "mobile") {
         return (
             <div className={`p-4 ${isExpanded ? 'bg-indigo-50/30' : 'bg-white'} border-l-4 ${s === 'hold' ? 'border-red-500' : s === 'ready' ? 'border-emerald-500' : 'border-transparent'}`} onClick={() => toggleRow(order.id)}>
@@ -176,7 +201,22 @@ Delivery At : ${order.printer_name || '-'}`;
                             </span>
                             <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
                                 <MessageCircle className="w-3.5 h-3.5" />
-                                WhatsApp
+                                Paper
+                            </button>
+                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold border border-blue-100 active:bg-blue-100 transition-colors">
+                                <UserCheck className="w-3.5 h-3.5" />
+                                Printer
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                            <button onClick={() => generateDoc('COA')} className="p-1.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
+                                <FileText className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => generateDoc('Delivery Label')} className="p-1.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100">
+                                <Truck className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => generateDoc('Shade Card')} className="p-1.5 bg-rose-50 text-rose-700 rounded-md border border-rose-100">
+                                <Palette className="w-3.5 h-3.5" />
                             </button>
                         </div>
                     </div>
@@ -309,7 +349,20 @@ Delivery At : ${order.printer_name || '-'}`;
                         <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
                             <MessageCircle className="w-4 h-4 text-emerald-600" />
                         </button>
-                        {!order.coa_file && !order.del_label_file && !order.shade_card_file && !order.paperwala_mobile && (
+                        <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-1 hover:bg-blue-50 rounded-full transition-colors">
+                            <UserCheck className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+                        <button onClick={() => generateDoc('COA')} title="Generate COA" className="p-1 hover:bg-indigo-50 rounded-full transition-colors">
+                            <FileText className="w-4 h-4 text-indigo-400 opacity-60 hover:opacity-100" />
+                        </button>
+                        <button onClick={() => generateDoc('Delivery Label')} title="Generate Delivery Label" className="p-1 hover:bg-amber-50 rounded-full transition-colors">
+                            <Truck className="w-4 h-4 text-amber-400 opacity-60 hover:opacity-100" />
+                        </button>
+                        <button onClick={() => generateDoc('Shade Card')} title="Generate Shade Card" className="p-1 hover:bg-rose-50 rounded-full transition-colors">
+                            <Palette className="w-4 h-4 text-rose-400 opacity-60 hover:opacity-100" />
+                        </button>
+                        {!order.coa_file && !order.del_label_file && !order.shade_card_file && !order.paperwala_mobile && !order.printer_mobile && (
                             <span className="text-xs text-slate-300">-</span>
                         )}
                     </div>
