@@ -100,6 +100,14 @@ export default function COAPage() {
         fetchOrder();
     }, [id]);
 
+    useEffect(() => {
+        if (order && order.product_name) {
+            // Sanitize filename to be safe
+            const safeName = order.product_name.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
+            document.title = `${safeName}.COA`;
+        }
+    }, [order]);
+
     if (loading) return <div className="p-20 text-center font-bold">Loading Order #{id}...</div>;
     if (error) return <div className="p-20 text-center text-red-500 font-bold">Error: {error}</div>;
     if (!order) return <div className="p-20 text-center text-gray-500">Order not found.</div>;
