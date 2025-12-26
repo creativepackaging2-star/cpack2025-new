@@ -50,7 +50,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             logo: '/logo_packaging.png',
             proprietor_sign: '/sign_packaging.png',
             proprietor_label: 'Authorised Signatory',
-            logo_width: 'w-[250px]'
+            logo_width: 'w-[200px]'
         }
     };
 
