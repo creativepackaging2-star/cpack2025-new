@@ -164,14 +164,14 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                                 <td className="border border-slate-800 p-2 font-medium">Construction</td>
                                 <td className="border border-slate-800 p-2">
                                     {order.construction || order.construction_type || 'As per approved specimen'}
-                                    {order.category_name?.toLowerCase().includes('insert') && order.folding_dimension && (
-                                        <span> ({order.folding_dimension})</span>
+                                    {order.category_name?.toLowerCase().includes('insert') && (order.folding_dim || order.folding_dimension) && (
+                                        <span> ({order.folding_dim || order.folding_dimension})</span>
                                     )}
                                 </td>
                                 <td className="border border-slate-800 p-2 text-center">
                                     <span className="font-bold text-emerald-700">OK</span>
-                                    {order.category_name?.toLowerCase().includes('insert') && order.folding_dimension && (
-                                        <div className="text-[10px] text-slate-500">({order.folding_dimension})</div>
+                                    {order.category_name?.toLowerCase().includes('insert') && (order.folding_dim || order.folding_dimension) && (
+                                        <div className="text-[10px] text-slate-500">({order.folding_dim || order.folding_dimension})</div>
                                     )}
                                 </td>
                             </tr>

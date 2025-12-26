@@ -83,6 +83,8 @@ export type Order = {
     // Added fields
     specification?: string | null
     construction?: string | null
+    folding: string | null
+    folding_dim: string | null
     ink: string | null
     plate_no: string | null
     coating: string | null
