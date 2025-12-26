@@ -215,7 +215,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                         <div className="mt-2 flex justify-end">
                             <div className="text-center relative">
                                 {/* Signature Image */}
-                                <div className="h-16 flex items-center justify-center mb-1">
+                                <div className="h-7 flex items-center justify-center mb-1">
                                     <img src="/pr_shah_sign_new.png" alt="P. R. Shah" className="h-full w-auto object-contain" />
                                 </div>
                                 <p className="text-blue-800 font-bold text-[11px] uppercase border-t border-slate-300 pt-1 inline-block px-4">Proprietor</p>
