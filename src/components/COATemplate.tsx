@@ -26,7 +26,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
         <>
             <style dangerouslySetInnerHTML={{
                 __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Herr+Von+Muellerhoff&display=swap');
                 
                 @media print {
                     @page {
@@ -56,6 +56,9 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                 }
                 .font-signature {
                     font-family: 'Great Vibes', cursive;
+                }
+                .font-signature-alt {
+                    font-family: 'Herr Von Muellerhoff', cursive;
                 }
             `}} />
 
@@ -199,11 +202,11 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                     <div className="flex justify-between items-end mb-8 pt-8 border-t border-slate-200">
                         <div className="text-[13px]">
                             <p className="font-bold text-slate-700">Checked By : Laxman</p>
-                            <div className="mt-1 font-signature text-3xl text-blue-900 transform -rotate-3">Laxman</div>
+                            <div className="mt-1 font-signature-alt text-4xl text-blue-900 transform -rotate-3 ml-2">LS</div>
                         </div>
                         <div className="text-right text-[13px]">
                             <p className="font-bold text-slate-700">Approved By : Saahil</p>
-                            <div className="mt-1 font-signature text-3xl text-blue-900 transform -rotate-2">Saahil</div>
+                            <div className="mt-1 font-signature-alt text-4xl text-blue-900 transform -rotate-2 ml-auto mr-4">Sps</div>
                         </div>
                     </div>
 
@@ -212,8 +215,8 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                         <div className="mt-2 flex justify-end">
                             <div className="text-center relative">
                                 {/* Signature Image */}
-                                <div className="h-10 flex items-center justify-center mb-1">
-                                    <img src="/pr_shah_sign.png" alt="P. R. Shah" className="h-full w-auto object-contain" />
+                                <div className="h-16 flex items-center justify-center mb-1">
+                                    <img src="/pr_shah_sign_new.png" alt="P. R. Shah" className="h-full w-auto object-contain" />
                                 </div>
                                 <p className="text-blue-800 font-bold text-[11px] uppercase border-t border-slate-300 pt-1 inline-block px-4">Proprietor</p>
                             </div>
