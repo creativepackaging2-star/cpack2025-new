@@ -5,22 +5,57 @@ import { Order } from '../types';
 
 interface COATemplateProps {
     order: Order;
+    companyType?: 'Enterprise' | 'Printers' | 'Packaging';
 }
 
-const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
+const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
     const [todayDate, setTodayDate] = useState('');
 
     useEffect(() => {
         setTodayDate(new Date().toLocaleDateString('en-GB'));
     }, []);
 
-    const branding = {
-        name: 'CREATIVE ENTERPRISE',
-        address: '14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA',
-        email: 'creativepackaging@outlook.com',
-        mobile: '9146178720',
-        gstn: '27AARHP2206E1Z8',
+    // Determine branding based on company type
+    const company = companyType || 'Enterprise';
+
+    const brandConfig = {
+        'Enterprise': {
+            name: 'CREATIVE ENTERPRISE',
+            address: '14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA',
+            email: 'creativepackaging@outlook.com',
+            mobile: '9146178720',
+            gstn: '27AARHP2206E1Z8',
+            logo: '/creative_logo.png',
+            proprietor_sign: '/pr_shah_sign_new.png',
+            proprietor_label: 'Proprietor',
+            logo_width: 'w-[300px]'
+        },
+        'Printers': {
+            name: 'CREATIVE PRINTERS',
+            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701', // Example - To be verified
+            email: 'creativeprinters@outlook.com', // Example
+            mobile: '9146178720', // Using same for now
+            gstn: '', // Pending
+            logo: '/logo_printers.png',
+            proprietor_sign: '/sign_printers.png',
+            proprietor_label: 'Proprietor',
+            logo_width: 'w-[250px]'
+        },
+        'Packaging': {
+            name: 'CREATIVE PACKAGING',
+            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701', // Example
+            email: 'creativepackaging@outlook.com',
+            mobile: '9146178720',
+            gstn: '', // Pending
+            logo: '/logo_packaging.png',
+            proprietor_sign: '/sign_packaging.png',
+            proprietor_label: 'Proprietor',
+            logo_width: 'w-[250px]'
+        }
     };
+
+    // Safety check - default to Enterprise if company not found
+    const branding = brandConfig[company as keyof typeof brandConfig] || brandConfig['Enterprise'];
 
     return (
         <>
@@ -67,8 +102,8 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                 <div className="mb-8 border-b-2 border-slate-800 pb-4">
                     <div className="flex justify-between items-center mb-2">
                         {/* Replaced Text Logo with Image */}
-                        <div className="w-[300px]">
-                            <img src="/creative_logo.png" alt="Creative Enterprise" className="max-w-full h-auto object-contain" />
+                        <div className={branding.logo_width || "w-[300px]"}>
+                            <img src={branding.logo} alt={branding.name} className="max-w-full h-auto object-contain" />
                         </div>
                         <div className="text-right text-[11px] font-medium text-slate-600">
                             <p>M: {branding.mobile}</p>
@@ -216,9 +251,9 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                             <div className="text-center relative">
                                 {/* Signature Image */}
                                 <div className="h-7 flex items-center justify-center mb-1">
-                                    <img src="/pr_shah_sign_new.png" alt="P. R. Shah" className="h-full w-auto object-contain" />
+                                    <img src={branding.proprietor_sign} alt={branding.proprietor_label} className="h-full w-auto object-contain" />
                                 </div>
-                                <p className="text-blue-800 font-bold text-[11px] uppercase border-t border-slate-300 pt-1 inline-block px-4">Proprietor</p>
+                                <p className="text-blue-800 font-bold text-[11px] uppercase border-t border-slate-300 pt-1 inline-block px-4">{branding.proprietor_label}</p>
                             </div>
                         </div>
                     </div>

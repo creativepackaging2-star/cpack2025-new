@@ -12,6 +12,7 @@ export default function COAPage() {
     const id = params ? (params.id as string) : null;
 
     const [order, setOrder] = useState<Order | null>(null);
+    const [selectedCompany, setSelectedCompany] = useState<'Enterprise' | 'Printers' | 'Packaging'>('Enterprise');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +89,14 @@ export default function COAPage() {
                     }
 
                     setOrder(orderData);
+
+                    // Auto-select company based on 'from_our_company' if possible
+                    if (orderData.from_our_company) {
+                        const from = orderData.from_our_company.toLowerCase();
+                        if (from.includes('printer')) setSelectedCompany('Printers');
+                        else if (from.includes('pack')) setSelectedCompany('Packaging');
+                        else setSelectedCompany('Enterprise');
+                    }
                 }
             } catch (err: any) {
                 console.error('Fetch error:', err);
@@ -115,7 +124,18 @@ export default function COAPage() {
     return (
         <div className="min-h-screen bg-slate-100 py-10 print:p-0 print:bg-white flex flex-col items-center">
             {/* Action Bar */}
-            <div className="mb-6 flex gap-4 print:hidden">
+            <div className="mb-6 flex gap-4 print:hidden items-center">
+                {/* Company Selector */}
+                <select
+                    value={selectedCompany}
+                    onChange={(e) => setSelectedCompany(e.target.value as any)}
+                    className="px-4 py-2 rounded-full border border-slate-300 bg-white font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="Enterprise">Creative Enterprise</option>
+                    <option value="Printers">Creative Printers</option>
+                    <option value="Packaging">Creative Packaging</option>
+                </select>
+
                 <button
                     onClick={() => window.print()}
                     className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 shadow-lg"
@@ -137,7 +157,7 @@ export default function COAPage() {
             </div>
 
             <div className="bg-white shadow-2xl print:shadow-none">
-                <COATemplate order={order} />
+                <COATemplate order={order} companyType={selectedCompany} />
             </div>
         </div>
     );
