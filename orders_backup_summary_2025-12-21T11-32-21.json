@@ -1,0 +1,27 @@
+{
+  "backup_date": "2025-12-21T11:32:21.096Z",
+  "total_orders": 635,
+  "orders_with_ups": 494,
+  "orders_with_specs": 635,
+  "orders_with_product_id": 635,
+  "sample_orders": [
+    {
+      "id": 1460,
+      "product_id": "2d341928-4d4a-44ff-8e51-09e09e1b9176",
+      "ups": null,
+      "specs": "300 | White | 99 x 16 x 65  | UV | CMYK+White UV ..."
+    },
+    {
+      "id": 1457,
+      "product_id": "fae774ce-6829-4b3d-8d48-617d31a12eb2",
+      "ups": 4,
+      "specs": "350 | White | 18 × 23 | 4 | 58 x58 x 105 | Aqua | ..."
+    },
+    {
+      "id": 1448,
+      "product_id": "fb88aeee-2cce-4db2-88de-0040c9da4aa2",
+      "ups": 8,
+      "specs": "350 | White | 18 × 25 | 8 | 68 x 35 x 100 | Aqua |..."
+    }
+  ]
+}

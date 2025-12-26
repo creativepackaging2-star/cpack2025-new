@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Order } from '../types';
 
 interface COATemplateProps {
@@ -6,153 +8,205 @@ interface COATemplateProps {
 }
 
 const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
-    // Dynamic Branding based on 'from_our_company'
-    const company = order.from_our_company?.toLowerCase() || '';
+    const [todayDate, setTodayDate] = useState('');
+
+    useEffect(() => {
+        setTodayDate(new Date().toLocaleDateString('en-GB'));
+    }, []);
 
     const branding = {
-        name: company.includes('enter') ? 'CREATIVE ENTERPRISE' :
-            company.includes('pack') ? 'CREATIVE PACKAGING' :
-                company.includes('print') ? 'CREATIVE PRINTERS' : 'CREATIVE ENTERPRISE',
+        name: 'CREATIVE ENTERPRISE',
+        address: '14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA',
         email: 'creativepackaging@outlook.com',
-        mobile: company.includes('enter') ? '9146178720' : '8097032001',
-        gstn: company.includes('enter') ? '27AARHP2206E1Z8' :
-            company.includes('pack') ? '27AAIPS3624G1ZL' :
-                company.includes('print') ? '27CGTPS8217E1ZT' : '27AARHP2206E1Z8',
+        mobile: '9146178720',
+        gstn: '27AARHP2206E1Z8',
     };
 
     return (
-        <div className="bg-white p-12 max-w-[800px] mx-auto text-slate-800 font-serif leading-tight print:p-0">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-1">
-                    <span className="text-2xl tracking-tighter font-light">CREATIVE</span>
-                    <span className="text-2xl font-bold">{branding.name.split(' ')[1]}</span>
-                </div>
-            </div>
+        <>
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @media print {
+                    @page {
+                        size: A4;
+                        margin: 0mm;
+                    }
+                    body {
+                        visibility: hidden;
+                        background: white;
+                    }
+                    .coa-container {
+                        visibility: visible;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        z-index: 9999;
+                        width: 210mm !important;
+                        height: 297mm !important;
+                        margin: 0 !important;
+                        padding: 15mm !important;
+                        background: white;
+                        box-shadow: none !important;
+                    }
+                    .coa-container * {
+                        visibility: visible;
+                    }
+                }
+            `}} />
 
-            <div className="text-[11px] mb-6 font-sans">
-                <p>14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA</p>
-                <div className="flex gap-4">
-                    <span>{branding.email}</span>
-                    <span>M: {branding.mobile}</span>
-                    <span>GSTN: {branding.gstn}</span>
-                </div>
-            </div>
-
-            <h1 className="text-xl font-bold text-center underline uppercase mb-8">Certificate of Analysis</h1>
-
-            {/* Top Details Grid */}
-            <div className="grid grid-cols-1 gap-y-1 mb-8 text-[13px]">
-                <div className="flex">
-                    <span className="w-32 font-bold">Customer Name:</span>
-                    <span className="flex-1 font-semibold">{order.customer_name || '-'}</span>
-                </div>
-                <div className="flex mb-4">
-                    <span className="w-32 font-bold">Address:</span>
-                    <span className="flex-1">{order.delivery_address || '-'}</span>
+            <div className="coa-container bg-white p-[0.75in] text-black font-sans leading-tight print:p-0 relative" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+                {/* Header */}
+                <div className="mb-8 border-b-2 border-slate-800 pb-4">
+                    <div className="flex justify-between items-center mb-2">
+                        {/* Replaced Text Logo with Image */}
+                        <div className="w-[300px]">
+                            <img src="/creative_logo.png" alt="Creative Enterprise" className="max-w-full h-auto object-contain" />
+                        </div>
+                        <div className="text-right text-[11px] font-medium text-slate-600">
+                            <p>M: {branding.mobile}</p>
+                            <p>GSTN: {branding.gstn}</p>
+                        </div>
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-600 mt-2">
+                        <p>{branding.address}</p>
+                        <p>{branding.email}</p>
+                    </div>
                 </div>
 
-                <hr className="border-slate-300 mb-2" />
+                {/* Title */}
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-bold uppercase tracking-wide border-b border-black inline-block pb-1">Certificate of Analysis</h1>
+                </div>
 
-                <div className="flex">
-                    <span className="w-32">Date:</span>
-                    <span>{new Date().toLocaleDateString('en-GB')}</span>
+                {/* Customer Section */}
+                <div className="mb-6 grid grid-cols-1 gap-1 text-[13px]">
+                    <div className="flex">
+                        <span className="w-36 font-bold text-slate-800">Customer Name:</span>
+                        <span className="font-semibold">{order.customer_name || '<<[Customer]>>'}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="w-36 font-bold text-slate-800 shrink-0">Address:</span>
+                        <span className="flex-1 whitespace-pre-wrap">{order.delivery_address || '<<[Delivery Address]>>'}</span>
+                    </div>
                 </div>
-                <div className="flex">
-                    <span className="w-32">Product Name:</span>
-                    <span className="font-bold">{order.product_name || '-'}</span>
-                </div>
-                <div className="flex">
-                    <span className="w-32">Quantity:</span>
-                    <span>{(order.quantity || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex">
-                    <span className="w-32">Invoice No:</span>
-                    <span>{order.inv_no || '________________'}</span>
-                </div>
-                <div className="flex">
-                    <span className="w-32">Date of Mfg.:</span>
-                    <span>{order.order_date ? new Date(order.order_date).toLocaleDateString('en-GB') : '________________'}</span>
-                </div>
-                <div className="flex">
-                    <span className="w-32">Batch No:</span>
-                    <span>{order.batch_no || '________________'}</span>
-                </div>
-                <div className="flex">
-                    <span className="w-32">Artwork Code:</span>
-                    <span className="uppercase">{order.artwork_code || '-'}</span>
-                </div>
-            </div>
 
-            {/* Analysis Table */}
-            <table className="w-full border-collapse border border-slate-900 text-[13px] mb-12">
-                <thead>
-                    <tr className="bg-slate-50 uppercase font-bold text-center">
-                        <th className="border border-slate-900 p-2 w-14">Sr No</th>
-                        <th className="border border-slate-900 p-2 w-32">Test</th>
-                        <th className="border border-slate-900 p-2">Specification</th>
-                        <th className="border border-slate-900 p-2 w-32">Observation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td className="border border-slate-900 p-2 text-center">1</td>
-                        <td className="border border-slate-900 p-2">Description</td>
-                        <td className="border border-slate-900 p-2 font-medium">{order.specs || '-'}</td>
-                        <td className="border border-slate-900 p-2 text-center font-bold">OK</td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-900 p-2 text-center">2</td>
-                        <td className="border border-slate-900 p-2">GSM</td>
-                        <td className="border border-slate-900 p-2">{order.gsm_value ? `${order.gsm_value} +/- 5%` : '-'}</td>
-                        <td className="border border-slate-900 p-2 text-center font-bold">
-                            OK<br /><span className="text-[10px] font-normal">{order.gsm_value}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-900 p-2 text-center">3</td>
-                        <td className="border border-slate-900 p-2">Construction</td>
-                        <td className="border border-slate-900 p-2">As per standard</td>
-                        <td className="border border-slate-900 p-2 text-center font-bold">OK</td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-900 p-2 text-center">4</td>
-                        <td className="border border-slate-900 p-2">Dimensions</td>
-                        <td className="border border-slate-900 p-2">{order.dimension ? `${order.dimension} mm +/- 2mm` : '-'}</td>
-                        <td className="border border-slate-900 p-2 text-center font-bold">
-                            OK<br /><span className="text-[10px] font-normal">{order.dimension}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td className="border border-slate-900 p-2 text-center">5</td>
-                        <td className="border border-slate-900 p-2">Shade</td>
-                        <td className="border border-slate-900 p-2">Will comply with shade</td>
-                        <td className="border border-slate-900 p-2 text-center font-bold">OK</td>
-                    </tr>
-                </tbody>
-            </table>
+                {/* Order Details List */}
+                <div className="border border-slate-300 rounded-lg p-4 mb-6 text-[13px] bg-slate-50/50">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                        <div className="flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Date :</span>
+                            <span>{todayDate || '<<[Delivery Date]>>'}</span>
+                        </div>
+                        <div className="flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Date of Mfg.:</span>
+                            <span>{order.order_date || '<<[Ready Date]>>'}</span>
+                        </div>
 
-            {/* Footer Signatures */}
-            <div className="flex justify-between items-end text-[13px] mt-20">
-                <div className="text-center">
-                    <p className="mb-4 italic">Checked By: Laxman</p>
-                    <div className="font-serif italic text-lg opacity-50">LS</div>
+                        <div className="col-span-2 flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Product Name :</span>
+                            <span className="font-bold">{order.product_name || '<<[Product Name]>>'}</span>
+                        </div>
+
+                        <div className="flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Quantity:</span>
+                            <span>{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</span>
+                        </div>
+                        <div className="flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Batch No:</span>
+                            <span>{order.batch_no || '<<[Batch No]>>'}</span>
+                        </div>
+
+                        <div className="flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Invoice No:</span>
+                            <span>{order.inv_no || '<<[Inv no]>>'}</span>
+                        </div>
+                        <div className="flex border-b border-slate-200 pb-1">
+                            <span className="w-32 font-bold text-slate-700">Artwork Code:</span>
+                            <span>{order.artwork_code || '<<[artwork code]>>'}</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="text-center space-y-2">
-                    <p className="font-bold">Approved By Saahil</p>
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-blue-600 uppercase">For {branding.name}</p>
-                        <div className="h-10"></div>
-                        <p className="italic font-bold">Proprietor</p>
+
+                {/* Analysis Table */}
+                <div className="mb-8">
+                    <table className="w-full border-collapse border border-slate-800 text-[13px]">
+                        <thead>
+                            <tr className="bg-slate-100">
+                                <th className="border border-slate-800 p-2 w-14 text-center font-bold">Sr No</th>
+                                <th className="border border-slate-800 p-2 w-48 text-left font-bold">Test</th>
+                                <th className="border border-slate-800 p-2 text-left font-bold">Specification</th>
+                                <th className="border border-slate-800 p-2 w-32 text-center font-bold">Observation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="border border-slate-800 p-2 text-center">1</td>
+                                <td className="border border-slate-800 p-2 font-medium">Description</td>
+                                <td className="border border-slate-800 p-2">{order.specification || order.specs || '<<[Specification]>>'}</td>
+                                <td className="border border-slate-800 p-2 text-center font-bold text-emerald-700">OK</td>
+                            </tr>
+                            <tr>
+                                <td className="border border-slate-800 p-2 text-center">2</td>
+                                <td className="border border-slate-800 p-2 font-medium">GSM</td>
+                                <td className="border border-slate-800 p-2">{order.gsm_value ? `${order.gsm_value} +/- 5%` : '<<[gsm]>> +/- 5%'}</td>
+                                <td className="border border-slate-800 p-2 text-center">
+                                    <span className="font-bold text-emerald-700">OK</span>
+                                    {order.gsm_value && <div className="text-[10px] text-slate-500">{order.gsm_value}</div>}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="border border-slate-800 p-2 text-center">3</td>
+                                <td className="border border-slate-800 p-2 font-medium">Construction</td>
+                                <td className="border border-slate-800 p-2">{order.construction || order.construction_type || 'As per approved specimen'}</td>
+                                <td className="border border-slate-800 p-2 text-center font-bold text-emerald-700">OK</td>
+                            </tr>
+                            <tr>
+                                <td className="border border-slate-800 p-2 text-center">4</td>
+                                <td className="border border-slate-800 p-2 font-medium">Dimensions</td>
+                                <td className="border border-slate-800 p-2">{order.dimension ? `${order.dimension} mm +/-2mm` : '<<[Dimension]>>mm +/-2mm'}</td>
+                                <td className="border border-slate-800 p-2 text-center">
+                                    <span className="font-bold text-emerald-700">OK</span>
+                                    {order.dimension && <div className="text-[10px] text-slate-500">{order.dimension}</div>}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="border border-slate-800 p-2 text-center">5</td>
+                                <td className="border border-slate-800 p-2 font-medium">Shade</td>
+                                <td className="border border-slate-800 p-2">Will comply with shade</td>
+                                <td className="border border-slate-800 p-2 text-center font-bold text-emerald-700">OK</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Signature Section - Spacer to push to bottom but not too far if content is short */}
+                <div className="mt-auto mb-4">
+                    <div className="flex justify-between items-end mb-8 pt-8 border-t border-slate-200">
+                        <div className="text-[13px]">
+                            <p className="font-bold text-slate-700">Checked By : Laxman</p>
+                            <div className="mt-4 italic font-serif text-xl opacity-60">L.S.</div>
+                        </div>
+                        <div className="text-right text-[13px]">
+                            <p className="font-bold text-slate-700">Approved By : Saahil</p>
+                            <div className="mt-4 italic font-black text-xl opacity-60">Sps</div>
+                        </div>
+                    </div>
+
+                    <div className="text-right text-[13px]">
+                        <p className="text-blue-800 font-bold uppercase tracking-wider text-sm">For {branding.name}</p>
+                        <div className="mt-2 flex justify-end">
+                            <div className="text-center relative">
+                                {/* Signature Image */}
+                                <div className="h-16 flex items-center justify-center mb-1">
+                                    <img src="/pr_shah_sign.png" alt="P. R. Shah" className="h-[95%] object-contain" />
+                                </div>
+                                <p className="text-blue-800 font-bold text-[11px] uppercase border-t border-slate-300 pt-1 inline-block px-4">Proprietor</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {/* Print Instruction */}
-            <div className="mt-20 text-[10px] text-slate-400 text-center print:hidden">
-                <p>Click Ctrl + P to print or save as PDF</p>
-            </div>
-        </div>
+        </>
     );
 };
 

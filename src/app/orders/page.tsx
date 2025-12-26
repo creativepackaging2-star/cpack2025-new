@@ -186,7 +186,12 @@ Plate No   : ${order.plate_no || '-'}`;
     };
 
     const generateDoc = (type: string) => {
-        alert(`${type} generation will be available once templates are defined.`);
+        if (type === 'COA') {
+            console.log('Generating COA for order:', order.id);
+            window.open(`/orders/${order.id}/coa`, '_blank');
+        } else {
+            alert(`${type} generation will be available once templates are defined.`);
+        }
     };
 
     if (view === "mobile") {
@@ -209,9 +214,14 @@ Plate No   : ${order.plate_no || '-'}`;
                             </button>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
-                            <button onClick={() => generateDoc('COA')} className="p-1.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
+                            <Link
+                                href={`/orders/${order.id}/coa`}
+                                target="_blank"
+                                className="p-1.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 <FileText className="w-3.5 h-3.5" />
-                            </button>
+                            </Link>
                             <button onClick={() => generateDoc('Delivery Label')} className="p-1.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100">
                                 <Truck className="w-3.5 h-3.5" />
                             </button>
@@ -353,9 +363,15 @@ Plate No   : ${order.plate_no || '-'}`;
                             <UserCheck className="w-4 h-4 text-blue-600" />
                         </button>
                         <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
-                        <button onClick={() => generateDoc('COA')} title="Generate COA" className="p-1 hover:bg-indigo-50 rounded-full transition-colors">
+                        <Link
+                            href={`/orders/${order.id}/coa`}
+                            target="_blank"
+                            title="Generate COA"
+                            className="p-1 hover:bg-indigo-50 rounded-full transition-colors inline-flex"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <FileText className="w-4 h-4 text-indigo-400 opacity-60 hover:opacity-100" />
-                        </button>
+                        </Link>
                         <button onClick={() => generateDoc('Delivery Label')} title="Generate Delivery Label" className="p-1 hover:bg-amber-50 rounded-full transition-colors">
                             <Truck className="w-4 h-4 text-amber-400 opacity-60 hover:opacity-100" />
                         </button>
@@ -685,6 +701,10 @@ export default function OrdersPage() {
                         />
                         Group by Category
                     </label>
+                    <Link href="/orders/sample/coa" target="_blank" className="inline-flex items-center justify-center rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Sample COA
+                    </Link>
                     <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Order

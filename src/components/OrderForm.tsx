@@ -414,13 +414,15 @@ Plate No   : ${formData.plate_no || '-'}`;
     };
 
     const generateDoc = (type: string) => {
-        if (!orderId) {
+        const id = initialData?.id;
+        if (!id) {
             alert('Please save the order first before generating documents.');
             return;
         }
 
         if (type === 'COA') {
-            window.open(`/orders/${orderId}/coa`, '_blank');
+            console.log('Generating COA for order (Form):', id);
+            window.open(`/orders/${id}/coa`, '_blank');
         } else {
             alert(`${type} generation will be available once templates are defined.`);
         }
@@ -768,13 +770,27 @@ Plate No   : ${formData.plate_no || '-'}`;
                                 <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">Supervisor</div>
                             </div>
 
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('COA')}>
-                                <div className="p-1 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                    <FileText className="w-8 h-8 text-indigo-600" />
+                            {initialData?.id ? (
+                                <Link
+                                    href={`/orders/${initialData.id}/coa`}
+                                    target="_blank"
+                                    className="flex flex-col items-center gap-1 group cursor-pointer"
+                                >
+                                    <div className="p-1 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                        <FileText className="w-8 h-8 text-indigo-600" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
+                                    <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">Auto-Gen</div>
+                                </Link>
+                            ) : (
+                                <div className="flex flex-col items-center gap-1 opacity-40 cursor-not-allowed" title="Save order first">
+                                    <div className="p-1 bg-slate-50 rounded-lg">
+                                        <FileText className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
+                                    <div className="text-[7px] bg-slate-50 text-slate-400 px-1 rounded font-bold border border-slate-100 italic">Save First</div>
                                 </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
-                                <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">Auto-Gen</div>
-                            </div>
+                            )}
 
                             <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Delivery Label')}>
                                 <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">

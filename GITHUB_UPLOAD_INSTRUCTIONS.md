@@ -3,7 +3,7 @@
 Since GitHub Desktop isn't pushing successfully, here's the manual upload method:
 
 ## Step 1: Delete Old Files on GitHub
-1. Go to: https://github.com/prameshshah123/cpack2025
+1. Go to: https://github.com/prameshsh ah123/cpack2025
 2. Click on each file/folder (except `.gitignore`)
 3. Click the trash icon to delete
 4. Commit each deletion

@@ -1,0 +1,27 @@
+{
+  "backup_date": "2025-12-21T05:40:43.831Z",
+  "total_orders": 635,
+  "orders_with_ups": 0,
+  "orders_with_specs": 635,
+  "orders_with_product_id": 635,
+  "sample_orders": [
+    {
+      "id": 836,
+      "product_id": "a75e7684-4177-4e32-bf1c-5b986ee70484",
+      "ups": null,
+      "specs": "320 | White | 12.5 × 19 | 50 x 135 x 100 | UV | Fo..."
+    },
+    {
+      "id": 1305,
+      "product_id": "f32bb1f5-af39-40c6-b4dc-aa0ac3a1b291",
+      "ups": null,
+      "specs": "350 | White | 14 × 22 | 95 x 35 x 78 | Aqua | Spot..."
+    },
+    {
+      "id": 837,
+      "product_id": "e2190687-955f-4e80-bf56-57b187997b91",
+      "ups": null,
+      "specs": "60 | Maplitho | 15 × 20 | 350 x 205 | BLACK | SG 1..."
+    }
+  ]
+}

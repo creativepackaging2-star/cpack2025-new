@@ -80,20 +80,21 @@ export type Order = {
     gsm_value: string | null
     print_size: string | null
     dimension: string | null
+    // Added fields
+    specification?: string | null
+    construction?: string | null
     ink: string | null
     plate_no: string | null
     coating: string | null
     special_effects: string | null
     pasting_type: string | null
     construction_type: string | null
-    specification: string | null
     artwork_code: string | null
     delivery_address: string | null
     artwork_pdf: string | null
     artwork_cdr: string | null
     product_name: string | null
     category_name: string | null
-    batch_no: string | null
     inv_no: string | null
     specs: string | null
     ups: number | null
