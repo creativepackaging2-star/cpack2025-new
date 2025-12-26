@@ -28,7 +28,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             logo: '/creative_logo.png',
             proprietor_sign: '/pr_shah_sign_new.png',
             proprietor_label: 'Proprietor',
-            logo_width: 'w-[240px]'
+            logo_width: 'w-[192px]'
         },
         'Printers': {
             name: 'CREATIVE PRINTERS',
@@ -39,7 +39,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             logo: '/logo_printers.png',
             proprietor_sign: '/sign_printers.png',
             proprietor_label: 'Proprietor',
-            logo_width: 'w-[200px]'
+            logo_width: 'w-[160px]'
         },
         'Packaging': {
             name: 'CREATIVE PACKAGING',
@@ -50,7 +50,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             logo: '/logo_packaging.png',
             proprietor_sign: '/sign_packaging.png',
             proprietor_label: 'Authorised Signatory',
-            logo_width: 'w-[200px]'
+            logo_width: 'w-[160px]'
         }
     };
 
