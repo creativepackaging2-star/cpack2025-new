@@ -25,17 +25,17 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             email: 'creativepackaging@outlook.com',
             mobile: '9146178720',
             gstn: '27AARHP2206E1Z8',
-            logo: '/creative_logo.png',
-            proprietor_sign: '/pr_shah_sign_new.png',
+            logo: '/logo_enterprise.png',
+            proprietor_sign: '/sign_enterprise.png',
             proprietor_label: 'Proprietor',
             logo_width: 'w-[300px]'
         },
         'Printers': {
             name: 'CREATIVE PRINTERS',
-            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701',
-            email: 'creativeprinters@outlook.com',
-            mobile: '9146178720',
-            gstn: '27ADDFP8596R1Z3',
+            address: '14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA',
+            email: 'creativepackaging@outlook.com',
+            mobile: '8097032001',
+            gstn: '27CGTPS8217E1ZT',
             logo: '/logo_printers.png',
             proprietor_sign: '/sign_printers.png',
             proprietor_label: 'Proprietor',
@@ -43,13 +43,13 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
         },
         'Packaging': {
             name: 'CREATIVE PACKAGING',
-            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701',
+            address: '14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA',
             email: 'creativepackaging@outlook.com',
-            mobile: '9146178720',
-            gstn: '27AADHC7413D1Z9',
+            mobile: '8097032001',
+            gstn: '27AAIPS3624G1ZL',
             logo: '/logo_packaging.png',
             proprietor_sign: '/sign_packaging.png',
-            proprietor_label: 'Proprietor',
+            proprietor_label: 'Authorised Signatory',
             logo_width: 'w-[250px]'
         }
     };
@@ -100,18 +100,14 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             <div className="coa-container bg-white p-[0.75in] text-black font-sans leading-tight print:p-0 relative" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
                 {/* Header */}
                 <div className="mb-8 border-b-2 border-slate-800 pb-4">
-                    <div className="flex justify-between items-start mb-2">
-                        {/* Replaced Text Logo with Image */}
+                    <div className="flex justify-between items-center mb-2">
                         <div className={branding.logo_width || "w-[300px]"}>
                             <img src={branding.logo} alt={branding.name} className="max-w-full h-auto object-contain" />
                         </div>
-                        <div className="text-right text-[11px] font-medium text-slate-600 mt-2">
-                            <p>M: {branding.mobile} | GSTN: {branding.gstn}</p>
-                            <p>{branding.email}</p>
-                        </div>
                     </div>
-                    <div className="text-[11px] font-medium text-slate-600 mt-1">
+                    <div className="text-[11px] font-medium text-slate-600 mt-2">
                         <p>{branding.address}</p>
+                        <p className="mt-1">Email: {branding.email} | M: {branding.mobile} | GSTN: {branding.gstn}</p>
                     </div>
                 </div>
 
