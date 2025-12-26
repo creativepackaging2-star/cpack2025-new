@@ -185,10 +185,13 @@ Plate No   : ${order.plate_no || '-'}`;
         window.open(url, '_blank');
     };
 
-    const generateDoc = (type: string) => {
+    const generateDoc = (type: string, orderId: number) => {
         if (type === 'COA') {
-            console.log('Generating COA for order:', order.id);
-            window.open(`/orders/${order.id}/coa`, '_blank');
+            console.log('Generating COA for order:', orderId);
+            window.open(`/orders/${orderId}/coa`, '_blank');
+        } else if (type === 'Delivery Label') {
+            console.log('Generating Delivery Label for order:', orderId);
+            window.open(`/orders/${orderId}/delivery-label`, '_blank');
         } else {
             alert(`${type} generation will be available once templates are defined.`);
         }
@@ -222,10 +225,10 @@ Plate No   : ${order.plate_no || '-'}`;
                             >
                                 <FileText className="w-3.5 h-3.5" />
                             </Link>
-                            <button onClick={() => generateDoc('Delivery Label')} className="p-1.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100">
+                            <button onClick={() => generateDoc('Delivery Label', order.id)} className="p-1.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100">
                                 <Truck className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => generateDoc('Shade Card')} className="p-1.5 bg-rose-50 text-rose-700 rounded-md border border-rose-100">
+                            <button onClick={() => generateDoc('Shade Card', order.id)} className="p-1.5 bg-rose-50 text-rose-700 rounded-md border border-rose-100">
                                 <Palette className="w-3.5 h-3.5" />
                             </button>
                         </div>
@@ -372,10 +375,10 @@ Plate No   : ${order.plate_no || '-'}`;
                         >
                             <FileText className="w-4 h-4 text-indigo-400 opacity-60 hover:opacity-100" />
                         </Link>
-                        <button onClick={() => generateDoc('Delivery Label')} title="Generate Delivery Label" className="p-1 hover:bg-amber-50 rounded-full transition-colors">
+                        <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label" className="p-1 hover:bg-amber-50 rounded-full transition-colors">
                             <Truck className="w-4 h-4 text-amber-400 opacity-60 hover:opacity-100" />
                         </button>
-                        <button onClick={() => generateDoc('Shade Card')} title="Generate Shade Card" className="p-1 hover:bg-rose-50 rounded-full transition-colors">
+                        <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card" className="p-1 hover:bg-rose-50 rounded-full transition-colors">
                             <Palette className="w-4 h-4 text-rose-400 opacity-60 hover:opacity-100" />
                         </button>
                         {!order.coa_file && !order.del_label_file && !order.shade_card_file && !order.paperwala_mobile && !order.printer_mobile && (
