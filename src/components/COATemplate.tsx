@@ -197,9 +197,9 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                     </table>
                 </div>
 
-                {/* Signature Section - Spacer to push to bottom but not too far if content is short */}
-                <div className="mt-auto mb-4">
-                    <div className="flex justify-between items-end mb-8 pt-8 border-t border-slate-200">
+                {/* Signature Section */}
+                <div className="mt-8 mb-4">
+                    <div className="flex justify-between items-end mb-4">
                         <div className="text-[13px]">
                             <p className="font-bold text-slate-700">Checked By : Laxman</p>
                             <div className="mt-1 font-signature-alt text-4xl text-blue-900 transform -rotate-3 ml-2">LS</div>
