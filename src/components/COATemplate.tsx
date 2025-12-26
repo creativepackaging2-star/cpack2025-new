@@ -32,10 +32,10 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
         },
         'Printers': {
             name: 'CREATIVE PRINTERS',
-            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701', // Example - To be verified
-            email: 'creativeprinters@outlook.com', // Example
-            mobile: '9146178720', // Using same for now
-            gstn: '', // Pending
+            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701',
+            email: 'creativeprinters@outlook.com',
+            mobile: '9146178720',
+            gstn: '27ADDFP8596R1Z3',
             logo: '/logo_printers.png',
             proprietor_sign: '/sign_printers.png',
             proprietor_label: 'Proprietor',
@@ -43,10 +43,10 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
         },
         'Packaging': {
             name: 'CREATIVE PACKAGING',
-            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701', // Example
+            address: 'Unit No. 11/12, Hasti Industrial Estate, Plot No. R-798, TTC Indl Area, Mahape, Navi Mumbai - 400701',
             email: 'creativepackaging@outlook.com',
             mobile: '9146178720',
-            gstn: '', // Pending
+            gstn: '27AADHC7413D1Z9',
             logo: '/logo_packaging.png',
             proprietor_sign: '/sign_packaging.png',
             proprietor_label: 'Proprietor',
@@ -100,19 +100,18 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             <div className="coa-container bg-white p-[0.75in] text-black font-sans leading-tight print:p-0 relative" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
                 {/* Header */}
                 <div className="mb-8 border-b-2 border-slate-800 pb-4">
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-start mb-2">
                         {/* Replaced Text Logo with Image */}
                         <div className={branding.logo_width || "w-[300px]"}>
                             <img src={branding.logo} alt={branding.name} className="max-w-full h-auto object-contain" />
                         </div>
-                        <div className="text-right text-[11px] font-medium text-slate-600">
-                            <p>M: {branding.mobile}</p>
-                            <p>GSTN: {branding.gstn}</p>
+                        <div className="text-right text-[11px] font-medium text-slate-600 mt-2">
+                            <p>M: {branding.mobile} | GSTN: {branding.gstn}</p>
+                            <p>{branding.email}</p>
                         </div>
                     </div>
-                    <div className="text-[11px] font-medium text-slate-600 mt-2">
+                    <div className="text-[11px] font-medium text-slate-600 mt-1">
                         <p>{branding.address}</p>
-                        <p>{branding.email}</p>
                     </div>
                 </div>
 
