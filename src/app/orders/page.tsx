@@ -740,25 +740,49 @@ export default function OrdersPage() {
                         ))}
 
                         {totalPages > 1 && (
-                            <div className="flex justify-center items-center space-x-2 pt-6">
-                                <button
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50 shadow-sm hover:bg-slate-50 transition-colors"
-                                >
-                                    Previous
-                                </button>
-                                <span className="text-sm font-medium text-slate-600">
-                                    Page {page} of {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50 shadow-sm hover:bg-slate-50 transition-colors"
-                                >
-                                    Next
-                                </button>
-                            </div>
+                            <>
+                                {/* Mobile Pagination */}
+                                <div className="flex md:hidden justify-center items-center space-x-2 pt-6 pb-4">
+                                    <button
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium disabled:opacity-50 shadow-sm hover:bg-slate-50 transition-colors"
+                                    >
+                                        ← Prev
+                                    </button>
+                                    <span className="text-sm font-medium text-slate-600 px-2">
+                                        {page} / {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium disabled:opacity-50 shadow-sm hover:bg-slate-50 transition-colors"
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+
+                                {/* Desktop Pagination */}
+                                <div className="hidden md:flex justify-center items-center space-x-2 pt-6">
+                                    <button
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50 shadow-sm hover:bg-slate-50 transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+                                    <span className="text-sm font-medium text-slate-600">
+                                        Page {page} of {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="px-3 py-1 bg-white border border-slate-300 rounded text-sm disabled:opacity-50 shadow-sm hover:bg-slate-50 transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </>
                         )}
                     </>
                 )}
