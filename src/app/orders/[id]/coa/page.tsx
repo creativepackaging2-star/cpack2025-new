@@ -50,14 +50,44 @@ export default function COAPage() {
                     } as any;
                     setOrder(sampleOrder);
                 } else {
-                    const { data, error: sbError } = await supabase
+                    let { data: orderData, error: sbError } = await supabase
                         .from('orders')
                         .select('*')
                         .eq('id', id)
                         .single();
 
                     if (sbError) throw sbError;
-                    setOrder(data);
+
+                    // Fallback logic for missing data
+                    if (orderData.product_id) {
+                        // 1. Fetch Product details if folding/address info is missing
+                        const { data: productData } = await supabase
+                            .from('products')
+                            .select('*')
+                            .eq('id', orderData.product_id)
+                            .single();
+
+                        if (productData) {
+                            // Fill missing folding info
+                            if (!orderData.folding) orderData.folding = productData.folding;
+                            if (!orderData.folding_dim) orderData.folding_dim = productData.folding_dim;
+
+                            // Fill missing delivery address
+                            if (!orderData.delivery_address && productData.delivery_address_id) {
+                                const { data: addressData } = await supabase
+                                    .from('delivery_addresses')
+                                    .select('name') // Assuming 'name' is the address field based on debug output
+                                    .eq('id', productData.delivery_address_id)
+                                    .single();
+
+                                if (addressData) {
+                                    orderData.delivery_address = addressData.name;
+                                }
+                            }
+                        }
+                    }
+
+                    setOrder(orderData);
                 }
             } catch (err: any) {
                 console.error('Fetch error:', err);
