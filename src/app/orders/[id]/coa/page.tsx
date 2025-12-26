@@ -115,6 +115,12 @@ export default function COAPage() {
                     Print Document
                 </button>
                 <button
+                    onClick={() => window.print()}
+                    className="px-6 py-2 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 shadow-lg"
+                >
+                    Save as PDF
+                </button>
+                <button
                     onClick={() => window.close()}
                     className="px-6 py-2 bg-white text-slate-600 rounded-full font-bold border border-slate-200 hover:bg-slate-50"
                 >
