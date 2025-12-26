@@ -43,6 +43,8 @@ export default function COAPage() {
                         from_our_company: 'Packaging',
                         status: 'Complete',
                         progress: 'Ready',
+                        category_name: 'Inserts',
+                        folding_dimension: '(100 x 50)',
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     } as any;

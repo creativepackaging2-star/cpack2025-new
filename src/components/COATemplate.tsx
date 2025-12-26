@@ -26,6 +26,8 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
         <>
             <style dangerouslySetInnerHTML={{
                 __html: `
+                @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+                
                 @media print {
                     @page {
                         size: A4;
@@ -51,6 +53,9 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                     .coa-container * {
                         visibility: visible;
                     }
+                }
+                .font-signature {
+                    font-family: 'Great Vibes', cursive;
                 }
             `}} />
 
@@ -133,7 +138,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                         <thead>
                             <tr className="bg-slate-100">
                                 <th className="border border-slate-800 p-2 w-14 text-center font-bold">Sr No</th>
-                                <th className="border border-slate-800 p-2 w-48 text-left font-bold">Test</th>
+                                <th className="border border-slate-800 p-2 w-32 text-left font-bold">Test</th>
                                 <th className="border border-slate-800 p-2 text-left font-bold">Specification</th>
                                 <th className="border border-slate-800 p-2 w-32 text-center font-bold">Observation</th>
                             </tr>
@@ -157,8 +162,18 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                             <tr>
                                 <td className="border border-slate-800 p-2 text-center">3</td>
                                 <td className="border border-slate-800 p-2 font-medium">Construction</td>
-                                <td className="border border-slate-800 p-2">{order.construction || order.construction_type || 'As per approved specimen'}</td>
-                                <td className="border border-slate-800 p-2 text-center font-bold text-emerald-700">OK</td>
+                                <td className="border border-slate-800 p-2">
+                                    {order.construction || order.construction_type || 'As per approved specimen'}
+                                    {order.category_name?.toLowerCase().includes('insert') && order.folding_dimension && (
+                                        <span> ({order.folding_dimension})</span>
+                                    )}
+                                </td>
+                                <td className="border border-slate-800 p-2 text-center">
+                                    <span className="font-bold text-emerald-700">OK</span>
+                                    {order.category_name?.toLowerCase().includes('insert') && order.folding_dimension && (
+                                        <div className="text-[10px] text-slate-500">({order.folding_dimension})</div>
+                                    )}
+                                </td>
                             </tr>
                             <tr>
                                 <td className="border border-slate-800 p-2 text-center">4</td>
@@ -184,11 +199,11 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                     <div className="flex justify-between items-end mb-8 pt-8 border-t border-slate-200">
                         <div className="text-[13px]">
                             <p className="font-bold text-slate-700">Checked By : Laxman</p>
-                            <div className="mt-4 italic font-serif text-xl opacity-60">L.S.</div>
+                            <div className="mt-1 font-signature text-3xl text-blue-900 transform -rotate-3">Laxman</div>
                         </div>
                         <div className="text-right text-[13px]">
                             <p className="font-bold text-slate-700">Approved By : Saahil</p>
-                            <div className="mt-4 italic font-black text-xl opacity-60">Sps</div>
+                            <div className="mt-1 font-signature text-3xl text-blue-900 transform -rotate-2">Saahil</div>
                         </div>
                     </div>
 
@@ -197,8 +212,8 @@ const COATemplate: React.FC<COATemplateProps> = ({ order }) => {
                         <div className="mt-2 flex justify-end">
                             <div className="text-center relative">
                                 {/* Signature Image */}
-                                <div className="h-16 flex items-center justify-center mb-1">
-                                    <img src="/pr_shah_sign.png" alt="P. R. Shah" className="h-[95%] object-contain" />
+                                <div className="h-10 flex items-center justify-center mb-1">
+                                    <img src="/pr_shah_sign.png" alt="P. R. Shah" className="h-full w-auto object-contain" />
                                 </div>
                                 <p className="text-blue-800 font-bold text-[11px] uppercase border-t border-slate-300 pt-1 inline-block px-4">Proprietor</p>
                             </div>
