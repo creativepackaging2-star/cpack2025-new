@@ -250,8 +250,6 @@ Plate No   : ${order.plate_no || '-'}`;
                         </button>
 
                         <div className="flex items-center gap-2 ml-2">
-                            {order.coa_file && <FileText className="w-3 h-3 text-indigo-400" />}
-                            {order.del_label_file && <Truck className="w-3 h-3 text-blue-400" />}
                             {order.shade_card_file && <Palette className="w-3 h-3 text-emerald-400" />}
                         </div>
                     </div>
@@ -344,16 +342,6 @@ Plate No   : ${order.plate_no || '-'}`;
                 {/* 4. Files */}
                 <td className="px-3 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                        {order.coa_file && (
-                            <a href={`/uploads/${order.coa_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="COA File">
-                                <FileText className="w-4 h-4 text-indigo-500 hover:text-indigo-700" />
-                            </a>
-                        )}
-                        {order.del_label_file && (
-                            <a href={`/uploads/${order.del_label_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="Delivery Label">
-                                <Truck className="w-4 h-4 text-blue-500 hover:text-blue-700" />
-                            </a>
-                        )}
                         {order.shade_card_file && (
                             <a href={`/uploads/${order.shade_card_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="Shade Card">
                                 <Palette className="w-4 h-4 text-emerald-500 hover:text-emerald-700" />
@@ -381,7 +369,7 @@ Plate No   : ${order.plate_no || '-'}`;
                         <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card" className="p-1 hover:bg-rose-50 rounded-full transition-colors">
                             <Palette className="w-4 h-4 text-rose-400 opacity-60 hover:opacity-100" />
                         </button>
-                        {!order.coa_file && !order.del_label_file && !order.shade_card_file && !order.paperwala_mobile && !order.printer_mobile && (
+                        {!order.shade_card_file && !order.paperwala_mobile && !order.printer_mobile && (
                             <span className="text-xs text-slate-300">-</span>
                         )}
                     </div>
@@ -704,10 +692,6 @@ export default function OrdersPage() {
                         />
                         Group by Category
                     </label>
-                    <Link href="/orders/sample/coa" target="_blank" className="inline-flex items-center justify-center rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Sample COA
-                    </Link>
                     <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Order
