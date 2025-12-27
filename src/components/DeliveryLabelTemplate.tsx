@@ -93,18 +93,24 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         </div>
                     </div>
 
-                    {/* Right: Product Details - Vertical Stack */}
+                    {/* Right: Product Details - 6 Equal Rows */}
                     <div className="border-2 border-black flex flex-col" style={{ flex: '1' }}>
-                        <div className="p-3 border-b-2 border-black">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Product</div>
-                            <div className="text-sm font-semibold">{order.product_name || '<<[Product Name]>>'}</div>
+                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                            <div className="text-xs font-bold text-gray-600">Product</div>
                         </div>
-                        <div className="p-3 border-b-2 border-black">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Qty</div>
+                        <div className="border-b-2 border-black flex items-center justify-center px-2" style={{ flex: 1 }}>
+                            <div className="text-sm font-semibold text-center">{order.product_name || '<<[Product Name]>>'}</div>
+                        </div>
+                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                            <div className="text-xs font-bold text-gray-600">Qty</div>
+                        </div>
+                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
                             <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
                         </div>
-                        <div className="p-3">
-                            <div className="text-xs font-bold text-gray-600 mb-1">Invoice No</div>
+                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                            <div className="text-xs font-bold text-gray-600">Invoice No</div>
+                        </div>
+                        <div className="flex items-center justify-center" style={{ flex: 1 }}>
                             <div className="text-sm font-semibold">{order.inv_no || '<<[Inv No]>>'}</div>
                         </div>
                     </div>
