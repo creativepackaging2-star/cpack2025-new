@@ -61,9 +61,14 @@ export default function ProductsPage() {
             // Optimistic update
             setProducts(prev => prev.filter(p => p.id !== id));
             setConfirmingId(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting:', error);
-            alert('Failed to delete product.');
+            const msg = error.message || 'Unknown error';
+            if (error.code === '23503') {
+                alert(`Cannot delete product because it is linked to existing orders. Please delete or re-link the orders first.\n\nDetail: ${msg}`);
+            } else {
+                alert(`Failed to delete product: ${msg}`);
+            }
         } finally {
             setIsDeleting(null);
         }
