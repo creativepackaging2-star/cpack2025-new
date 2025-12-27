@@ -10,43 +10,43 @@ interface ShadeCardTemplateProps {
 const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
     // Single card component
     const ShadeCard = () => (
-        <div className="border border-slate-300 p-10 flex flex-col justify-center" style={{ height: '33.33%' }}>
-            <div className="space-y-5">
-                <div className="border-b border-slate-200 pb-3 flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Customer</span>
-                    <span className="text-lg font-bold text-slate-900 leading-tight">{order.customer_name || '<<[Customer]>>'}</span>
+        <div className="border border-slate-300 p-12 flex flex-col justify-center" style={{ height: '33.33%' }}>
+            <div className="space-y-8">
+                <div className="border-b border-slate-200 pb-2">
+                    <span className="text-base font-bold text-slate-700">Customer: </span>
+                    <span className="text-base font-semibold text-slate-900">{order.customer_name || '<<[Customer]>>'}</span>
                 </div>
 
-                <div className="border-b border-slate-200 pb-3 flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Product Name</span>
-                    <span className="text-lg font-bold text-slate-900 leading-tight">{order.product_name || '<<[Product Name]>>'}</span>
+                <div className="border-b border-slate-200 pb-2">
+                    <span className="text-base font-bold text-slate-700">Product Name: </span>
+                    <span className="text-base font-semibold text-slate-900">{order.product_name || '<<[Product Name]>>'}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8">
-                    <div className="border-b border-slate-200 pb-3 flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Artwork Code</span>
-                        <span className="text-base font-bold text-slate-900">{order.artwork_code || '<<[artwork code]>>'}</span>
+                <div className="grid grid-cols-2 gap-12">
+                    <div className="border-b border-slate-200 pb-2">
+                        <span className="text-base font-bold text-slate-700">Artwork Code: </span>
+                        <span className="text-base font-semibold text-slate-900">{order.artwork_code || '<<[artwork code]>>'}</span>
                     </div>
-                    <div className="border-b border-slate-200 pb-3 flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Dimension</span>
-                        <span className="text-base font-bold text-slate-900">{order.dimension || '<<[Dimention]>>'}</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8">
-                    <div className="border-b border-slate-200 pb-3 flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">GSM</span>
-                        <span className="text-base font-bold text-slate-900">{order.gsm_value || '<<[GSM]>>'}</span>
-                    </div>
-                    <div className="border-b border-slate-200 pb-3 flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Construction</span>
-                        <span className="text-base font-bold text-slate-900">{order.construction_type || order.construction || order.pasting_type || '<<[constraction]>>'}</span>
+                    <div className="border-b border-slate-200 pb-2">
+                        <span className="text-base font-bold text-slate-700">Dimension: </span>
+                        <span className="text-base font-semibold text-slate-900">{order.dimension || '<<[Dimention]>>'}</span>
                     </div>
                 </div>
 
-                <div className="pb-2 flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Configuration / Specifications</span>
-                    <span className="text-sm font-medium text-slate-700 leading-relaxed italic">{order.specification || order.specs || '<<[Specification]>>'}</span>
+                <div className="grid grid-cols-2 gap-12">
+                    <div className="border-b border-slate-200 pb-2">
+                        <span className="text-base font-bold text-slate-700">GSM: </span>
+                        <span className="text-base font-semibold text-slate-900">{order.gsm_value || '<<[GSM]>>'}</span>
+                    </div>
+                    <div className="border-b border-slate-200 pb-2">
+                        <span className="text-base font-bold text-slate-700">Construction: </span>
+                        <span className="text-base font-semibold text-slate-900">{order.construction_type || order.construction || order.pasting_type || '<<[constraction]>>'}</span>
+                    </div>
+                </div>
+
+                <div className="pb-2">
+                    <span className="text-base font-bold text-slate-700">Specification: </span>
+                    <span className="text-base font-medium text-slate-800 italic leading-relaxed">{order.specification || order.specs || '<<[Specification]>>'}</span>
                 </div>
             </div>
         </div>
