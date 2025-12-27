@@ -40,7 +40,7 @@ const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
                     </div>
                     <div className="border-b border-slate-200 pb-3 flex flex-col">
                         <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Construction</span>
-                        <span className="text-base font-bold text-slate-900">{order.construction || '<<[constraction]>>'}</span>
+                        <span className="text-base font-bold text-slate-900">{order.construction_type || order.construction || order.pasting_type || '<<[constraction]>>'}</span>
                     </div>
                 </div>
 

@@ -51,6 +51,43 @@ export default function ShadeCardPage() {
 
                     if (sbError) throw sbError;
 
+                    // Fallback logic for missing data
+                    if (orderData.product_id) {
+                        const { data: productData, error: pError } = await supabase
+                            .from('products')
+                            .select(`
+                                *,
+                                pasting:pasting_types(name),
+                                construction:construction_types(name),
+                                category:categories(name)
+                            `)
+                            .eq('id', orderData.product_id)
+                            .single();
+
+                        if (productData) {
+                            // Map construction and pasting if missing in order
+                            if (!orderData.construction_type) orderData.construction_type = productData.construction?.name;
+                            if (!orderData.pasting_type) orderData.pasting_type = productData.pasting?.name;
+                            if (!orderData.category_name) orderData.category_name = productData.category?.name;
+                            if (!orderData.artwork_code) orderData.artwork_code = productData.artwork_code;
+                            if (!orderData.gsm_value) orderData.gsm_value = productData.gsm_value; // fallback
+                            if (!orderData.dimension) orderData.dimension = productData.dimension; // fallback
+
+                            // Fill missing delivery address
+                            if (!orderData.delivery_address && productData.delivery_address_id) {
+                                const { data: addressData } = await supabase
+                                    .from('delivery_addresses')
+                                    .select('name')
+                                    .eq('id', productData.delivery_address_id)
+                                    .single();
+
+                                if (addressData) {
+                                    orderData.delivery_address = addressData.name;
+                                }
+                            }
+                        }
+                    }
+
                     setOrder(orderData);
                 }
             } catch (err: any) {
