@@ -82,11 +82,11 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 }
             `}} />
 
-            <div className="label-container bg-white p-4 text-black font-sans" style={{ width: '6in', height: '4in', margin: '0 auto', display: 'flex', flexDirection: 'column', border: '2px solid #000' }}>
+            <div className="label-container bg-white p-4 text-black font-sans" style={{ width: '6in', height: '4in', margin: '0 auto', display: 'flex', flexDirection: 'column', border: '1px solid #000' }}>
                 {/* Main Content - Horizontal Layout */}
                 <div className="flex gap-3 mb-3" style={{ flex: 1 }}>
                     {/* Left: Delivery Address Section */}
-                    <div className="border-2 border-black p-3" style={{ flex: '1.5' }}>
+                    <div className="border border-black p-3" style={{ flex: '1.5' }}>
                         <div className="text-xs font-bold text-gray-600 mb-2">DELIVERY ADDRESS:</div>
                         <div className="text-base font-bold leading-relaxed whitespace-pre-wrap">
                             {order.delivery_address || '<<[Delivery Address]>>'}
@@ -94,20 +94,20 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                     </div>
 
                     {/* Right: Product Details - 6 Equal Rows */}
-                    <div className="border-2 border-black flex flex-col" style={{ flex: '1' }}>
-                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                    <div className="border border-black flex flex-col" style={{ flex: '1' }}>
+                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
                             <div className="text-xs font-bold text-gray-600">Product</div>
                         </div>
-                        <div className="border-b-2 border-black flex items-center justify-center px-2" style={{ flex: 1 }}>
+                        <div className="border-b border-black flex items-center justify-center px-2" style={{ flex: 1 }}>
                             <div className="text-sm font-semibold text-center">{order.product_name || '<<[Product Name]>>'}</div>
                         </div>
-                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
                             <div className="text-xs font-bold text-gray-600">Qty</div>
                         </div>
-                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
                             <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
                         </div>
-                        <div className="border-b-2 border-black flex items-center justify-center" style={{ flex: 1 }}>
+                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
                             <div className="text-xs font-bold text-gray-600">Invoice No</div>
                         </div>
                         <div className="flex items-center justify-center" style={{ flex: 1 }}>
@@ -117,7 +117,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 </div>
 
                 {/* Company Branding Footer */}
-                <div className="border-t-2 border-black pt-2">
+                <div className="border-t border-black pt-2">
                     <div className="text-center">
                         <div className="font-bold text-sm mb-1">{branding.name}</div>
                         <div className="text-[10px] mb-0.5">{branding.address}</div>

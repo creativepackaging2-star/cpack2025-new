@@ -13,38 +13,31 @@ const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
         <div className="border-2 border-black p-4" style={{ height: '33.33%' }}>
             <div className="space-y-2">
                 <div className="border-b border-black pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">Customer</div>
-                    <div className="text-sm font-semibold">{order.customer_name || '<<[Customer]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">Customer:</span> <span className="font-semibold">{order.customer_name || '<<[Customer]>>'}</span></div>
                 </div>
 
                 <div className="border-b border-black pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">Product Name</div>
-                    <div className="text-sm font-semibold">{order.product_name || '<<[Product Name]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">Product Name:</span> <span className="font-semibold">{order.product_name || '<<[Product Name]>>'}</span></div>
                 </div>
 
                 <div className="border-b border-black pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">Artwork Code</div>
-                    <div className="text-sm font-semibold">{order.artwork_code || '<<[artwork code]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">Artwork Code:</span> <span className="font-semibold">{order.artwork_code || '<<[artwork code]>>'}</span></div>
                 </div>
 
                 <div className="border-b border-black pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">Dimension</div>
-                    <div className="text-sm font-semibold">{order.dimension || '<<[Dimention]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">Dimension:</span> <span className="font-semibold">{order.dimension || '<<[Dimention]>>'}</span></div>
                 </div>
 
                 <div className="border-b border-black pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">GSM</div>
-                    <div className="text-sm font-semibold">{order.gsm_value || '<<[GSM]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">GSM:</span> <span className="font-semibold">{order.gsm_value || '<<[GSM]>>'}</span></div>
                 </div>
 
                 <div className="border-b border-black pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">Specification</div>
-                    <div className="text-xs font-medium leading-tight">{order.specification || order.specs || '<<[Specification]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">Specification:</span> <span className="font-medium">{order.specification || order.specs || '<<[Specification]>>'}</span></div>
                 </div>
 
                 <div className="pb-1">
-                    <div className="text-[10px] font-bold text-gray-600">Construction</div>
-                    <div className="text-sm font-semibold">{order.construction || '<<[constraction]>>'}</div>
+                    <div className="text-sm"><span className="font-bold text-gray-600">Construction:</span> <span className="font-semibold">{order.construction || '<<[constraction]>>'}</span></div>
                 </div>
             </div>
         </div>
