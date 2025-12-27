@@ -93,24 +93,20 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         </div>
                     </div>
 
-                    {/* Right: Product Details Table */}
-                    <div className="border-2 border-black" style={{ flex: '1' }}>
-                        <table className="w-full text-sm h-full">
-                            <tbody>
-                                <tr className="border-b border-black">
-                                    <td className="font-bold p-2 bg-gray-100 border-r border-black" style={{ width: '40%' }}>Product:</td>
-                                    <td className="p-2 font-semibold text-xs">{order.product_name || '<<[Product Name]>>'}</td>
-                                </tr>
-                                <tr className="border-b border-black">
-                                    <td className="font-bold p-2 bg-gray-100 border-r border-black">Quantity:</td>
-                                    <td className="p-2 font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</td>
-                                </tr>
-                                <tr>
-                                    <td className="font-bold p-2 bg-gray-100 border-r border-black">Invoice No.:</td>
-                                    <td className="p-2 font-semibold">{order.inv_no || '<<[Inv No]>>'}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    {/* Right: Product Details - Vertical Stack */}
+                    <div className="border-2 border-black p-3 flex flex-col justify-center" style={{ flex: '1' }}>
+                        <div className="mb-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Product</div>
+                            <div className="text-sm font-semibold">{order.product_name || '<<[Product Name]>>'}</div>
+                        </div>
+                        <div className="mb-3">
+                            <div className="text-xs font-bold text-gray-600 mb-1">Qty</div>
+                            <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-gray-600 mb-1">Invoice No</div>
+                            <div className="text-sm font-semibold">{order.inv_no || '<<[Inv No]>>'}</div>
+                        </div>
                     </div>
                 </div>
 
