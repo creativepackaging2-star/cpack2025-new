@@ -15,6 +15,15 @@ export default function ProductsPage() {
 
     const [categories, setCategories] = useState<Record<number, string>>({});
     const [specialEffectsMap, setSpecialEffectsMap] = useState<Record<number, string>>({});
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (confirmingId) {
+            const timer = setTimeout(() => setConfirmingId(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [confirmingId]);
 
     useEffect(() => {
         fetchResources();
@@ -40,16 +49,23 @@ export default function ProductsPage() {
     }
 
     async function handleDelete(id: string) {
-        if (!window.confirm('Are you sure you want to delete this product?')) return;
+        if (confirmingId !== id) {
+            setConfirmingId(id);
+            return;
+        }
 
+        setIsDeleting(id);
         try {
             const { error } = await supabase.from('products').delete().eq('id', id);
             if (error) throw error;
-            // Optimistic update or refetch
+            // Optimistic update
             setProducts(prev => prev.filter(p => p.id !== id));
+            setConfirmingId(null);
         } catch (error) {
             console.error('Error deleting:', error);
             alert('Failed to delete product.');
+        } finally {
+            setIsDeleting(null);
         }
     }
 
@@ -252,10 +268,22 @@ export default function ProductsPage() {
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDelete(product.id)}
-                                                    className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                    title="Delete Product"
+                                                    className={`rounded px-2 py-1 transition-all flex items-center gap-1 ${isDeleting === product.id
+                                                        ? 'bg-slate-100 text-slate-400 cursor-wait'
+                                                        : confirmingId === product.id
+                                                            ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
+                                                            : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                                                        }`}
+                                                    title={confirmingId === product.id ? "Click again to confirm" : "Delete Product"}
+                                                    disabled={!!isDeleting}
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    {isDeleting === product.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : confirmingId === product.id ? (
+                                                        "Confirm?"
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
                                                 </button>
                                             </div>
                                         </td>
