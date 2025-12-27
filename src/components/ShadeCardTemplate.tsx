@@ -10,40 +10,40 @@ interface ShadeCardTemplateProps {
 const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
     // Single card component
     const ShadeCard = () => (
-        <div className="border-t border-b border-slate-300 py-6 px-6 flex flex-col justify-center" style={{ height: '33.33%' }}>
-            <div className="space-y-3">
+        <div className="border-t border-b border-slate-300 py-4 px-6 flex flex-col justify-center" style={{ height: '33.33%' }}>
+            <div className="space-y-2">
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">Customer:</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">Customer:</span>
                     <span className="text-slate-900 font-semibold">{order.customer_name || '<<[Customer]>>'}</span>
                 </div>
 
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">Product Name :</span>
-                    <span className="text-slate-900 font-bold">{order.product_name || '<<[Product Name]>>'}</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">Product Name :</span>
+                    <span className="text-slate-900 font-bold leading-tight">{order.product_name || '<<[Product Name]>>'}</span>
                 </div>
 
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">Artwork Code:</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">Artwork Code:</span>
                     <span className="text-slate-900 font-semibold">{order.artwork_code || '<<[artwork code]>>'}</span>
                 </div>
 
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">Dimension:</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">Dimension:</span>
                     <span className="text-slate-900 font-semibold">{order.dimension || '<<[Dimention]>>'}</span>
                 </div>
 
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">GSM :</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">GSM :</span>
                     <span className="text-slate-900 font-semibold">{order.gsm_value || '<<[GSM]>>'}</span>
                 </div>
 
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">Specification:</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">Specification:</span>
                     <span className="text-slate-800 font-medium italic leading-snug flex-1">{order.specification || order.specs || '<<[Specification]>>'}</span>
                 </div>
 
                 <div className="flex items-start">
-                    <span className="w-40 font-bold text-slate-700 shrink-0">Construction:</span>
+                    <span className="w-36 font-medium text-slate-500 shrink-0">Construction:</span>
                     <span className="text-slate-900 font-semibold">{order.construction_type || order.construction || order.pasting_type || '<<[constraction]>>'}</span>
                 </div>
             </div>
