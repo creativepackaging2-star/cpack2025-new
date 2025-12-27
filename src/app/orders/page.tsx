@@ -192,6 +192,9 @@ Plate No   : ${order.plate_no || '-'}`;
         } else if (type === 'Delivery Label') {
             console.log('Generating Delivery Label for order:', orderId);
             window.open(`/orders/${orderId}/delivery-label`, '_blank');
+        } else if (type === 'Shade Card') {
+            console.log('Generating Shade Card for order:', orderId);
+            window.open(`/orders/${orderId}/shade-card`, '_blank');
         } else {
             alert(`${type} generation will be available once templates are defined.`);
         }
