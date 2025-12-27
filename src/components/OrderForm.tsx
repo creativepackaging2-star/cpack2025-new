@@ -745,16 +745,6 @@ Plate No   : ${formData.plate_no || '-'}`;
 
                         <SectionHeader icon={Zap} title="Automation Sync" />
                         <div className="flex items-center gap-3">
-                            <div className="flex flex-col items-center gap-1 group">
-                                <FileText className="w-8 h-8 text-slate-200 group-hover:text-indigo-400 transition-colors" />
-                                <span className="text-[8px] font-black text-slate-400 uppercase">COA</span>
-                                <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">v0.2.0-auto</div>
-                            </div>
-                            <div className="flex flex-col items-center gap-1 group">
-                                <Truck className="w-8 h-8 text-slate-200 group-hover:text-blue-400 transition-colors" />
-                                <span className="text-[8px] font-black text-slate-400 uppercase">Del. Label</span>
-                                <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">v0.2.0-auto</div>
-                            </div>
                             <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPaperwala}>
                                 <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
                                     <MessageCircle className="w-8 h-8 text-emerald-600" />

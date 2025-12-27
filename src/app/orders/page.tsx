@@ -251,10 +251,6 @@ Plate No   : ${order.plate_no || '-'}`;
                         >
                             {order.progress || 'Pending'}
                         </button>
-
-                        <div className="flex items-center gap-2 ml-2">
-                            {order.shade_card_file && <Palette className="w-3 h-3 text-emerald-400" />}
-                        </div>
                     </div>
 
                     <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
@@ -290,13 +286,12 @@ Plate No   : ${order.plate_no || '-'}`;
     return (
         <Fragment>
             <tr className={rowClassName} onClick={() => toggleRow(order.id)}>
-                <td className="px-6 py-4">
+                <td className="px-3 py-4 text-center">
                     <button className="p-1 hover:bg-slate-200 rounded-md transition-colors">
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-600" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                     </button>
                 </td>
 
-                {/* 1. Product */}
                 <td className="px-3 py-4">
                     <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
@@ -306,18 +301,16 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-4">
+                <td className="px-3 py-4 text-center">
                     <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
-                {/* 2. Specs */}
                 <td className="px-3 py-4 max-w-[300px]">
                     <div className="text-xs text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>
 
-                {/* 3. Process */}
                 <td className="px-3 py-4">
                     {isEditing ? (
                         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
@@ -342,14 +335,8 @@ Plate No   : ${order.plate_no || '-'}`;
                     )}
                 </td>
 
-                {/* 4. Files */}
                 <td className="px-3 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                        {order.shade_card_file && (
-                            <a href={`/uploads/${order.shade_card_file}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title="Shade Card">
-                                <Palette className="w-4 h-4 text-emerald-500 hover:text-emerald-700" />
-                            </a>
-                        )}
                         <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
                             <MessageCircle className="w-4 h-4 text-emerald-600" />
                         </button>
@@ -372,13 +359,9 @@ Plate No   : ${order.plate_no || '-'}`;
                         <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card" className="p-1 hover:bg-rose-50 rounded-full transition-colors">
                             <Palette className="w-4 h-4 text-rose-400 opacity-60 hover:opacity-100" />
                         </button>
-                        {!order.shade_card_file && !order.paperwala_mobile && !order.printer_mobile && (
-                            <span className="text-xs text-slate-300">-</span>
-                        )}
                     </div>
                 </td>
 
-                {/* 5. Action */}
                 <td className="px-3 py-4 text-right">
                     <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
                         {(!order.status || order.status !== 'Complete') && (
@@ -399,7 +382,7 @@ Plate No   : ${order.plate_no || '-'}`;
             </tr>
             {isExpanded && (
                 <tr className="bg-slate-50/50">
-                    <td colSpan={6} className="px-12 py-8">
+                    <td colSpan={7} className="px-12 py-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in fade-in slide-in-from-top-2">
                             <DetailGroup title="Logistics" items={[
                                 { label: 'Printer', value: order.printer_name },
@@ -441,16 +424,13 @@ Plate No   : ${order.plate_no || '-'}`;
                                 <div className="flex flex-wrap gap-2 pt-2">
                                     {order.artwork_pdf && <Link href={`/uploads/${order.artwork_pdf}`} target="_blank"><DocBadge label="PDF" /></Link>}
                                     {order.artwork_cdr && <Link href={`/uploads/${order.artwork_cdr}`} target="_blank"><DocBadge label="CDR" /></Link>}
-                                    {order.shade_card_file && <DocBadge label="Shade" />}
-                                    {order.del_label_file && <DocBadge label="Label" />}
-                                    {order.coa_file && <DocBadge label="COA" />}
                                 </div>
                             </div>
                         </div>
                     </td>
                 </tr>
             )}
-        </Fragment>
+        </Fragment >
     );
 });
 OrderRow.displayName = 'OrderRow';
