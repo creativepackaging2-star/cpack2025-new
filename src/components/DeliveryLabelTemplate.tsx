@@ -94,16 +94,16 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                     </div>
 
                     {/* Right: Product Details - Vertical Stack */}
-                    <div className="border-2 border-black p-3 flex flex-col justify-center" style={{ flex: '1' }}>
-                        <div className="mb-3">
+                    <div className="border-2 border-black flex flex-col" style={{ flex: '1' }}>
+                        <div className="p-3 border-b-2 border-black">
                             <div className="text-xs font-bold text-gray-600 mb-1">Product</div>
                             <div className="text-sm font-semibold">{order.product_name || '<<[Product Name]>>'}</div>
                         </div>
-                        <div className="mb-3">
+                        <div className="p-3 border-b-2 border-black">
                             <div className="text-xs font-bold text-gray-600 mb-1">Qty</div>
                             <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
                         </div>
-                        <div>
+                        <div className="p-3">
                             <div className="text-xs font-bold text-gray-600 mb-1">Invoice No</div>
                             <div className="text-sm font-semibold">{order.inv_no || '<<[Inv No]>>'}</div>
                         </div>
