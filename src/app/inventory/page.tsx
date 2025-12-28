@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useDeferredValue } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Loader2, Box, ArrowUpRight, ArrowDownLeft, Database, Search, Filter } from 'lucide-react';
 
@@ -23,6 +23,10 @@ export default function InventoryPage() {
     const [error, setError] = useState<string | null>(null);
     const [stock, setStock] = useState<StockItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Performance: Fix for INP (Interaction to Next Paint)
+    // Deferred value allows the search input to remain responsive while table filtering happens in the background
+    const deferredSearchTerm = useDeferredValue(searchTerm);
 
     useEffect(() => {
         fetchStock();
@@ -94,15 +98,15 @@ export default function InventoryPage() {
     }
 
     const filteredStock = useMemo(() => {
-        if (!searchTerm) return stock;
-        const s = searchTerm.toLowerCase();
+        if (!deferredSearchTerm) return stock;
+        const s = deferredSearchTerm.toLowerCase();
         return stock.filter(item =>
             item.gsm_name.toLowerCase().includes(s) ||
             item.paper_type_name.toLowerCase().includes(s) ||
             item.size_name.toLowerCase().includes(s) ||
             item.warehouse_name.toLowerCase().includes(s)
         );
-    }, [stock, searchTerm]);
+    }, [stock, deferredSearchTerm]);
 
     if (loading) {
         return (
@@ -114,7 +118,7 @@ export default function InventoryPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-[1400px] mx-auto px-4">
+        <div className="space-y-6 max-w-[1400px] mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -129,7 +133,7 @@ export default function InventoryPage() {
                     <input
                         type="text"
                         placeholder="Search GSM, Type, Size or Printer..."
-                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow shadow-sm"
+                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow shadow-sm text-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -152,8 +156,8 @@ export default function InventoryPage() {
                                 <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">GSM</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Size</th>
                                 <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50/50">Current Stock</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">IN</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">OUT</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">IN</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">OUT</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -165,34 +169,29 @@ export default function InventoryPage() {
                                 filteredStock.map((item, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-white transition-colors">
-                                                    <Database className="w-4 h-4 text-slate-400" />
-                                                </div>
-                                                <span className="text-sm font-semibold text-slate-900 uppercase tracking-tight">{item.warehouse_name}</span>
-                                            </div>
+                                            <span className="text-sm font-semibold text-slate-900 uppercase tracking-tight">{item.warehouse_name}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">{item.paper_type_name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold border border-indigo-100">
-                                                {item.gsm_name}
-                                            </span>
+                                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                                            {item.paper_type_name}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 font-mono tracking-tighter">{item.size_name}</td>
+                                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                                            {item.gsm_name}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600 font-mono tracking-tighter">
+                                            {item.size_name}
+                                        </td>
                                         <td className="px-6 py-4 text-right bg-indigo-50/20">
-                                            <span className={`text-base font-black font-mono ${item.net_stock < 0 ? 'text-rose-700' : 'text-slate-900 underline decoration-indigo-200 underline-offset-4'}`}>
+                                            <span className={`text-xl font-black font-mono tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
                                                 {item.net_stock.toLocaleString()}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right border-l border-slate-50">
-                                            <div className="flex items-center justify-end gap-1 text-emerald-600 font-mono font-bold text-xs">
-                                                <ArrowUpRight className="w-3 h-3" />
+                                        <td className="px-6 py-4 text-right border-l border-slate-50 opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-mono font-bold text-[10px]">
                                                 {item.total_in.toLocaleString()}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 text-rose-600 font-mono font-bold text-xs">
-                                                <ArrowDownLeft className="w-3 h-3" />
+                                        <td className="px-6 py-4 text-right opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-mono font-bold text-[10px]">
                                                 {item.total_out.toLocaleString()}
                                             </div>
                                         </td>
@@ -201,27 +200,6 @@ export default function InventoryPage() {
                             )}
                         </tbody>
                     </table>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">Total Inbound</p>
-                    <p className="text-3xl font-black text-emerald-900 font-mono">
-                        {stock.reduce((acc, curr) => acc + curr.total_in, 0).toLocaleString()}
-                    </p>
-                </div>
-                <div className="bg-rose-50 border border-rose-100 p-6 rounded-2xl shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1">Total Consumed</p>
-                    <p className="text-3xl font-black text-rose-900 font-mono">
-                        {stock.reduce((acc, curr) => acc + curr.total_out, 0).toLocaleString()}
-                    </p>
-                </div>
-                <div className="bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-200">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100 mb-1">Total Net Stock</p>
-                    <p className="text-3xl font-black text-white font-mono">
-                        {stock.reduce((acc, curr) => acc + curr.net_stock, 0).toLocaleString()}
-                    </p>
                 </div>
             </div>
         </div>

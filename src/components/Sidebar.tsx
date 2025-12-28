@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -11,59 +11,87 @@ const navigation = [
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },
-    // { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    isCollapsed: boolean;
+    setIsCollapsed: (val: boolean) => void;
+}
+
+export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     const pathname = usePathname();
 
     return (
-        <div className="hidden border-r bg-slate-900 md:block md:w-64 lg:w-72 text-white h-screen sticky top-0">
-            <div className="flex h-16 items-center border-b border-slate-800 px-6">
-                <h1 className="text-xl font-bold tracking-tight text-white">PrintMfg</h1>
+        <div className={twMerge(
+            "hidden border-r bg-slate-900 md:block transition-all duration-300 ease-in-out text-white h-screen sticky top-0 z-50",
+            isCollapsed ? "w-20" : "w-64 lg:w-72"
+        )}>
+            <div className="flex h-16 items-center border-b border-slate-800 px-6 justify-between overflow-hidden">
+                {!isCollapsed && <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap">PrintMfg</h1>}
+                {isCollapsed && <Package className="h-6 w-6 text-indigo-500 mx-auto" />}
             </div>
-            <div className="px-3 py-4">
-                <nav className="space-y-1">
+
+            <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute -right-3 top-20 bg-indigo-600 rounded-full p-1 border-2 border-slate-900 hover:bg-indigo-500 transition-colors z-50"
+            >
+                {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+            </button>
+
+            <div className="px-3 py-6">
+                <nav className="space-y-2">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                prefetch={false} // Disable prefetching to improve INP on heavy pages
+                                prefetch={false}
                                 className={twMerge(
-                                    'group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                                    'group flex items-center rounded-xl transition-all duration-200',
+                                    isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
                                     isActive
-                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                                 )}
+                                title={isCollapsed ? item.name : ""}
                             >
                                 <item.icon
                                     className={twMerge(
-                                        'mr-3 h-5 w-5 flex-shrink-0',
+                                        'h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110',
+                                        isCollapsed ? "" : "mr-3",
                                         isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
                                     )}
                                 />
-                                {item.name}
+                                {!isCollapsed && <span className="text-sm font-semibold tracking-wide whitespace-nowrap">{item.name}</span>}
                             </Link>
                         );
                     })}
                 </nav>
             </div>
-            <div className="absolute bottom-4 left-0 right-0 px-6 space-y-4">
-                <div className="flex items-center gap-3 rounded-lg bg-slate-800/50 p-3">
-                    <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
-                        <span className="text-xs font-medium">U</span>
+
+            <div className={twMerge(
+                "absolute bottom-6 left-0 right-0 px-3 transition-opacity duration-300",
+                isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+            )}>
+                <div className="flex items-center gap-3 rounded-2xl bg-slate-800/30 p-4 border border-slate-700/50">
+                    <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-inner">
+                        <User className="h-5 w-5 text-indigo-100" />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-white">Admin User</p>
-                        <p className="text-xs text-slate-400">admin@cpack.com</p>
+                    <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-white truncate">Admin User</p>
+                        <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-0.5">v0.2.0-stable</p>
                     </div>
-                </div>
-                <div className="text-[10px] text-slate-500 text-center font-mono uppercase tracking-widest">
-                    v0.2.0-stable
                 </div>
             </div>
+
+            {isCollapsed && (
+                <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+                    <div className="h-10 w-10 rounded-xl bg-slate-800/50 flex items-center justify-center border border-slate-700/50">
+                        <span className="text-xs font-black text-indigo-500">CP</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
