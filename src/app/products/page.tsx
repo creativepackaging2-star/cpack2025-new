@@ -288,18 +288,27 @@ export default function ProductsPage() {
                 query = query.or(`product_name.ilike.%${term}%,sku.ilike.%${term}%,dimension.ilike.%${term}%,specs.ilike.%${term}%`);
             }
 
-            // Filter out archived products unless toggle is on
-            if (!showArchived) {
-                // We check for not archived
-                query = query.neq('status', 'archived');
-            }
+            // NOTE: Server-side filtering (.neq) is removed to prevent crashes if 'status' column is missing.
+            // Client-side filtering is used below.
 
             const { data, error } = await query;
 
             if (error) {
                 console.error('Error fetching products:', error);
+
+                // If the error is not about the column missing, we should probably still show it? 
+                // But for now, let's just log it. If 'data' is null, UI shows empty.
             } else {
-                setProducts(data || []);
+                let filteredData = data || [];
+
+                // Client-side filtering
+                // If 'status' column is missing, p.status is undefined.
+                // undefined !== 'archived' is true. So all products are shown (Correct behavior).
+                if (!showArchived) {
+                    filteredData = filteredData.filter(p => p.status !== 'archived');
+                }
+
+                setProducts(filteredData);
             }
         } finally {
             setLoading(false);
