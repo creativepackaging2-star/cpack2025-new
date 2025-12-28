@@ -10,9 +10,25 @@ export default function AuditPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [uploadStatus, setUploadStatus] = useState<string>('');
+    const [effectsMap, setEffectsMap] = useState<Record<string, string>>({});
+
     useEffect(() => {
         fetchData();
+        fetchResources();
     }, []);
+
+    const fetchResources = async () => {
+        // Fetch Special Effects Map because DB might store IDs
+        const { data } = await supabase.from('special_effects').select('id, name');
+        if (data) {
+            const map: Record<string, string> = {};
+            data.forEach((fx: any) => {
+                map[String(fx.id)] = fx.name;
+            });
+            setEffectsMap(map);
+        }
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -28,6 +44,34 @@ export default function AuditPage() {
             setProducts(data || []);
         }
         setLoading(false);
+    };
+
+    // Helper to render special effects (handles IDs, names, or JSON arrays)
+    const renderSpecialEffects = (val: string | null) => {
+        if (!val) return <span className="text-slate-400 italic">Null</span>;
+
+        // Check if it's a simple ID in our map
+        if (effectsMap[val]) return effectsMap[val];
+
+        // Check if it's a JSON array of IDs e.g. ["1", "2"]
+        try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) {
+                return parsed.map(id => effectsMap[String(id)] || id).join(', ');
+            }
+        } catch (e) {
+            // Not JSON
+        }
+
+        // Maybe comma separated string "1,2"
+        if (val.includes(',')) {
+            return val.split(',').map(part => {
+                const trimmed = part.trim();
+                return effectsMap[trimmed] || trimmed;
+            }).join(', ');
+        }
+
+        return val;
     };
 
     const downloadCSV = () => {
@@ -62,6 +106,7 @@ export default function AuditPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setUploadStatus('Reading file...');
         const reader = new FileReader();
         reader.onload = (event) => {
             const text = event.target?.result as string;
@@ -73,28 +118,34 @@ export default function AuditPage() {
     const parseCSV = (text: string) => {
         const lines = text.split(/\r?\n/);
         const map: Record<string, string> = {};
+        let rowCount = 0;
 
-        // Normalize: Lowercase, trim
-        // Heuristic: Col 0 = Product Name, Col 1 = Special Effects
         lines.forEach((line) => {
             if (!line.trim()) return;
-            // Split by comma, handling potential quotes (simple regex)
-            const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            // Robust Split: Handle quotes
+            // e.g. "Product, Name", "Effect"
+            const cols = line.match(/(?:^|,)("(?:[^"]|"")*"|[^,]*)/g);
+            if (!cols) return;
 
-            if (cols.length >= 2) {
-                const clean = (s: string) => s ? s.replace(/^"|"$/g, '').trim() : '';
-                const name = clean(cols[0]);
-                const effect = clean(cols[1]);
+            // Clean up regex match results
+            const cleanCols = cols.map(col => {
+                return col.replace(/^,/, '').replace(/^"|"$/g, '').replace(/""/g, '"').trim();
+            });
 
-                // Skip header row if matches "product name"
+            if (cleanCols.length >= 2) {
+                const name = cleanCols[0];
+                const effect = cleanCols[1];
+
                 if (name && name.toLowerCase() !== 'product name') {
                     map[name.toLowerCase()] = effect;
+                    rowCount++;
                 }
             }
         });
 
         setCsvData(map);
         calculateStats(products, map);
+        setUploadStatus(`Parsed ${rowCount} rows successfully.`);
     };
 
     const calculateStats = (currentProducts: Product[], map: Record<string, string>) => {
@@ -102,9 +153,19 @@ export default function AuditPage() {
         currentProducts.forEach(p => {
             const normName = (p.product_name || '').toLowerCase().trim();
             const csvValue = map[normName];
+
+            const rawDbVal = p.special_effects || '';
+            const resolvedDbVal = renderSpecialEffects(rawDbVal);
+
+            // Adjusted logic: Compare CSV value against simple string DB value OR resolved name
+            const dbValString = typeof resolvedDbVal === 'string' ? resolvedDbVal : rawDbVal;
+
             if (!csvValue) {
                 missing++;
-            } else if (csvValue === (p.special_effects || '')) {
+            } else if (
+                csvValue.toLowerCase() === rawDbVal.toLowerCase() ||
+                csvValue.toLowerCase() === dbValString.toLowerCase()
+            ) {
                 match++;
             } else {
                 mismatch++;
@@ -125,7 +186,8 @@ export default function AuditPage() {
                         <p className="text-sm text-slate-500">Compare Database vs Legacy CSV</p>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                    {uploadStatus && <span className="text-xs font-medium text-emerald-600 animate-pulse bg-emerald-50 px-2 py-1 rounded">{uploadStatus}</span>}
                     <div className="relative">
                         <input
                             type="file"
@@ -211,14 +273,23 @@ export default function AuditPage() {
                                 products.map((product, idx) => {
                                     const normName = (product.product_name || '').toLowerCase().trim();
                                     const csvVal = csvData[normName];
-                                    const dbVal = product.special_effects || '';
+
+                                    // Use our helper to get the readable string
+                                    const resolvedDbVal = renderSpecialEffects(product.special_effects);
+
+                                    // Robust comparison string
+                                    // If renderSpecialEffects returns a string (normal case), use it. 
+                                    const dbValString = typeof resolvedDbVal === 'string' ? resolvedDbVal : String(product.special_effects || '');
 
                                     let status = 'neutral';
                                     let rowClass = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
 
                                     if (Object.keys(csvData).length > 0) {
                                         if (!csvVal) status = 'missing';
-                                        else if (csvVal === dbVal) status = 'match';
+                                        else if (
+                                            csvVal.toLowerCase() === (product.special_effects || '').toLowerCase() ||
+                                            csvVal.toLowerCase() === dbValString.toLowerCase()
+                                        ) status = 'match';
                                         else status = 'differ';
 
                                         if (status === 'differ') rowClass = 'bg-red-50 hover:bg-red-100';
@@ -232,7 +303,7 @@ export default function AuditPage() {
                                                 <div className="text-[10px] font-mono text-slate-400 font-normal">{product.artwork_code}</div>
                                             </td>
                                             <td className="px-6 py-3 text-sm text-indigo-700 font-medium bg-indigo-50/30">
-                                                {dbVal || <span className="text-slate-400 italic">Empty</span>}
+                                                {resolvedDbVal}
                                             </td>
                                             <td className="px-6 py-3 text-sm border-l border-emerald-100 bg-emerald-50/30 text-emerald-800 font-medium">
                                                 {csvVal || <span className="text-slate-300 italic">-</span>}
