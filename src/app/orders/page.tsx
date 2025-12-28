@@ -298,13 +298,13 @@ Plate No   : ${order.plate_no || '-'}`;
     return (
         <Fragment>
             <tr className={rowClassName} onClick={() => toggleRow(order.id)}>
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-2 text-center">
                     <button className="p-1 hover:bg-slate-200 rounded-md transition-colors">
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-600" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                     </button>
                 </td>
 
-                <td className="px-3 py-3">
+                <td className="px-3 py-2">
                     <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
@@ -313,17 +313,17 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-2 text-center">
                     <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
-                <td className="px-3 py-3 max-w-[300px]">
+                <td className="px-3 py-2 max-w-[300px]">
                     <div className="text-xs text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>
 
-                <td className="px-3 py-3">
+                <td className="px-3 py-2">
                     {isEditing ? (
                         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                             <select
@@ -347,7 +347,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     )}
                 </td>
 
-                <td className="px-3 py-3 text-center">
+                <td className="px-3 py-2 text-center">
                     <div className="flex items-center justify-center gap-2">
                         <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
                             <MessageCircle className="w-4 h-4 text-emerald-600" />
@@ -382,7 +382,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-3 text-right">
+                <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
                         {(!order.status || order.status !== 'Complete') && (
                             <button

@@ -146,11 +146,11 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200">
+                            <tr className="bg-slate-50 border-b border-slate-300">
                                 <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Warehouse</th>
                                 <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Paper Type</th>
                                 <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">GSM</th>
@@ -160,7 +160,7 @@ export default function InventoryPage() {
                                 <th className="px-2 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">OUT</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-300">
                             {filteredStock.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">No inventory records found matching your search.</td>
@@ -181,7 +181,7 @@ export default function InventoryPage() {
                                             {item.size_name}
                                         </td>
                                         <td className="px-4 py-3 text-right bg-indigo-50/20">
-                                            <span className={`text-sm font-black font-sans tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
+                                            <span className={`text-lg font-bold font-sans tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
                                                 {item.net_stock.toLocaleString()}
                                             </span>
                                         </td>

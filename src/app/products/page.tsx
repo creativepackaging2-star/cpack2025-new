@@ -178,7 +178,7 @@ export default function ProductsPage() {
                                 products.map((product) => (
                                     <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                                         {/* 1. Product Info */}
-                                        <td className="px-6 py-3">
+                                        <td className="px-6 py-2">
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-300">
                                                     {product.product_image ? (
@@ -195,7 +195,7 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 2. Category */}
-                                        <td className="px-6 py-3 whitespace-nowrap">
+                                        <td className="px-6 py-2 whitespace-nowrap">
                                             <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                                                 {product.category_id && categories[product.category_id]
                                                     ? categories[product.category_id]
@@ -204,12 +204,12 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 2.5. U (Actual GSM) */}
-                                        <td className="px-6 py-3 whitespace-nowrap text-sm text-slate-600">
+                                        <td className="px-6 py-2 whitespace-nowrap text-sm text-slate-600">
                                             {product.actual_gsm_used || '-'}
                                         </td>
 
                                         {/* 3. Specs */}
-                                        <td className="px-6 py-3">
+                                        <td className="px-6 py-2">
                                             <div className="text-sm text-slate-600 whitespace-pre-wrap">
                                                 {product.specs || '-'}
                                             </div>
@@ -222,7 +222,7 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 4. CDR/PDF */}
-                                        <td className="px-6 py-3 whitespace-nowrap text-center">
+                                        <td className="px-6 py-2 whitespace-nowrap text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 {product.artwork_pdf ? (
                                                     <a
@@ -254,7 +254,7 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 5. Action */}
-                                        <td className="px-6 py-3 whitespace-nowrap text-right">
+                                        <td className="px-6 py-2 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link href={`/orders/new?product_id=${product.id}`}>
                                                     <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-colors" title="Create Order">
