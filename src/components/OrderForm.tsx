@@ -382,9 +382,8 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
         const msg = `*Paper Order Details*
 
-Job ID       : ${formData.order_id || '-'}
-Paper Size  : ${formData.paper_order_size || '-'}
-Paper Qty   : ${formData.paper_order_qty || '-'}
+Size        : ${formData.paper_order_size || '-'}
+Qty         : ${formData.paper_order_qty || '-'}
 Paper       : ${formData.paper_type_name || '-'}
 GSM         : ${formData.gsm_value || '-'}
 Delivery At : ${formData.printer_name || '-'}`;
@@ -400,14 +399,13 @@ Delivery At : ${formData.printer_name || '-'}`;
             return;
         }
 
-        const msg = `Job ID     : *${formData.order_id || '-'}*
-Product    : *${formData.product_name || '-'}*
+        const msg = `Product    : ${formData.product_name || '-'}
 Print Size : ${formData.print_size || '-'}
 Print Qty  : ${formData.total_print_qty || '-'}
-Paper.     : ${formData.paper_type_name || '-'}
-GSM.       : ${formData.gsm_value || '-'}
-Code.      : ${formData.artwork_code || '-'}
-Ink.       : ${formData.ink || '-'}
+Paper      : ${formData.paper_type_name || '-'}
+GSM        : ${formData.gsm_value || '-'}
+Code       : ${formData.artwork_code || '-'}
+Ink        : ${formData.ink || '-'}
 Plate No   : ${formData.plate_no || '-'}`;
 
         const phone = formData.printer_mobile.replace(/\D/g, '');

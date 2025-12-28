@@ -56,9 +56,9 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
         const handleResize = () => {
             if (typeof window !== 'undefined') {
                 const width = window.innerWidth;
-                const targetWidth = 6 * 96; // 6 inches in pixels
-                if (width < targetWidth + 40) {
-                    setScale((width - 40) / targetWidth);
+                const targetWidth = 6 * 96; // 6 inches
+                if (width < targetWidth + 20) {
+                    setScale((width - 20) / targetWidth);
                 } else {
                     setScale(1);
                 }

@@ -152,13 +152,11 @@ const OrderRow = memo(({
         }
 
         const msg = `*Paper Order*
-Job ID: ${order.order_id || '-'}
-Product: ${order.product_name || '-'}
-Size: ${order.paper_order_size || '-'}
-Qty: ${order.paper_order_qty || '-'}
-Paper: ${order.paper_type_name || '-'}
-GSM: ${order.gsm_value || '-'}
-Delivery At: ${order.printer_name || '-'}`;
+Size        : ${order.paper_order_size || '-'}
+Qty         : ${order.paper_order_qty || '-'}
+Paper       : ${order.paper_type_name || '-'}
+GSM         : ${order.gsm_value || '-'}
+Delivery At : ${order.printer_name || '-'}`;
 
         const phone = order.paperwala_mobile.replace(/\D/g, '');
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
@@ -173,15 +171,14 @@ Delivery At: ${order.printer_name || '-'}`;
         }
 
         const msg = `*Printing Order*
-Job ID: ${order.order_id || '-'}
-Product: ${order.product_name || '-'}
-Print Size: ${order.print_size || '-'}
-Print Qty: ${order.total_print_qty || '-'}
-Paper: ${order.paper_type_name || '-'}
-GSM: ${order.gsm_value || '-'}
-Code: ${order.artwork_code || '-'}
-Ink: ${order.ink || '-'}
-Plate No: ${order.plate_no || '-'}`;
+Product    : ${order.product_name || '-'}
+Print Size : ${order.print_size || '-'}
+Print Qty  : ${order.total_print_qty || '-'}
+Paper      : ${order.paper_type_name || '-'}
+GSM        : ${order.gsm_value || '-'}
+Code       : ${order.artwork_code || '-'}
+Ink        : ${order.ink || '-'}
+Plate No   : ${order.plate_no || '-'}`;
 
         const phone = order.printer_mobile.replace(/\D/g, '');
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
