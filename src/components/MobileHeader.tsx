@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Menu, X, LayoutDashboard, Package, ShoppingCart } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Package, ShoppingCart, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
@@ -10,6 +10,7 @@ const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
+    { name: 'Inventory', href: '/inventory', icon: ClipboardList },
 ];
 
 export function MobileHeader() {
