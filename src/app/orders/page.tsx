@@ -638,7 +638,6 @@ export default function OrdersPage() {
                     qty: order.paper_order_qty,
                     unit: 'sheets',
                     reference: order.order_id,
-                    related_order_id: order.id,
                     notes: `Warehouse: ${order.printer_name || 'Stock'}`
                 });
             }
@@ -652,7 +651,6 @@ export default function OrdersPage() {
                     qty: order.paper_required,
                     unit: 'sheets',
                     reference: order.order_id,
-                    related_order_id: order.id,
                     notes: `Warehouse: ${order.printer_name || 'Stock'}`
                 });
             }
