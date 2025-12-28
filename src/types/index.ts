@@ -28,6 +28,7 @@ export type Product = {
     artwork_cdr: string | null
     product_image: string | null
     actual_gsm_used: string | null
+    status: string | null
 }
 
 export type Order = {
