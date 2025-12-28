@@ -204,9 +204,9 @@ export default function ProductForm({ initialData }: Props) {
     if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-indigo-600" /></div>;
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-xl border border-slate-200 shadow-sm max-w-6xl mx-auto">
+        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8 bg-white p-4 md:p-8 rounded-xl border border-slate-200 shadow-sm max-w-6xl mx-auto mb-10">
             <div className="border-b border-slate-200 pb-4 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-slate-800">{initialData ? 'Edit Product' : 'New Product'}</h2>
+                <h2 className="text-lg md:text-xl font-bold text-slate-800">{initialData ? 'Edit Product' : 'New Product'}</h2>
                 <Link href="/products" className="text-slate-400 hover:text-slate-600"><X className="h-6 w-6" /></Link>
             </div>
 
@@ -296,7 +296,7 @@ export default function ProductForm({ initialData }: Props) {
                 {/* 2.5 Printing Details */}
                 <div className="space-y-4 lg:col-span-3">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-2">Printing</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                         <div>
                             <label className="label">Ink</label>
                             <input name="ink" value={formData.ink || ''} onChange={handleChange} className="input-field" />

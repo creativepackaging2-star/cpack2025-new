@@ -50,6 +50,26 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
 
     const branding = brandConfig[company as keyof typeof brandConfig] || brandConfig['Enterprise'];
 
+    const [scale, setScale] = useState(1);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (typeof window !== 'undefined') {
+                const width = window.innerWidth;
+                const targetWidth = 6 * 96; // 6 inches in pixels
+                if (width < targetWidth + 40) {
+                    setScale((width - 40) / targetWidth);
+                } else {
+                    setScale(1);
+                }
+            }
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <>
             <style dangerouslySetInnerHTML={{
@@ -75,6 +95,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         padding: 0.25in !important;
                         background: white;
                         box-shadow: none !important;
+                        transform: none !important;
                     }
                     .label-container * {
                         visibility: visible;
@@ -82,47 +103,70 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 }
             `}} />
 
-            <div className="label-container bg-white p-4 text-black font-sans" style={{ width: '6in', height: '4in', margin: '0 auto', display: 'flex', flexDirection: 'column', border: '1px solid #000' }}>
-                {/* Main Content - Horizontal Layout */}
-                <div className="flex gap-3 mb-3" style={{ flex: 1 }}>
-                    {/* Left: Delivery Address Section */}
-                    <div className="border border-black p-3" style={{ flex: '1.5' }}>
-                        <div className="text-xs font-bold text-gray-600 mb-2">DELIVERY ADDRESS:</div>
-                        <div className="text-base font-bold leading-relaxed whitespace-pre-wrap">
-                            {order.delivery_address || '<<[Delivery Address]>>'}
+            <div
+                className="print:p-0"
+                style={{
+                    width: scale < 1 ? '100vw' : 'auto',
+                    height: scale < 1 ? `calc(4in * ${scale})` : 'auto',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    justifyContent: 'center'
+                }}
+            >
+                <div
+                    className="label-container bg-white p-4 text-black font-sans relative shadow-xl print:shadow-none"
+                    style={{
+                        width: '6in',
+                        height: '4in',
+                        transform: scale < 1 ? `scale(${scale})` : 'none',
+                        transformOrigin: 'top center',
+                        margin: '0 auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        border: '1px solid #000'
+                    }}
+                >
+                    {/* Main Content - Horizontal Layout */}
+                    <div className="flex gap-3 mb-3" style={{ flex: 1 }}>
+                        {/* Left: Delivery Address Section */}
+                        <div className="border border-black p-3" style={{ flex: '1.5' }}>
+                            <div className="text-xs font-bold text-gray-600 mb-2">DELIVERY ADDRESS:</div>
+                            <div className="text-base font-bold leading-relaxed whitespace-pre-wrap">
+                                {order.delivery_address || '<<[Delivery Address]>>'}
+                            </div>
+                        </div>
+
+                        {/* Right: Product Details - 6 Equal Rows */}
+                        <div className="border border-black flex flex-col" style={{ flex: '1' }}>
+                            <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
+                                <div className="text-xs font-bold text-gray-600">Product</div>
+                            </div>
+                            <div className="border-b border-black flex items-center justify-center px-2" style={{ flex: 1 }}>
+                                <div className="text-sm font-semibold text-center">{order.product_name || '<<[Product Name]>>'}</div>
+                            </div>
+                            <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
+                                <div className="text-xs font-bold text-gray-600">Qty</div>
+                            </div>
+                            <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
+                                <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
+                            </div>
+                            <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
+                                <div className="text-xs font-bold text-gray-600">Invoice No</div>
+                            </div>
+                            <div className="flex items-center justify-center" style={{ flex: 1 }}>
+                                <div className="text-sm font-semibold">{order.inv_no || '<<[Inv No]>>'}</div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right: Product Details - 6 Equal Rows */}
-                    <div className="border border-black flex flex-col" style={{ flex: '1' }}>
-                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                            <div className="text-xs font-bold text-gray-600">Product</div>
-                        </div>
-                        <div className="border-b border-black flex items-center justify-center px-2" style={{ flex: 1 }}>
-                            <div className="text-sm font-semibold text-center">{order.product_name || '<<[Product Name]>>'}</div>
-                        </div>
-                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                            <div className="text-xs font-bold text-gray-600">Qty</div>
-                        </div>
-                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                            <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
-                        </div>
-                        <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                            <div className="text-xs font-bold text-gray-600">Invoice No</div>
-                        </div>
-                        <div className="flex items-center justify-center" style={{ flex: 1 }}>
-                            <div className="text-sm font-semibold">{order.inv_no || '<<[Inv No]>>'}</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Company Branding Footer */}
-                <div className="border-t border-black pt-2">
-                    <div className="text-center">
-                        <div className="font-bold text-sm mb-1">{branding.name}</div>
-                        <div className="text-[10px] mb-0.5">{branding.address}</div>
-                        <div className="text-[10px] font-semibold">
-                            M: {branding.mobile} | {branding.email}
+                    {/* Company Branding Footer */}
+                    <div className="border-t border-black pt-2">
+                        <div className="text-center">
+                            <div className="font-bold text-sm mb-1">{branding.name}</div>
+                            <div className="text-[10px] mb-0.5">{branding.address}</div>
+                            <div className="text-[10px] font-semibold">
+                                M: {branding.mobile} | {branding.email}
+                            </div>
                         </div>
                     </div>
                 </div>

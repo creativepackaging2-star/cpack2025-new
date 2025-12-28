@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Order } from '../types';
 
 interface ShadeCardTemplateProps {
@@ -8,6 +8,26 @@ interface ShadeCardTemplateProps {
 }
 
 const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
+    const [scale, setScale] = useState(1);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (typeof window !== 'undefined') {
+                const width = window.innerWidth;
+                const targetWidth = 210 * 3.78; // 210mm in pixels approx
+                if (width < targetWidth + 40) {
+                    setScale((width - 40) / targetWidth);
+                } else {
+                    setScale(1);
+                }
+            }
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Single card component
     const ShadeCard = () => (
         <div className="border-t border-b border-slate-300 py-4 px-6 flex flex-col justify-center" style={{ height: '33.33%' }}>
@@ -75,6 +95,7 @@ const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
                         padding: 10mm !important;
                         background: white;
                         box-shadow: none !important;
+                        transform: none !important;
                     }
                     .shade-card-container * {
                         visibility: visible;
@@ -82,12 +103,35 @@ const ShadeCardTemplate: React.FC<ShadeCardTemplateProps> = ({ order }) => {
                 }
             `}} />
 
-            <div className="shade-card-container bg-white p-8 text-black font-sans" style={{ width: '210mm', height: '297mm', margin: '0 auto', border: '2px solid #000' }}>
-                {/* 3-Up Layout - Three identical shade cards */}
-                <div className="h-full flex flex-col">
-                    <ShadeCard />
-                    <ShadeCard />
-                    <ShadeCard />
+            <div
+                className="print:p-0"
+                style={{
+                    width: scale < 1 ? '100vw' : 'auto',
+                    height: scale < 1 ? `calc(297mm * ${scale})` : 'auto',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    justifyContent: 'center'
+                }}
+            >
+                <div
+                    className="shade-card-container bg-white p-8 text-black font-sans relative shadow-2xl print:shadow-none"
+                    style={{
+                        width: '210mm',
+                        height: '297mm',
+                        transform: scale < 1 ? `scale(${scale})` : 'none',
+                        transformOrigin: 'top center',
+                        margin: '0 auto',
+                        border: '2px solid #000',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
+                >
+                    {/* 3-Up Layout - Three identical shade cards */}
+                    <div className="h-full flex flex-col">
+                        <ShadeCard />
+                        <ShadeCard />
+                        <ShadeCard />
+                    </div>
                 </div>
             </div>
         </>

@@ -43,7 +43,7 @@ export default function Dashboard() {
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         <Card title="Total Products" value={stats.products} icon={Package} color="text-blue-600" />
         <Card title="Total Orders" value={stats.orders} icon={ShoppingCart} color="text-indigo-600" />
         {/* Placeholders for specific status counts */}

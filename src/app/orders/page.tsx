@@ -151,13 +151,14 @@ const OrderRow = memo(({
             return;
         }
 
-        const msg = `*Paper Order Details*
-
-Paper Size  : ${order.paper_order_size || '-'}
-Paper Qty   : ${order.paper_order_qty || '-'}
-Paper       : ${order.paper_type_name || '-'}
-GSM         : ${order.gsm_value || '-'}
-Delivery At : ${order.printer_name || '-'}`;
+        const msg = `*Paper Order*
+Job ID: ${order.order_id || '-'}
+Product: ${order.product_name || '-'}
+Size: ${order.paper_order_size || '-'}
+Qty: ${order.paper_order_qty || '-'}
+Paper: ${order.paper_type_name || '-'}
+GSM: ${order.gsm_value || '-'}
+Delivery At: ${order.printer_name || '-'}`;
 
         const phone = order.paperwala_mobile.replace(/\D/g, '');
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
@@ -171,14 +172,16 @@ Delivery At : ${order.printer_name || '-'}`;
             return;
         }
 
-        const msg = `Product    : *${order.product_name || '-'}*
-Print Size : ${order.print_size || '-'}
-Print Qty  : ${order.total_print_qty || '-'}
-Paper.     : ${order.paper_type_name || '-'}
-GSM.       : ${order.gsm_value || '-'}
-Code.      : ${order.artwork_code || '-'}
-Ink.       : ${order.ink || '-'}
-Plate No   : ${order.plate_no || '-'}`;
+        const msg = `*Printing Order*
+Job ID: ${order.order_id || '-'}
+Product: ${order.product_name || '-'}
+Print Size: ${order.print_size || '-'}
+Print Qty: ${order.total_print_qty || '-'}
+Paper: ${order.paper_type_name || '-'}
+GSM: ${order.gsm_value || '-'}
+Code: ${order.artwork_code || '-'}
+Ink: ${order.ink || '-'}
+Plate No: ${order.plate_no || '-'}`;
 
         const phone = order.printer_mobile.replace(/\D/g, '');
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
@@ -650,32 +653,38 @@ export default function OrdersPage() {
                 </div>
             )}
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                    Production Orders
-                    <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                    <span className="text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-2 py-0.5 rounded shadow-sm font-bold">v0.2.0-stable ✓</span>
-                </h2>
-                <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex items-center justify-between lg:justify-start gap-4">
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                        Orders
+                        <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
+                        <span className="hidden sm:inline-flex text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-2 py-0.5 rounded shadow-sm font-bold">v0.2.0 ✓</span>
+                    </h2>
+                    <Link href="/orders/new" className="lg:hidden inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-sm">
+                        <Plus className="mr-1 h-4 w-4" />
+                        New
+                    </Link>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[11px] md:text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
                         <input
                             type="checkbox"
                             checked={showCompleted}
                             onChange={e => handleToggleCompleted(e.target.checked)}
                             className="rounded text-indigo-600 focus:ring-indigo-500"
                         />
-                        Show Completed
+                        Completed Only
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
+                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[11px] md:text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
                         <input
                             type="checkbox"
                             checked={groupByCategory}
                             onChange={e => handleToggleGrouping(e.target.checked)}
                             className="rounded text-indigo-600 focus:ring-indigo-500"
                         />
-                        Group by Category
+                        Grouped
                     </label>
-                    <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
+                    <Link href="/orders/new" className="hidden lg:inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Order
                     </Link>

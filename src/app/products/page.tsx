@@ -132,8 +132,8 @@ export default function ProductsPage() {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            {/* Table (Desktop) */}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-50">
@@ -274,10 +274,10 @@ export default function ProductsPage() {
                                                 <button
                                                     onClick={() => handleDelete(product.id)}
                                                     className={`rounded px-2 py-1 transition-all flex items-center gap-1 ${isDeleting === product.id
-                                                        ? 'bg-slate-100 text-slate-400 cursor-wait'
-                                                        : confirmingId === product.id
-                                                            ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
-                                                            : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                                                            ? 'bg-slate-100 text-slate-400 cursor-wait'
+                                                            : confirmingId === product.id
+                                                                ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
+                                                                : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                                                         }`}
                                                     title={confirmingId === product.id ? "Click again to confirm" : "Delete Product"}
                                                     disabled={!!isDeleting}
@@ -298,6 +298,101 @@ export default function ProductsPage() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Card View (Mobile) */}
+            <div className="md:hidden space-y-4">
+                {loading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                    </div>
+                ) : products.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
+                        No products found.
+                    </div>
+                ) : (
+                    products.map((product) => (
+                        <div key={product.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 overflow-hidden">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                                        {product.product_image ? (
+                                            <ImageIcon className="h-6 w-6 text-slate-400" />
+                                        ) : (
+                                            <span className="text-[10px] font-black text-slate-400">IMG</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 leading-tight">{product.product_name || 'Unnamed Product'}</h3>
+                                        <p className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded inline-block mt-0.5 uppercase">
+                                            {product.artwork_code || 'No Code'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                        {product.category_id && categories[product.category_id] ? categories[product.category_id] : 'N/A'}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">U: {product.actual_gsm_used || '-'}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-600 mb-4 border border-slate-100">
+                                <div className="font-medium line-clamp-3">{product.specs || 'No specifications provided.'}</div>
+                                {product.dimension && (
+                                    <div className="mt-2 pt-2 border-t border-slate-200/60 font-mono font-bold text-indigo-600">
+                                        DIM: {product.dimension}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 pt-1">
+                                <div className="flex gap-2">
+                                    {product.artwork_pdf && (
+                                        <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
+                                            <FileText className="h-4 w-4" />
+                                        </a>
+                                    )}
+                                    {product.artwork_cdr && (
+                                        <a href={`/uploads/${product.artwork_cdr}`} target="_blank" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
+                                            <div className="text-[8px] font-black">CDR</div>
+                                        </a>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Link href={`/orders/new?product_id=${product.id}`}>
+                                        <button className="p-2 text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100">
+                                            <ShoppingCart className="h-4 w-4" />
+                                        </button>
+                                    </Link>
+                                    <Link href={`/products/${product.id}/edit`}>
+                                        <button className="p-2 text-indigo-600 bg-indigo-50 rounded-lg border border-indigo-100">
+                                            <Edit2 className="h-4 w-4" />
+                                        </button>
+                                    </Link>
+                                    <button
+                                        onClick={() => handleDelete(product.id)}
+                                        className={`p-2 rounded-lg border transition-all ${isDeleting === product.id
+                                                ? 'bg-slate-100 text-slate-400'
+                                                : confirmingId === product.id
+                                                    ? 'bg-red-600 text-white border-red-600 font-bold text-[10px] px-3'
+                                                    : 'text-red-500 bg-red-50 border-red-100'
+                                            }`}
+                                        disabled={!!isDeleting}
+                                    >
+                                        {isDeleting === product.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : confirmingId === product.id ? (
+                                            "Confirm?"
+                                        ) : (
+                                            <Trash2 className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

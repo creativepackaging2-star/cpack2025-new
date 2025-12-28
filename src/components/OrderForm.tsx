@@ -382,6 +382,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
         const msg = `*Paper Order Details*
 
+Job ID       : ${formData.order_id || '-'}
 Paper Size  : ${formData.paper_order_size || '-'}
 Paper Qty   : ${formData.paper_order_qty || '-'}
 Paper       : ${formData.paper_type_name || '-'}
@@ -399,7 +400,8 @@ Delivery At : ${formData.printer_name || '-'}`;
             return;
         }
 
-        const msg = `Product    : *${formData.product_name || '-'}*
+        const msg = `Job ID     : *${formData.order_id || '-'}*
+Product    : *${formData.product_name || '-'}*
 Print Size : ${formData.print_size || '-'}
 Print Qty  : ${formData.total_print_qty || '-'}
 Paper.     : ${formData.paper_type_name || '-'}
@@ -438,17 +440,17 @@ Plate No   : ${formData.plate_no || '-'}`;
     if (loading) return <div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-indigo-600" /><span className="text-slate-500 font-medium">Fetching Product Details...</span></div>;
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-4 bg-white p-3 md:p-6 rounded-2xl border border-slate-200 shadow-lg">
             {/* --- HEADER SECTION --- */}
-            <div className="flex justify-between items-center border-b border-slate-100 pb-6">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4 md:pb-6">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-black text-slate-900 uppercase">
+                    <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
                         {initialData ? 'Update Order' : 'New Order Entry'}
                     </h1>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-4">
-                        <span>Version v0.2.0-stable | {product?.product_name || 'Select Product'}</span>
+                    <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest flex flex-wrap items-center gap-2 md:gap-4">
+                        <span>v0.2.0-stable | {product?.product_name || 'Select Product'}</span>
                         <span className={`px-2 py-0.5 rounded border ${printers.length > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                            Data: P({printers.length}) W({paperwalas.length}) S({sizes.length})
+                            P({printers.length}) W({paperwalas.length}) S({sizes.length})
                         </span>
                     </p>
                 </div>
@@ -810,14 +812,14 @@ Plate No   : ${formData.plate_no || '-'}`;
             </div>
 
             {/* --- FOOTER --- */}
-            <div className="flex justify-end items-center gap-4 pt-8 border-t border-slate-100">
-                <Link href="/orders" className="text-sm font-bold text-slate-400 hover:text-slate-600 px-4">Cancel</Link>
+            <div className="flex flex-col md:flex-row justify-end items-center gap-4 pt-8 border-t border-slate-100 mb-6">
+                <Link href="/orders" className="w-full md:w-auto text-center text-sm font-bold text-slate-400 hover:text-slate-600 px-4 py-2 border border-transparent md:border-none">Cancel</Link>
                 <button
                     type="submit"
                     disabled={saving}
-                    className="bg-indigo-600 text-white px-10 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2"
+                    className="w-full md:w-auto bg-indigo-600 text-white px-10 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
                 >
-                    {saving ? <><Loader2 className="animate-spin" /> Saving...</> : <><CheckCircle /> {initialData ? 'Update Order' : 'Save Order'}</>}
+                    {saving ? <><Loader2 className="animate-spin h-4 w-4" /> Saving...</> : <><CheckCircle className="h-4 w-4" /> {initialData ? 'Update Order' : 'Save Order'}</>}
                 </button>
             </div>
 

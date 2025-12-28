@@ -113,30 +113,32 @@ export default function ShadeCardPage() {
     if (!order) return <div className="p-20 text-center text-gray-500">Order not found.</div>;
 
     return (
-        <div className="min-h-screen bg-slate-100 py-10 print:p-0 print:bg-white flex flex-col items-center">
+        <div className="min-h-screen bg-slate-100 py-4 md:py-10 print:p-0 print:bg-white flex flex-col items-center">
             {/* Action Bar */}
-            <div className="mb-6 flex gap-4 print:hidden items-center">
-                <button
-                    onClick={() => window.print()}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 shadow-lg"
-                >
-                    Print Shade Card
-                </button>
-                <button
-                    onClick={() => window.print()}
-                    className="px-6 py-2 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 shadow-lg"
-                >
-                    Save as PDF
-                </button>
-                <button
-                    onClick={() => window.close()}
-                    className="px-6 py-2 bg-white text-slate-600 rounded-full font-bold border border-slate-200 hover:bg-slate-50"
-                >
-                    Close
-                </button>
+            <div className="mb-6 flex flex-wrap justify-center gap-3 md:gap-4 print:hidden items-center px-4 max-w-full">
+                <div className="flex flex-wrap justify-center gap-2">
+                    <button
+                        onClick={() => window.print()}
+                        className="flex-1 sm:flex-none px-6 py-2 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 shadow-lg active:scale-95 transition-all"
+                    >
+                        Print
+                    </button>
+                    <button
+                        onClick={() => window.print()}
+                        className="flex-1 sm:flex-none px-6 py-2 bg-emerald-600 text-white rounded-full font-bold text-sm hover:bg-emerald-700 shadow-lg active:scale-95 transition-all"
+                    >
+                        PDF
+                    </button>
+                    <button
+                        onClick={() => window.close()}
+                        className="px-6 py-2 bg-white text-slate-600 rounded-full font-bold text-sm border border-slate-200 hover:bg-slate-50 transition-colors"
+                    >
+                        Close
+                    </button>
+                </div>
             </div>
 
-            <div className="bg-white shadow-2xl print:shadow-none">
+            <div className="bg-white shadow-2xl print:shadow-none mx-2 md:mx-0 overflow-x-auto max-w-full">
                 <ShadeCardTemplate order={order} />
             </div>
         </div>
