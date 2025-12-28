@@ -1,34 +1,181 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, FileText, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, FileText, Image as ImageIcon, Trash2, Archive, Filter } from 'lucide-react';
 import Link from 'next/link';
+
+// Memoized Product Row Component to prevent unnecessary re-renders
+const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
+    product: Product,
+    categories: Record<number, string>,
+    onDelete: (id: string, name: string) => void,
+    isDeleting: boolean
+}) => {
+    const [confirming, setConfirming] = useState(false);
+
+    useEffect(() => {
+        if (confirming) {
+            const timer = setTimeout(() => setConfirming(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [confirming]);
+
+    const handleDeleteClick = () => {
+        if (confirming) {
+            onDelete(product.id, product.product_name || 'this product');
+        } else {
+            setConfirming(true);
+        }
+    };
+
+    const isArchived = product.status === 'archived';
+
+    return (
+        <tr className={`hover:bg-slate-50 transition-colors ${isArchived ? 'bg-slate-50/50 grayscale opacity-70' : ''}`}>
+            {/* 1. Product Info */}
+            <td className="px-6 py-2">
+                <div className="flex items-center">
+                    <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-300">
+                        {product.product_image ? (
+                            <ImageIcon className="h-5 w-5 text-slate-400" />
+                        ) : (
+                            <span className="text-xs font-bold text-slate-400">IMG</span>
+                        )}
+                    </div>
+                    <div className="ml-4">
+                        <div className="flex items-center gap-2">
+                            <div className="text-sm font-semibold text-slate-900">{product.product_name || 'Unnamed Product'}</div>
+                            {isArchived && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Archived</span>}
+                        </div>
+                        <div className="text-xs text-slate-500">Code: {product.artwork_code || 'N/A'}</div>
+                    </div>
+                </div>
+            </td>
+
+            {/* 2. Category */}
+            <td className="px-6 py-2 whitespace-nowrap">
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                    {product.category_id && categories[product.category_id]
+                        ? categories[product.category_id]
+                        : `Category ${product.category_id || '-'}`}
+                </span>
+            </td>
+
+            {/* 2.5. U (Actual GSM) */}
+            <td className="px-6 py-2 whitespace-nowrap text-sm text-slate-600">
+                {product.actual_gsm_used || '-'}
+            </td>
+
+            {/* 3. Specs */}
+            <td className="px-6 py-2">
+                <div className="text-sm text-slate-600 whitespace-pre-wrap">
+                    {product.specs || '-'}
+                </div>
+                {/* Dimensions as subtitle if needed, or if not in specs already */}
+                {(!product.specs || !product.specs.includes(product.dimension || '')) && product.dimension && (
+                    <div className="text-xs text-slate-400 mt-1">
+                        Dim: {product.dimension}
+                    </div>
+                )}
+            </td>
+
+            {/* 4. CDR/PDF */}
+            <td className="px-6 py-2 whitespace-nowrap text-center">
+                <div className="flex items-center justify-center gap-2">
+                    {product.artwork_pdf ? (
+                        <a
+                            href={`/uploads/${product.artwork_pdf}`}
+                            download
+                            target="_blank"
+                            className="group relative"
+                            title={`Download ${product.artwork_pdf}`}
+                        >
+                            <FileText className="h-5 w-5 text-red-500 cursor-pointer hover:scale-110 transition-transform" />
+                            <span className="sr-only">PDF Available</span>
+                        </a>
+                    ) : <span className="w-5" />}
+
+                    {product.artwork_cdr ? (
+                        <a
+                            href={`/uploads/${product.artwork_cdr}`}
+                            download
+                            target="_blank"
+                            className="group relative"
+                            title={`Download ${product.artwork_cdr}`}
+                        >
+                            <div className="h-5 w-5 rounded bg-amber-500 text-[8px] font-bold text-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                CDR
+                            </div>
+                        </a>
+                    ) : <span className="w-5" />}
+                </div>
+            </td>
+
+            {/* 5. Action */}
+            <td className="px-6 py-2 whitespace-nowrap text-right">
+                <div className="flex items-center justify-end gap-2">
+                    <Link href={`/orders/new?product_id=${product.id}`}>
+                        <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-colors" title="Create Order">
+                            <ShoppingCart className="h-4 w-4" />
+                        </button>
+                    </Link>
+                    <Link href={`/products/${product.id}/edit`}>
+                        <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Edit">
+                            <Edit2 className="h-4 w-4" />
+                        </button>
+                    </Link>
+                    <Link href={`/products/${product.id}`}>
+                        <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="View">
+                            <Eye className="h-4 w-4" />
+                        </button>
+                    </Link>
+                    {!isArchived && (
+                        <button
+                            onClick={handleDeleteClick}
+                            className={`rounded px-2 py-1 transition-all flex items-center gap-1 ${isDeleting
+                                ? 'bg-slate-100 text-slate-400 cursor-wait'
+                                : confirming
+                                    ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
+                                    : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                                }`}
+                            title={confirming ? "Click again to confirm" : "Delete Product"}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : confirming ? (
+                                "Confirm?"
+                            ) : (
+                                <Trash2 className="h-4 w-4" />
+                            )}
+                        </button>
+                    )}
+                </div>
+            </td>
+        </tr>
+    );
+});
+ProductRow.displayName = 'ProductRow';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showArchived, setShowArchived] = useState(false);
     const debouncedSearch = useDebounce(searchQuery, 300);
 
     const [categories, setCategories] = useState<Record<number, string>>({});
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [specialEffectsMap, setSpecialEffectsMap] = useState<Record<number, string>>({});
-    const [confirmingId, setConfirmingId] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (confirmingId) {
-            const timer = setTimeout(() => setConfirmingId(null), 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [confirmingId]);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchResources();
         fetchProducts();
-    }, [debouncedSearch]);
+    }, [debouncedSearch, showArchived]);
 
     async function fetchResources() {
         // Fetch Categories
@@ -48,31 +195,84 @@ export default function ProductsPage() {
         }
     }
 
-    async function handleDelete(id: string) {
-        if (confirmingId !== id) {
-            setConfirmingId(id);
-            return;
-        }
-
-        setIsDeleting(id);
+    const handleDelete = useCallback(async (id: string, name: string) => {
+        setDeletingId(id);
         try {
             const { error } = await supabase.from('products').delete().eq('id', id);
             if (error) throw error;
-            // Optimistic update
+            // Optimistic update for hard delete
             setProducts(prev => prev.filter(p => p.id !== id));
-            setConfirmingId(null);
         } catch (error: any) {
             console.error('Error deleting:', error);
             const msg = error.message || 'Unknown error';
+
+            // Check for foreign key violation (linked existing orders)
             if (error.code === '23503') {
-                alert(`Cannot delete product because it is linked to existing orders. Please delete or re-link the orders first.\n\nDetail: ${msg}`);
+                const shouldArchive = window.confirm(
+                    `Cannot permanently delete "${name}" because it has existing order history.\n\nDo you want to ARCHIVE it instead?\n\n(This will hide it from the main list but keep the data safe.)`
+                );
+
+                if (shouldArchive) {
+                    try {
+                        const { error: archiveError } = await supabase
+                            .from('products')
+                            .update({ status: 'archived' })
+                            .eq('id', id);
+
+                        if (archiveError) throw archiveError;
+
+                        // Optimistic update for archive
+                        if (!showArchived) {
+                            setProducts(prev => prev.filter(p => p.id !== id));
+                        } else {
+                            // If showing archived, update the status
+                            setProducts(prev => prev.map(p => p.id === id ? { ...p, status: 'archived' } : p));
+                        }
+                        alert(`"${name}" has been archived.`);
+                    } catch (archiveError: any) {
+                        alert(`Failed to archive product: ${archiveError.message}`);
+                    }
+                } else {
+                    // User rejected Archive. Offer Force Delete (Unlink).
+                    const shouldForceDelete = window.confirm(
+                        `Do you want to FORCE DELETE "${name}"?\n\n⚠️ WARNING: This will UNLINK this product from all associated orders. The orders will remain, but they will no longer be linked to this product card.\n\nAre you sure you want to proceed with permanent deletion?`
+                    );
+
+                    if (shouldForceDelete) {
+                        try {
+                            // 1. Unlink from orders
+                            const { error: unlinkError } = await supabase
+                                .from('orders')
+                                .update({ product_id: null })
+                                .eq('product_id', id);
+
+                            if (unlinkError) throw unlinkError;
+
+                            // 2. Delete product
+                            const { error: deleteError } = await supabase
+                                .from('products')
+                                .delete()
+                                .eq('id', id);
+
+                            if (deleteError) throw deleteError;
+
+                            // Optimistic update
+                            setProducts(prev => prev.filter(p => p.id !== id));
+                            alert(`"${name}" has been permanently deleted and unlinked from orders.`);
+
+                        } catch (forceError: any) {
+                            console.error('Force delete failed:', forceError);
+                            alert(`Force delete failed: ${forceError.message}`);
+                        }
+                    }
+                }
             } else {
                 alert(`Failed to delete product: ${msg}`);
             }
         } finally {
-            setIsDeleting(null);
+            setDeletingId(null);
         }
-    }
+    }, [showArchived]);
 
     async function fetchProducts() {
         setLoading(true);
@@ -86,6 +286,12 @@ export default function ProductsPage() {
                 // Enhanced Search: Name, SKU, Dimension, Specs (which covers pasting, paper, etc.)
                 const term = debouncedSearch.trim();
                 query = query.or(`product_name.ilike.%${term}%,sku.ilike.%${term}%,dimension.ilike.%${term}%,specs.ilike.%${term}%`);
+            }
+
+            // Filter out archived products unless toggle is on
+            if (!showArchived) {
+                // We check for not archived
+                query = query.neq('status', 'archived');
             }
 
             const { data, error } = await query;
@@ -105,7 +311,7 @@ export default function ProductsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                     Product Catalog
-                    <span className="text-[10px] text-emerald-600 font-mono ml-2 border border-emerald-200 bg-emerald-50 px-1 rounded">v11:07 OrdersLink</span>
+                    <span className="text-[10px] text-emerald-600 font-mono ml-2 border border-emerald-200 bg-emerald-50 px-1 rounded">v2.1 Cleanup</span>
                 </h1>
                 <Link
                     href="/products/new"
@@ -117,8 +323,8 @@ export default function ProductsPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex items-center space-x-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="relative flex-1 w-full">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <Search className="h-5 w-5 text-slate-400" />
                     </div>
@@ -130,6 +336,13 @@ export default function ProductsPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
+                <button
+                    onClick={() => setShowArchived(!showArchived)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${showArchived ? 'bg-slate-100 border-slate-400 text-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                >
+                    {showArchived ? <Filter className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                    {showArchived ? 'Hide Archived' : 'Show Archived'}
+                </button>
             </div>
 
             {/* Table (Desktop) */}
@@ -171,128 +384,18 @@ export default function ProductsPage() {
                             ) : products.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                        No products found.
+                                        {showArchived ? "No products found." : "No active products found."}
                                     </td>
                                 </tr>
                             ) : (
                                 products.map((product) => (
-                                    <tr key={product.id} className="hover:bg-slate-50 transition-colors">
-                                        {/* 1. Product Info */}
-                                        <td className="px-6 py-2">
-                                            <div className="flex items-center">
-                                                <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-300">
-                                                    {product.product_image ? (
-                                                        <ImageIcon className="h-5 w-5 text-slate-400" />
-                                                    ) : (
-                                                        <span className="text-xs font-bold text-slate-400">IMG</span>
-                                                    )}
-                                                </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-semibold text-slate-900">{product.product_name || 'Unnamed Product'}</div>
-                                                    <div className="text-xs text-slate-500">Code: {product.artwork_code || 'N/A'}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        {/* 2. Category */}
-                                        <td className="px-6 py-2 whitespace-nowrap">
-                                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                                {product.category_id && categories[product.category_id]
-                                                    ? categories[product.category_id]
-                                                    : `Category ${product.category_id || '-'}`}
-                                            </span>
-                                        </td>
-
-                                        {/* 2.5. U (Actual GSM) */}
-                                        <td className="px-6 py-2 whitespace-nowrap text-sm text-slate-600">
-                                            {product.actual_gsm_used || '-'}
-                                        </td>
-
-                                        {/* 3. Specs */}
-                                        <td className="px-6 py-2">
-                                            <div className="text-sm text-slate-600 whitespace-pre-wrap">
-                                                {product.specs || '-'}
-                                            </div>
-                                            {/* Dimensions as subtitle if needed, or if not in specs already */}
-                                            {(!product.specs || !product.specs.includes(product.dimension || '')) && product.dimension && (
-                                                <div className="text-xs text-slate-400 mt-1">
-                                                    Dim: {product.dimension}
-                                                </div>
-                                            )}
-                                        </td>
-
-                                        {/* 4. CDR/PDF */}
-                                        <td className="px-6 py-2 whitespace-nowrap text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                {product.artwork_pdf ? (
-                                                    <a
-                                                        href={`/uploads/${product.artwork_pdf}`}
-                                                        download
-                                                        target="_blank"
-                                                        className="group relative"
-                                                        title={`Download ${product.artwork_pdf}`}
-                                                    >
-                                                        <FileText className="h-5 w-5 text-red-500 cursor-pointer hover:scale-110 transition-transform" />
-                                                        <span className="sr-only">PDF Available</span>
-                                                    </a>
-                                                ) : <span className="w-5" />}
-
-                                                {product.artwork_cdr ? (
-                                                    <a
-                                                        href={`/uploads/${product.artwork_cdr}`}
-                                                        download
-                                                        target="_blank"
-                                                        className="group relative"
-                                                        title={`Download ${product.artwork_cdr}`}
-                                                    >
-                                                        <div className="h-5 w-5 rounded bg-amber-500 text-[8px] font-bold text-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                                                            CDR
-                                                        </div>
-                                                    </a>
-                                                ) : <span className="w-5" />}
-                                            </div>
-                                        </td>
-
-                                        {/* 5. Action */}
-                                        <td className="px-6 py-2 whitespace-nowrap text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link href={`/orders/new?product_id=${product.id}`}>
-                                                    <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-colors" title="Create Order">
-                                                        <ShoppingCart className="h-4 w-4" />
-                                                    </button>
-                                                </Link>
-                                                <Link href={`/products/${product.id}/edit`}>
-                                                    <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Edit">
-                                                        <Edit2 className="h-4 w-4" />
-                                                    </button>
-                                                </Link>
-                                                <Link href={`/products/${product.id}`}>
-                                                    <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="View">
-                                                        <Eye className="h-4 w-4" />
-                                                    </button>
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(product.id)}
-                                                    className={`rounded px-2 py-1 transition-all flex items-center gap-1 ${isDeleting === product.id
-                                                        ? 'bg-slate-100 text-slate-400 cursor-wait'
-                                                        : confirmingId === product.id
-                                                            ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
-                                                            : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
-                                                        }`}
-                                                    title={confirmingId === product.id ? "Click again to confirm" : "Delete Product"}
-                                                    disabled={!!isDeleting}
-                                                >
-                                                    {isDeleting === product.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : confirmingId === product.id ? (
-                                                        "Confirm?"
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <ProductRow
+                                        key={product.id}
+                                        product={product}
+                                        categories={categories}
+                                        onDelete={handleDelete}
+                                        isDeleting={deletingId === product.id}
+                                    />
                                 ))
                             )}
                         </tbody>
@@ -308,92 +411,133 @@ export default function ProductsPage() {
                     </div>
                 ) : products.length === 0 ? (
                     <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
-                        No products found.
+                        {showArchived ? "No products found." : "No active products found."}
                     </div>
                 ) : (
                     products.map((product) => (
-                        <div key={product.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 overflow-hidden">
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
-                                        {product.product_image ? (
-                                            <ImageIcon className="h-6 w-6 text-slate-400" />
-                                        ) : (
-                                            <span className="text-[10px] font-black text-slate-400">IMG</span>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-bold text-slate-900 leading-tight">{product.product_name || 'Unnamed Product'}</h3>
-                                        <p className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded inline-block mt-0.5 uppercase">
-                                            {product.artwork_code || 'No Code'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                        {product.category_id && categories[product.category_id] ? categories[product.category_id] : 'N/A'}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase">U: {product.actual_gsm_used || '-'}</span>
-                                </div>
-                            </div>
-
-                            <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-600 mb-4 border border-slate-100">
-                                <div className="font-medium line-clamp-3">{product.specs || 'No specifications provided.'}</div>
-                                {product.dimension && (
-                                    <div className="mt-2 pt-2 border-t border-slate-200/60 font-mono font-bold text-indigo-600">
-                                        DIM: {product.dimension}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center justify-between gap-3 pt-1">
-                                <div className="flex gap-2">
-                                    {product.artwork_pdf && (
-                                        <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
-                                            <FileText className="h-4 w-4" />
-                                        </a>
-                                    )}
-                                    {product.artwork_cdr && (
-                                        <a href={`/uploads/${product.artwork_cdr}`} target="_blank" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
-                                            <div className="text-[8px] font-black">CDR</div>
-                                        </a>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Link href={`/orders/new?product_id=${product.id}`}>
-                                        <button className="p-2 text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100">
-                                            <ShoppingCart className="h-4 w-4" />
-                                        </button>
-                                    </Link>
-                                    <Link href={`/products/${product.id}/edit`}>
-                                        <button className="p-2 text-indigo-600 bg-indigo-50 rounded-lg border border-indigo-100">
-                                            <Edit2 className="h-4 w-4" />
-                                        </button>
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDelete(product.id)}
-                                        className={`p-2 rounded-lg border transition-all ${isDeleting === product.id
-                                            ? 'bg-slate-100 text-slate-400'
-                                            : confirmingId === product.id
-                                                ? 'bg-red-600 text-white border-red-600 font-bold text-[10px] px-3'
-                                                : 'text-red-500 bg-red-50 border-red-100'
-                                            }`}
-                                        disabled={!!isDeleting}
-                                    >
-                                        {isDeleting === product.id ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : confirmingId === product.id ? (
-                                            "Confirm?"
-                                        ) : (
-                                            <Trash2 className="h-4 w-4" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <MobileProductCard
+                            key={product.id}
+                            product={product}
+                            categories={categories}
+                            onDelete={handleDelete}
+                            isDeleting={deletingId === product.id}
+                        />
                     ))
                 )}
             </div>
         </div>
     );
 }
+
+// Extracted Mobile Card Component
+const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
+    product: Product,
+    categories: Record<number, string>,
+    onDelete: (id: string, name: string) => void,
+    isDeleting: boolean
+}) => {
+    const [confirming, setConfirming] = useState(false);
+
+    useEffect(() => {
+        if (confirming) {
+            const timer = setTimeout(() => setConfirming(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [confirming]);
+
+    const handleDeleteClick = () => {
+        if (confirming) {
+            onDelete(product.id, product.product_name || 'this product');
+        } else {
+            setConfirming(true);
+        }
+    };
+
+    const isArchived = product.status === 'archived';
+
+    return (
+        <div className={`bg-white rounded-xl border border-slate-200 shadow-sm p-4 overflow-hidden ${isArchived ? 'grayscale opacity-75' : ''}`}>
+            {isArchived && <div className="text-[10px] bg-slate-100 text-slate-600 text-center font-bold uppercase py-1 mb-2 rounded border border-slate-200">Archived Product</div>}
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                        {product.product_image ? (
+                            <ImageIcon className="h-6 w-6 text-slate-400" />
+                        ) : (
+                            <span className="text-[10px] font-black text-slate-400">IMG</span>
+                        )}
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-900 leading-tight">{product.product_name || 'Unnamed Product'}</h3>
+                        <p className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded inline-block mt-0.5 uppercase">
+                            {product.artwork_code || 'No Code'}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                        {product.category_id && categories[product.category_id] ? categories[product.category_id] : 'N/A'}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">U: {product.actual_gsm_used || '-'}</span>
+                </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-600 mb-4 border border-slate-100">
+                <div className="font-medium line-clamp-3">{product.specs || 'No specifications provided.'}</div>
+                {product.dimension && (
+                    <div className="mt-2 pt-2 border-t border-slate-200/60 font-mono font-bold text-indigo-600">
+                        DIM: {product.dimension}
+                    </div>
+                )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 pt-1">
+                <div className="flex gap-2">
+                    {product.artwork_pdf && (
+                        <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
+                            <FileText className="h-4 w-4" />
+                        </a>
+                    )}
+                    {product.artwork_cdr && (
+                        <a href={`/uploads/${product.artwork_cdr}`} target="_blank" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
+                            <div className="text-[8px] font-black">CDR</div>
+                        </a>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Link href={`/orders/new?product_id=${product.id}`}>
+                        <button className="p-2 text-emerald-600 bg-emerald-50 rounded-lg border border-emerald-100">
+                            <ShoppingCart className="h-4 w-4" />
+                        </button>
+                    </Link>
+                    <Link href={`/products/${product.id}/edit`}>
+                        <button className="p-2 text-indigo-600 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <Edit2 className="h-4 w-4" />
+                        </button>
+                    </Link>
+                    {!isArchived && (
+                        <button
+                            onClick={handleDeleteClick}
+                            className={`p-2 rounded-lg border transition-all ${isDeleting
+                                ? 'bg-slate-100 text-slate-400'
+                                : confirming
+                                    ? 'bg-red-600 text-white border-red-600 font-bold text-[10px] px-3'
+                                    : 'text-red-500 bg-red-50 border-red-100'
+                                }`}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : confirming ? (
+                                "Confirm?"
+                            ) : (
+                                <Trash2 className="h-4 w-4" />
+                            )}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+});
+MobileProductCard.displayName = 'MobileProductCard';
