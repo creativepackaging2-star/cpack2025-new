@@ -151,13 +151,13 @@ export default function InventoryPage() {
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Warehouse</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Paper Type</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">GSM</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Size</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50/50">Current Stock</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">IN</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">OUT</th>
+                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Warehouse</th>
+                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Paper Type</th>
+                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">GSM</th>
+                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Size</th>
+                                <th className="px-4 py-4 text-right text-[10px] font-bold font-sans uppercase tracking-widest text-indigo-600 bg-indigo-50/50">Current Stock</th>
+                                <th className="px-2 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">IN</th>
+                                <th className="px-2 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">OUT</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -168,30 +168,30 @@ export default function InventoryPage() {
                             ) : (
                                 filteredStock.map((item, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3">
                                             <span className="text-sm font-semibold text-slate-900 uppercase tracking-tight">{item.warehouse_name}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                                        <td className="px-4 py-3 text-sm text-slate-600 font-medium">
                                             {item.paper_type_name}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                                        <td className="px-4 py-3 text-sm font-medium text-slate-600">
                                             {item.gsm_name}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600 font-mono tracking-tighter">
+                                        <td className="px-4 py-3 text-sm text-slate-600 tracking-tight">
                                             {item.size_name}
                                         </td>
-                                        <td className="px-6 py-4 text-right bg-indigo-50/20">
-                                            <span className={`text-xl font-black font-mono tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
+                                        <td className="px-4 py-3 text-right bg-indigo-50/20">
+                                            <span className={`text-sm font-black font-sans tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
                                                 {item.net_stock.toLocaleString()}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right border-l border-slate-50 opacity-40 group-hover:opacity-100 transition-opacity">
-                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-mono font-bold text-[10px]">
+                                        <td className="px-2 py-3 text-right border-l border-slate-50 opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-bold text-[10px]">
                                                 {item.total_in.toLocaleString()}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right opacity-40 group-hover:opacity-100 transition-opacity">
-                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-mono font-bold text-[10px]">
+                                        <td className="px-2 py-3 text-right opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-bold text-[10px]">
                                                 {item.total_out.toLocaleString()}
                                             </div>
                                         </td>
