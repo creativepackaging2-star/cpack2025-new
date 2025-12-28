@@ -32,15 +32,15 @@ DetailGroup.displayName = 'DetailGroup';
 
 const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry }: any) => {
     return (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm mb-8">
-            <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
+        <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm mb-8">
+            <div className="bg-slate-50 px-6 py-3 border-b border-slate-300 flex items-center gap-2">
                 <h3 className="text-sm font-semibold text-slate-800">{category}</h3>
-                <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
                     {catOrders.length}
                 </span>
             </div>
             <div className="overflow-x-auto hidden md:block">
-                <table className="min-w-full divide-y divide-slate-200">
+                <table className="min-w-full divide-y divide-slate-300">
                     <thead className="bg-slate-50">
                         <tr>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[40px]"></th>
@@ -52,7 +52,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                             <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white">
+                    <tbody className="divide-y divide-slate-300 bg-white">
                         {catOrders.map((order: any) => (
                             <OrderRow
                                 key={order.id}
@@ -298,13 +298,13 @@ Plate No   : ${order.plate_no || '-'}`;
     return (
         <Fragment>
             <tr className={rowClassName} onClick={() => toggleRow(order.id)}>
-                <td className="px-3 py-4 text-center">
+                <td className="px-3 py-3 text-center">
                     <button className="p-1 hover:bg-slate-200 rounded-md transition-colors">
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-600" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                     </button>
                 </td>
 
-                <td className="px-3 py-4">
+                <td className="px-3 py-3">
                     <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
@@ -313,17 +313,17 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-4 text-center">
+                <td className="px-3 py-3 text-center">
                     <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
-                <td className="px-3 py-4 max-w-[300px]">
+                <td className="px-3 py-3 max-w-[300px]">
                     <div className="text-xs text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>
 
-                <td className="px-3 py-4">
+                <td className="px-3 py-3">
                     {isEditing ? (
                         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                             <select
@@ -347,7 +347,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     )}
                 </td>
 
-                <td className="px-3 py-4 text-center">
+                <td className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                         <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
                             <MessageCircle className="w-4 h-4 text-emerald-600" />
@@ -382,7 +382,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-4 text-right">
+                <td className="px-3 py-3 text-right">
                     <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
                         {(!order.status || order.status !== 'Complete') && (
                             <button

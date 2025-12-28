@@ -6,12 +6,39 @@ import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, 
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { memo } from 'react';
+
 const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },
 ];
+
+const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
+    <Link
+        href={item.href}
+        prefetch={false}
+        className={twMerge(
+            'group flex items-center rounded-xl transition-all duration-200',
+            isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
+            isActive
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+        )}
+        title={isCollapsed ? item.name : ""}
+    >
+        <item.icon
+            className={twMerge(
+                'h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110',
+                isCollapsed ? "" : "mr-3",
+                isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
+            )}
+        />
+        {!isCollapsed && <span className="text-sm font-semibold tracking-wide whitespace-nowrap">{item.name}</span>}
+    </Link>
+));
+NavItem.displayName = 'NavItem';
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -40,33 +67,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
             <div className="px-3 py-6">
                 <nav className="space-y-2">
-                    {navigation.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                prefetch={false}
-                                className={twMerge(
-                                    'group flex items-center rounded-xl transition-all duration-200',
-                                    isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
-                                    isActive
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
-                                )}
-                                title={isCollapsed ? item.name : ""}
-                            >
-                                <item.icon
-                                    className={twMerge(
-                                        'h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110',
-                                        isCollapsed ? "" : "mr-3",
-                                        isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
-                                    )}
-                                />
-                                {!isCollapsed && <span className="text-sm font-semibold tracking-wide whitespace-nowrap">{item.name}</span>}
-                            </Link>
-                        );
-                    })}
+                    {navigation.map((item) => (
+                        <NavItem
+                            key={item.name}
+                            item={item}
+                            isActive={pathname === item.href}
+                            isCollapsed={isCollapsed}
+                        />
+                    ))}
                 </nav>
             </div>
 

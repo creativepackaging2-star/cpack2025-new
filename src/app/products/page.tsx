@@ -133,9 +133,9 @@ export default function ProductsPage() {
             </div>
 
             {/* Table (Desktop) */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="hidden md:block overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-200">
+                    <table className="min-w-full divide-y divide-slate-300">
                         <thead className="bg-slate-50">
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -158,7 +158,7 @@ export default function ProductsPage() {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 bg-white">
+                        <tbody className="divide-y divide-slate-300 bg-white">
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-20 text-center text-slate-500">
@@ -178,9 +178,9 @@ export default function ProductsPage() {
                                 products.map((product) => (
                                     <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                                         {/* 1. Product Info */}
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center">
-                                                <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                                                <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-300">
                                                     {product.product_image ? (
                                                         <ImageIcon className="h-5 w-5 text-slate-400" />
                                                     ) : (
@@ -195,7 +195,7 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 2. Category */}
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-3 whitespace-nowrap">
                                             <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                                                 {product.category_id && categories[product.category_id]
                                                     ? categories[product.category_id]
@@ -204,12 +204,12 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 2.5. U (Actual GSM) */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                        <td className="px-6 py-3 whitespace-nowrap text-sm text-slate-600">
                                             {product.actual_gsm_used || '-'}
                                         </td>
 
                                         {/* 3. Specs */}
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-3">
                                             <div className="text-sm text-slate-600 whitespace-pre-wrap">
                                                 {product.specs || '-'}
                                             </div>
@@ -222,7 +222,7 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 4. CDR/PDF */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                        <td className="px-6 py-3 whitespace-nowrap text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 {product.artwork_pdf ? (
                                                     <a
@@ -254,7 +254,7 @@ export default function ProductsPage() {
                                         </td>
 
                                         {/* 5. Action */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                        <td className="px-6 py-3 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link href={`/orders/new?product_id=${product.id}`}>
                                                     <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-colors" title="Create Order">
@@ -274,10 +274,10 @@ export default function ProductsPage() {
                                                 <button
                                                     onClick={() => handleDelete(product.id)}
                                                     className={`rounded px-2 py-1 transition-all flex items-center gap-1 ${isDeleting === product.id
-                                                            ? 'bg-slate-100 text-slate-400 cursor-wait'
-                                                            : confirmingId === product.id
-                                                                ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
-                                                                : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                                                        ? 'bg-slate-100 text-slate-400 cursor-wait'
+                                                        : confirmingId === product.id
+                                                            ? 'bg-red-600 text-white hover:bg-red-700 font-bold text-[10px]'
+                                                            : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                                                         }`}
                                                     title={confirmingId === product.id ? "Click again to confirm" : "Delete Product"}
                                                     disabled={!!isDeleting}
@@ -373,10 +373,10 @@ export default function ProductsPage() {
                                     <button
                                         onClick={() => handleDelete(product.id)}
                                         className={`p-2 rounded-lg border transition-all ${isDeleting === product.id
-                                                ? 'bg-slate-100 text-slate-400'
-                                                : confirmingId === product.id
-                                                    ? 'bg-red-600 text-white border-red-600 font-bold text-[10px] px-3'
-                                                    : 'text-red-500 bg-red-50 border-red-100'
+                                            ? 'bg-slate-100 text-slate-400'
+                                            : confirmingId === product.id
+                                                ? 'bg-red-600 text-white border-red-600 font-bold text-[10px] px-3'
+                                                : 'text-red-500 bg-red-50 border-red-100'
                                             }`}
                                         disabled={!!isDeleting}
                                     >
