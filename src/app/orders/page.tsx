@@ -223,12 +223,12 @@ Plate No   : ${order.plate_no || '-'}`;
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
-                                title="Run Paper Entry (IN/OUT)"
-                                className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-md text-[10px] font-bold border border-amber-100 active:bg-amber-100 transition-colors"
-                                disabled={isUpdating}
+                                title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
+                                disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
                             >
-                                {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
-                                Paper Entry
+                                {isUpdating === order.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className={`w-3.5 h-3.5 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : ''}`} />}
+                                {order.automation === 'PAPER_ENTRY_DONE' ? 'Recorded' : 'Paper Entry'}
                             </button>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
@@ -357,11 +357,11 @@ Plate No   : ${order.plate_no || '-'}`;
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
-                            disabled={isUpdating}
-                            title="Run Paper Entry (IN/OUT)"
-                            className={`p-1 rounded-full transition-colors ${isUpdating ? 'opacity-50' : 'hover:bg-amber-50'}`}
+                            disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
+                            title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
+                            className={`p-1 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
                         >
-                            {isUpdating ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className="w-4 h-4 text-amber-600" />}
+                            {isUpdating === order.id ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className={`w-4 h-4 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
                         </button>
                         <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
                         <Link
@@ -663,11 +663,25 @@ export default function OrdersPage() {
                 return;
             }
 
-            const { error } = await supabase
+            const { error: insertError } = await supabase
                 .from('paper_transactions')
                 .insert(transactions);
 
-            if (error) throw error;
+            if (insertError) throw insertError;
+
+            // Update order to prevent double entry
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({ automation: 'PAPER_ENTRY_DONE' })
+                .eq('id', order.id);
+
+            if (updateError) {
+                console.warn('Paper transactions saved, but failed to mark order:', updateError);
+            }
+
+            startTransition(() => {
+                setOrders(prev => prev.map(o => o.id === order.id ? { ...o, automation: 'PAPER_ENTRY_DONE' } : o));
+            });
 
             alert(`Successfully added ${transactions.length} paper transaction(s).`);
         } catch (err: any) {
