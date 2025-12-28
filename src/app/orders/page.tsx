@@ -629,13 +629,18 @@ export default function OrdersPage() {
 
             const transactions: any[] = [];
 
+            const inQty = order.paper_order_qty || 0;
+            const outQty = order.paper_required || order.total_print_qty || 0;
+
+            console.log(`Calculating Entry for Order ${order.id}:`, { inQty, outQty });
+
             // 1. PAPER IN - Condition: if paper_type_name is not blank
-            if (order.paper_type_name && (order.paper_order_qty || 0) > 0) {
+            if (order.paper_type_name && inQty > 0) {
                 transactions.push({
                     tx_type: 'IN',
                     paper_type_id: paperTypeId,
                     gsm_id: gsmId,
-                    qty: order.paper_order_qty,
+                    qty: inQty,
                     unit: 'sheets',
                     reference: order.order_id,
                     notes: `Warehouse: ${order.printer_name || 'Stock'}`
@@ -643,12 +648,12 @@ export default function OrdersPage() {
             }
 
             // 2. PAPER OUT - Material required for the job
-            if ((order.paper_required || 0) > 0) {
+            if (outQty > 0) {
                 transactions.push({
                     tx_type: 'OUT',
                     paper_type_id: paperTypeId,
                     gsm_id: gsmId,
-                    qty: order.paper_required,
+                    qty: outQty,
                     unit: 'sheets',
                     reference: order.order_id,
                     notes: `Warehouse: ${order.printer_name || 'Stock'}`
