@@ -151,9 +151,9 @@ export default function InventoryPage() {
                                 <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Paper Type</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">GSM</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Size</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50/50">Current Stock</th>
                                 <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">IN</th>
                                 <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">OUT</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-indigo-50/50">Current Stock</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -179,7 +179,12 @@ export default function InventoryPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500 font-mono tracking-tighter">{item.size_name}</td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right bg-indigo-50/20">
+                                            <span className={`text-base font-black font-mono ${item.net_stock < 0 ? 'text-rose-700' : 'text-slate-900 underline decoration-indigo-200 underline-offset-4'}`}>
+                                                {item.net_stock.toLocaleString()}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right border-l border-slate-50">
                                             <div className="flex items-center justify-end gap-1 text-emerald-600 font-mono font-bold text-xs">
                                                 <ArrowUpRight className="w-3 h-3" />
                                                 {item.total_in.toLocaleString()}
@@ -190,11 +195,6 @@ export default function InventoryPage() {
                                                 <ArrowDownLeft className="w-3 h-3" />
                                                 {item.total_out.toLocaleString()}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right bg-indigo-50/20">
-                                            <span className={`text-sm font-black font-mono ${item.net_stock < 0 ? 'text-rose-700' : 'text-slate-900 underline decoration-indigo-200 underline-offset-4'}`}>
-                                                {item.net_stock.toLocaleString()}
-                                            </span>
                                         </td>
                                     </tr>
                                 ))
