@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database } from 'lucide-react';
 import Link from 'next/link';
 
 // --- Memoized Components for Performance ---
@@ -30,7 +30,7 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 ));
 DetailGroup.displayName = 'DetailGroup';
 
-const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate }: any) => {
+const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry }: any) => {
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm mb-8">
             <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
@@ -66,6 +66,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                 editProgress={editProgress}
                                 setEditProgress={setEditProgress}
                                 handleQuickUpdate={handleQuickUpdate}
+                                handlePaperEntry={handlePaperEntry}
                                 view="table"
                             />
                         ))}
@@ -88,6 +89,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                         editProgress={editProgress}
                         setEditProgress={setEditProgress}
                         handleQuickUpdate={handleQuickUpdate}
+                        handlePaperEntry={handlePaperEntry}
                         view="mobile"
                     />
                 ))}
@@ -122,6 +124,7 @@ const OrderRow = memo(({
     editProgress,
     setEditProgress,
     handleQuickUpdate,
+    handlePaperEntry,
     view = "table"
 }: any) => {
     const [confirming, setConfirming] = useState(false);
@@ -217,6 +220,15 @@ Plate No   : ${order.plate_no || '-'}`;
                             <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold border border-blue-100 active:bg-blue-100 transition-colors">
                                 <UserCheck className="w-3.5 h-3.5" />
                                 Printer
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
+                                title="Run Paper Entry (IN/OUT)"
+                                className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-md text-[10px] font-bold border border-amber-100 active:bg-amber-100 transition-colors"
+                                disabled={isUpdating}
+                            >
+                                {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+                                Paper Entry
                             </button>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
@@ -342,6 +354,14 @@ Plate No   : ${order.plate_no || '-'}`;
                         </button>
                         <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-1 hover:bg-blue-50 rounded-full transition-colors">
                             <UserCheck className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
+                            disabled={isUpdating}
+                            title="Run Paper Entry (IN/OUT)"
+                            className={`p-1 rounded-full transition-colors ${isUpdating ? 'opacity-50' : 'hover:bg-amber-50'}`}
+                        >
+                            {isUpdating ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className="w-4 h-4 text-amber-600" />}
                         </button>
                         <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
                         <Link
@@ -496,7 +516,9 @@ export default function OrdersPage() {
                     dimension,
                     artwork_pdf, 
                     artwork_cdr, 
-                    category_id
+                    category_id,
+                    paper_type_id,
+                    gsm_id
                 )
             `)
             .order('created_at', { ascending: false });
@@ -591,6 +613,70 @@ export default function OrdersPage() {
             });
         }
     }, [editProgress]);
+
+    const handlePaperEntry = useCallback(async (order: any) => {
+        setIsUpdating(order.id);
+
+        try {
+            const paperTypeId = order.products?.paper_type_id;
+            const gsmId = order.products?.gsm_id;
+
+            if (!paperTypeId || !gsmId) {
+                alert('Incomplete product paper data. Cannot create transactions.');
+                setIsUpdating(null);
+                return;
+            }
+
+            const transactions: any[] = [];
+
+            // 1. PAPER IN - Condition: if paper_type_name is not blank
+            if (order.paper_type_name && (order.paper_order_qty || 0) > 0) {
+                transactions.push({
+                    tx_type: 'IN',
+                    paper_type_id: paperTypeId,
+                    gsm_id: gsmId,
+                    qty: order.paper_order_qty,
+                    unit: 'sheets',
+                    reference: order.order_id,
+                    related_order_id: order.id,
+                    notes: `Warehouse: ${order.printer_name || 'Stock'}`
+                });
+            }
+
+            // 2. PAPER OUT - Material required for the job
+            if ((order.paper_required || 0) > 0) {
+                transactions.push({
+                    tx_type: 'OUT',
+                    paper_type_id: paperTypeId,
+                    gsm_id: gsmId,
+                    qty: order.paper_required,
+                    unit: 'sheets',
+                    reference: order.order_id,
+                    related_order_id: order.id,
+                    notes: `Warehouse: ${order.printer_name || 'Stock'}`
+                });
+            }
+
+            if (transactions.length === 0) {
+                alert('No paper quantities found to enter.');
+                setIsUpdating(null);
+                return;
+            }
+
+            const { error } = await supabase
+                .from('paper_transactions')
+                .insert(transactions);
+
+            if (error) throw error;
+
+            alert(`Successfully added ${transactions.length} paper transaction(s).`);
+        } catch (err: any) {
+            console.error('Paper Entry Error:', err);
+            alert('Error entering paper transactions: ' + (err.message || 'Unknown error'));
+        } finally {
+            setIsUpdating(null);
+        }
+    }, []);
 
     const toggleRow = useCallback((id: number) => {
         setExpandedOrderId(prev => prev === id ? null : id);
@@ -725,6 +811,7 @@ export default function OrdersPage() {
                                 editProgress={editProgress}
                                 setEditProgress={setEditProgress}
                                 handleQuickUpdate={handleQuickUpdate}
+                                handlePaperEntry={handlePaperEntry}
                             />
                         ))}
 
