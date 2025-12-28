@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, FileText, Image as ImageIcon, Trash2, Archive, Filter } from 'lucide-react';
+import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, FileText, Image as ImageIcon, Trash2, Archive, Filter, Database } from 'lucide-react';
 import Link from 'next/link';
 
 // Memoized Product Row Component to prevent unnecessary re-renders
@@ -322,6 +322,13 @@ export default function ProductsPage() {
                     Product Catalog
                     <span className="text-[10px] text-emerald-600 font-mono ml-2 border border-emerald-200 bg-emerald-50 px-1 rounded">v2.1 Cleanup</span>
                 </h1>
+                <Link
+                    href="/products/audit"
+                    className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm border border-slate-300 hover:bg-slate-50 transition-colors"
+                >
+                    <Database className="mr-2 h-4 w-4 text-slate-500" />
+                    Audit Data
+                </Link>
                 <Link
                     href="/products/new"
                     className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 transition-colors"
