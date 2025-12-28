@@ -55,32 +55,122 @@ export default function AuditPage() {
         document.body.removeChild(link);
     };
 
+    const [csvData, setCsvData] = useState<Record<string, string>>({});
+    const [stats, setStats] = useState({ match: 0, mismatch: 0, missing: 0 });
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target?.result as string;
+            parseCSV(text);
+        };
+        reader.readAsText(file);
+    };
+
+    const parseCSV = (text: string) => {
+        const lines = text.split(/\r?\n/);
+        const map: Record<string, string> = {};
+
+        // Normalize: Lowercase, trim
+        // Heuristic: Col 0 = Product Name, Col 1 = Special Effects
+        lines.forEach((line) => {
+            if (!line.trim()) return;
+            // Split by comma, handling potential quotes (simple regex)
+            const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+
+            if (cols.length >= 2) {
+                const clean = (s: string) => s ? s.replace(/^"|"$/g, '').trim() : '';
+                const name = clean(cols[0]);
+                const effect = clean(cols[1]);
+
+                // Skip header row if matches "product name"
+                if (name && name.toLowerCase() !== 'product name') {
+                    map[name.toLowerCase()] = effect;
+                }
+            }
+        });
+
+        setCsvData(map);
+        calculateStats(products, map);
+    };
+
+    const calculateStats = (currentProducts: Product[], map: Record<string, string>) => {
+        let match = 0, mismatch = 0, missing = 0;
+        currentProducts.forEach(p => {
+            const normName = (p.product_name || '').toLowerCase().trim();
+            const csvValue = map[normName];
+            if (!csvValue) {
+                missing++;
+            } else if (csvValue === (p.special_effects || '')) {
+                match++;
+            } else {
+                mismatch++;
+            }
+        });
+        setStats({ match, mismatch, missing });
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Link href="/products" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                         <ArrowLeft className="h-5 w-5 text-slate-600" />
                     </Link>
-                    <h1 className="text-2xl font-bold text-slate-900">Data Audit: Special Effects</h1>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Data Audit: Special Effects</h1>
+                        <p className="text-sm text-slate-500">Compare Database vs Legacy CSV</p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
+                    <div className="relative">
+                        <input
+                            type="file"
+                            accept=".csv"
+                            onChange={handleFileUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 font-medium text-sm shadow-sm transition-colors">
+                            <Upload className="h-4 w-4" />
+                            Upload CSV
+                        </button>
+                    </div>
                     <button
                         onClick={fetchData}
                         className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm"
                     >
                         <RefreshCw className="h-4 w-4" />
-                        Refresh
+                        Refresh DB
                     </button>
                     <button
                         onClick={downloadCSV}
                         className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 font-medium text-sm shadow-sm"
                     >
                         <Download className="h-4 w-4" />
-                        Export CSV
+                        Export
                     </button>
                 </div>
             </div>
+
+            {Object.keys(csvData).length > 0 && (
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-center">
+                        <div className="text-2xl font-bold text-emerald-600">{stats.match}</div>
+                        <div className="text-xs font-medium text-emerald-800 uppercase">Matches</div>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-center">
+                        <div className="text-2xl font-bold text-amber-600">{stats.missing}</div>
+                        <div className="text-xs font-medium text-amber-800 uppercase">Missing in CSV</div>
+                    </div>
+                    <div className="bg-red-50 border border-red-100 p-4 rounded-xl text-center">
+                        <div className="text-2xl font-bold text-red-600">{stats.mismatch}</div>
+                        <div className="text-xs font-medium text-red-800 uppercase">Values Differ</div>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -90,17 +180,14 @@ export default function AuditPage() {
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[30%]">
                                     Product Name
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[10%]">
-                                    Code
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-indigo-600 uppercase tracking-wider w-[25%] bg-indigo-50/50">
+                                    DB Value
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-indigo-600 uppercase tracking-wider w-[20%] bg-indigo-50/50">
-                                    Special Effects (DB)
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-emerald-600 uppercase tracking-wider w-[25%] bg-emerald-50/50 border-l border-emerald-100">
+                                    CSV Value
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-[20%]">
-                                    Specs (Ref)
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-emerald-600 uppercase tracking-wider w-[20%] bg-emerald-50/50 border-l border-emerald-100">
-                                    Google Drive Value
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-[20%]">
+                                    Status
                                 </th>
                             </tr>
                         </thead>
@@ -121,26 +208,43 @@ export default function AuditPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                products.map((product, idx) => (
-                                    <tr key={product.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">
-                                            {product.product_name}
-                                        </td>
-                                        <td className="px-6 py-3 text-xs font-mono text-slate-500">
-                                            {product.artwork_code}
-                                        </td>
-                                        <td className="px-6 py-3 text-sm text-indigo-700 font-medium bg-indigo-50/30">
-                                            {product.special_effects || <span className="text-slate-400 italic">Null</span>}
-                                        </td>
-                                        <td className="px-6 py-3 text-xs text-slate-600 line-clamp-2" title={product.specs || ''}>
-                                            {product.specs || '-'}
-                                        </td>
-                                        <td className="px-6 py-3 text-sm border-l border-emerald-100 bg-emerald-50/30">
-                                            {/* Placeholder for visual check */}
-                                            <div className="h-6 w-full border-b border-dashed border-emerald-200"></div>
-                                        </td>
-                                    </tr>
-                                ))
+                                products.map((product, idx) => {
+                                    const normName = (product.product_name || '').toLowerCase().trim();
+                                    const csvVal = csvData[normName];
+                                    const dbVal = product.special_effects || '';
+
+                                    let status = 'neutral';
+                                    let rowClass = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
+
+                                    if (Object.keys(csvData).length > 0) {
+                                        if (!csvVal) status = 'missing';
+                                        else if (csvVal === dbVal) status = 'match';
+                                        else status = 'differ';
+
+                                        if (status === 'differ') rowClass = 'bg-red-50 hover:bg-red-100';
+                                        if (status === 'match') rowClass = 'bg-emerald-50/30 hover:bg-emerald-50';
+                                    }
+
+                                    return (
+                                        <tr key={product.id} className={`${rowClass} transition-colors`}>
+                                            <td className="px-6 py-3 text-sm font-medium text-slate-900">
+                                                {product.product_name}
+                                                <div className="text-[10px] font-mono text-slate-400 font-normal">{product.artwork_code}</div>
+                                            </td>
+                                            <td className="px-6 py-3 text-sm text-indigo-700 font-medium bg-indigo-50/30">
+                                                {dbVal || <span className="text-slate-400 italic">Empty</span>}
+                                            </td>
+                                            <td className="px-6 py-3 text-sm border-l border-emerald-100 bg-emerald-50/30 text-emerald-800 font-medium">
+                                                {csvVal || <span className="text-slate-300 italic">-</span>}
+                                            </td>
+                                            <td className="px-6 py-3 text-center">
+                                                {status === 'match' && <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-700">MATCH</span>}
+                                                {status === 'differ' && <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700 animate-pulse">MISMATCH</span>}
+                                                {status === 'missing' && Object.keys(csvData).length > 0 && <span className="text-xs text-slate-400">Not in CSV</span>}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
