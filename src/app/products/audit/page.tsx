@@ -174,6 +174,37 @@ export default function AuditPage() {
         setStats({ match, mismatch, missing });
     };
 
+    const updateProduct = async (id: string, field: string, value: string) => {
+        try {
+            // Optimistic update
+            setProducts(prev => prev.map(p =>
+                p.id === id ? { ...p, [field]: value } : p
+            ));
+
+            const { error } = await supabase
+                .from('products')
+                .update({ [field]: value })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            // Re-calculate stats with new data
+            if (Object.keys(csvData).length > 0) {
+                // Determine new state to update stats... or just let re-render handle it if we recalc on render? 
+                // We really should recalc stats on product change.
+                const updatedProducts = products.map(p =>
+                    p.id === id ? { ...p, [field]: value } : p
+                );
+                calculateStats(updatedProducts, csvData);
+            }
+
+        } catch (error: any) {
+            console.error('Update failed:', error);
+            alert('Failed to update product: ' + error.message);
+            // Revert strict refresh might be needed but for now we trust optimistic
+        }
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -302,8 +333,27 @@ export default function AuditPage() {
                                                 {product.product_name}
                                                 <div className="text-[10px] font-mono text-slate-400 font-normal">{product.artwork_code}</div>
                                             </td>
-                                            <td className="px-6 py-3 text-sm text-indigo-700 font-medium bg-indigo-50/30">
-                                                {resolvedDbVal}
+                                            <td className="px-6 py-3 text-sm">
+                                                <div className="relative">
+                                                    <select
+                                                        value={product.special_effects || ''}
+                                                        onChange={(e) => updateProduct(product.id, 'special_effects', e.target.value)}
+                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-xs sm:leading-6 bg-white/50 hover:bg-white"
+                                                    >
+                                                        <option value="">Select Effect...</option>
+                                                        {Object.entries(effectsMap).map(([id, name]) => (
+                                                            <option key={id} value={id}>
+                                                                {name}
+                                                            </option>
+                                                        ))}
+                                                        {/* Handle case where current value is NOT in map (legacy text) */}
+                                                        {product.special_effects && !effectsMap[product.special_effects] && (
+                                                            <option value={product.special_effects} disabled>
+                                                                {product.special_effects} (Legacy/Unknown)
+                                                            </option>
+                                                        )}
+                                                    </select>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-3 text-sm border-l border-emerald-100 bg-emerald-50/30 text-emerald-800 font-medium">
                                                 {csvVal || <span className="text-slate-300 italic">-</span>}
