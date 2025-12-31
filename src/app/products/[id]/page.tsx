@@ -75,12 +75,19 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
         notFound();
     }
 
-    // Effect Name Resolver
+    // Effect Name Resolver - handles both IDs and Names
     const getEffectNames = (str: string | null) => {
         if (!str) return [];
-        return str.split(/[|/]/).map(id => id.trim()).filter(Boolean).map(id => {
-            const e = maps.effects.get(parseInt(id));
-            return e ? e.name : id;
+        return str.split(/[|/]/).map(part => part.trim()).filter(Boolean).map(part => {
+            // Check if it's a numeric ID
+            const numId = parseInt(part);
+            if (!isNaN(numId) && String(numId) === part) {
+                // It's an ID, resolve it
+                const e = maps.effects.get(numId);
+                return e ? e.name : part;
+            }
+            // It's already a name, return as-is
+            return part;
         });
     };
 
@@ -92,6 +99,18 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
     };
 
     const effectNames = product ? getEffectNames(product.special_effects) : [];
+
+    // Specs Resolver for product details - also handles nested IDs
+    const resolvedSpecs = product?.specs ? (product.specs as string).split('|').map((part: string) => {
+        const trimmed = part.trim();
+        // Check if this part is a lone ID
+        const numId = parseInt(trimmed);
+        if (!isNaN(numId) && String(numId) === trimmed) {
+            const e = maps.effects.get(numId);
+            return e ? e.name : trimmed;
+        }
+        return trimmed;
+    }).join(' | ') : '-';
 
     return (
         <div className="space-y-8 max-w-6xl mx-auto">
@@ -217,7 +236,7 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
                             <div className="md:col-span-2">
                                 <dt className="text-xs font-medium text-slate-500 uppercase mb-1">Detailed Specs / Notes</dt>
                                 <p className="mt-1 text-sm text-slate-900 whitespace-pre-wrap rounded-md bg-slate-50 p-3 border border-slate-200 min-h-[80px]">
-                                    {product.specs || product.spec || '-'}
+                                    {resolvedSpecs}
                                 </p>
                             </div>
                         </div>

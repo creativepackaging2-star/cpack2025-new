@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
-import { Loader2, Save, X, Upload } from 'lucide-react';
+import { Loader2, Save, X } from 'lucide-react';
 import Link from 'next/link';
 
 type Props = {
@@ -142,35 +142,41 @@ export default function ProductForm({ initialData }: Props) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Generate a standard name: ProductName_OriginalName.ext
-        const ext = file.name.split('.').pop();
-        const baseName = formData.product_name ? formData.product_name.replace(/\s+/g, '_') : 'Product';
-        const typeSuffix = fieldName === 'artwork_pdf' ? 'ART' : 'CDR';
-        const finalName = `${baseName}_${typeSuffix}.${ext}`;
-
-        // Create FormData
-        const data = new FormData();
-        data.append('file', file);
-        data.append('filename', finalName);
-
-        // Upload
         try {
-            // Show some loading indicator if we had one, but strict alert for now
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: data,
-            });
-            const json = await res.json();
+            alert('Uploading to Storage...');
 
-            if (json.success) {
-                setFormData(prev => ({ ...prev, [fieldName]: json.filename }));
-                alert(`File uploaded successfully as: ${json.filename}`);
-            } else {
-                alert('Upload failed: ' + json.message);
+            // 1. Sanitize filename
+            const ext = file.name.split('.').pop();
+            const baseName = formData.product_name ? formData.product_name.replace(/[^a-zA-Z0-9]/g, '_') : 'Product';
+            const typeSuffix = fieldName === 'artwork_pdf' ? 'ART' : 'CDR';
+            const finalName = `${baseName}_${typeSuffix}_${Date.now()}.${ext}`;
+            const filePath = `${finalName}`;
+
+            // 2. Upload to Supabase Storage (Bucket: 'product-files')
+            // Ensure this bucket exists in your Supabase Dashboard -> Storage
+            const { data, error } = await supabase.storage
+                .from('product-files')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: true
+                });
+
+            if (error) throw error;
+
+            // 3. Get Public URL
+            const { data: urlData } = supabase.storage
+                .from('product-files')
+                .getPublicUrl(filePath);
+
+            if (urlData.publicUrl) {
+                setFormData(prev => ({ ...prev, [fieldName]: urlData.publicUrl }));
+                alert('File uploaded successfully!');
             }
-        } catch (err) {
-            console.error(err);
-            alert('Upload error. Check console.');
+
+        } catch (err: any) {
+            console.error('Upload Error:', err);
+            // Show full error details
+            alert(`Upload Failed!\n\nDetails: ${JSON.stringify(err, null, 2)}\n\nMessage: ${err.message}`);
         }
     };
 
@@ -187,6 +193,79 @@ export default function ProductForm({ initialData }: Props) {
             if (initialData?.id) {
                 const { error } = await supabase.from('products').update(payload).eq('id', initialData.id);
                 if (error) throw error;
+
+                // --- APP-LEVEL SYNC: Update linked orders ---
+                try {
+                    // Fetch the updated product (to get generated 'specs' etc.)
+                    const { data: updatedProduct } = await supabase
+                        .from('products')
+                        .select('specs, product_name, special_effects, dimension, plate_no, ink, ups, artwork_code, artwork_pdf, artwork_cdr, size_id')
+                        .eq('id', initialData.id)
+                        .single();
+
+                    if (updatedProduct) {
+                        // Resolve Special Effect Names for the Order Snapshot
+                        const resolvedSpecialEffects = selectedEffects.map(id => {
+                            const match = specialEffects.find(e => String(e.id) === String(id));
+                            return match ? match.name : id;
+                        }).join(' | ');
+
+                        // Resolve Spec String for the Order Snapshot (Human Readable)
+                        const sizeName = sizes.find(s => s.id === updatedProduct.size_id)?.name || '';
+                        const resolvedSpecs = [
+                            sizeName,
+                            updatedProduct.ups ? `UPS: ${updatedProduct.ups}` : '',
+                            updatedProduct.dimension,
+                            resolvedSpecialEffects
+                        ].filter(Boolean).join(' | ');
+
+                        const orderUpdates: any = {
+                            product_name: updatedProduct.product_name,
+                            specs: resolvedSpecs, // Use clean resolved specs
+                            product_specs: resolvedSpecs,
+                            special_effects: resolvedSpecialEffects, // Use resolved names
+                            dimension: updatedProduct.dimension,
+                            plate_no: updatedProduct.plate_no,
+                            ink: updatedProduct.ink,
+                            artwork_code: updatedProduct.artwork_code,
+                            artwork_pdf: updatedProduct.artwork_pdf,
+                            artwork_cdr: updatedProduct.artwork_cdr,
+                        };
+
+                        // Safe UPS sync
+                        if (updatedProduct.ups && !isNaN(Number(updatedProduct.ups))) {
+                            const upsNum = Number(updatedProduct.ups);
+                            orderUpdates.ups = upsNum;
+                            orderUpdates.product_ups = upsNum;
+                        }
+
+                        console.log('--- SYNC DEBUG START ---');
+                        console.log('Target Product ID:', initialData.id);
+                        console.log('Updates Payload:', orderUpdates);
+
+                        const { error: syncError, count } = await supabase
+                            .from('orders')
+                            .update(orderUpdates)
+                            .eq('product_id', initialData.id)
+                            .select();
+
+                        console.log('Sync Result - Count:', count);
+                        console.log('Sync Result - Error:', syncError);
+                        console.log('--- SYNC DEBUG END ---');
+
+                        if (syncError) {
+                            console.error('Sync to orders failed:', syncError);
+                            alert(`⚠️ Product saved, but failed to auto-update linked orders.\n\nError: ${syncError.message}\nCode: ${syncError.code}\n\nPlease update orders manually if needed.`);
+                        } else {
+                            console.log('Successfully synced changes to linked orders.');
+                        }
+                    }
+                } catch (syncErr: any) {
+                    console.error('Sync logic error:', syncErr);
+                    alert(`⚠️ Product saved, but sync logic crashed.\n${syncErr.message}`);
+                }
+                // --------------------------------------------
+
             } else {
                 const { error } = await supabase.from('products').insert([payload]);
                 if (error) throw error;
@@ -359,25 +438,49 @@ export default function ProductForm({ initialData }: Props) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="label">Artwork PDF</label>
-                            <div className="mt-1 flex items-center space-x-2">
-                                <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    Select PDF
-                                    <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileChange(e, 'artwork_pdf')} />
-                                </label>
-                                <span className="text-xs text-slate-500 truncate max-w-[200px]">{formData.artwork_pdf || 'No file selected'}</span>
+                            <div className="space-y-2">
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={(e) => handleFileChange(e, 'artwork_pdf')}
+                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                />
+                                <input
+                                    name="artwork_pdf"
+                                    value={formData.artwork_pdf || ''}
+                                    onChange={handleChange}
+                                    className="input-field"
+                                    placeholder="or paste Drive link..."
+                                />
                             </div>
+                            {formData.artwork_pdf && (
+                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline mt-1 block">
+                                    View File →
+                                </a>
+                            )}
                         </div>
                         <div>
                             <label className="label">Artwork CDR</label>
-                            <div className="mt-1 flex items-center space-x-2">
-                                <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    Select CDR
-                                    <input type="file" accept=".cdr" className="hidden" onChange={(e) => handleFileChange(e, 'artwork_cdr')} />
-                                </label>
-                                <span className="text-xs text-slate-500 truncate max-w-[200px]">{formData.artwork_cdr || 'No file selected'}</span>
+                            <div className="space-y-2">
+                                <input
+                                    type="file"
+                                    accept=".cdr,.zip,.rar" // CDR/Archives
+                                    onChange={(e) => handleFileChange(e, 'artwork_cdr')}
+                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                />
+                                <input
+                                    name="artwork_cdr"
+                                    value={formData.artwork_cdr || ''}
+                                    onChange={handleChange}
+                                    className="input-field"
+                                    placeholder="or paste Drive link..."
+                                />
                             </div>
+                            {formData.artwork_cdr && (
+                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline mt-1 block">
+                                    View File →
+                                </a>
+                            )}
                         </div>
                         <div className="md:col-span-1">
                             <label className="label">Delivery Address</label>

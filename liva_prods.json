@@ -1,0 +1,38 @@
+[
+  {
+    "id": "306b8bab-1132-426e-9366-fa8e5e38347c",
+    "product_name": "LivaDrine 5mg outer Cartons ",
+    "artwork_code": "YKPMDBXIN/OC1",
+    "sku": "1001"
+  },
+  {
+    "id": "d5f31d50-3206-497a-bf47-aeaa2ae664d2",
+    "product_name": "LivaDrine 5mg inner Cartons",
+    "artwork_code": "YKPMDBXIN/C1",
+    "sku": "1001"
+  },
+  {
+    "id": "43f3cfe7-c36c-4a2c-a047-472ebea58953",
+    "product_name": "LivaDrine 5mg inserts ",
+    "artwork_code": "YKPMDBXIN/I1",
+    "sku": "1001"
+  },
+  {
+    "id": "c97cf576-50a6-4e2c-966e-b9b21cd8de8c",
+    "product_name": "LivaDrine 2.5mg inner Cartons",
+    "artwork_code": "YKPMDCXIN/C1",
+    "sku": "1001"
+  },
+  {
+    "id": "427b1af0-4f78-4c0f-9e7e-62e49f2ed913",
+    "product_name": "LivaDrine 2.5mg outer Cartons",
+    "artwork_code": "YkPMDCXIN/OC1",
+    "sku": "1001"
+  },
+  {
+    "id": "5d5e982a-bcca-4b0d-a229-6aada97c1b2f",
+    "product_name": "LivaDrine 2.5mg inserts",
+    "artwork_code": "YKPMDCXIN/I1 xx",
+    "sku": "1001"
+  }
+]

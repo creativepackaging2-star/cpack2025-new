@@ -1,0 +1,10 @@
+--- VERIFYING SPECIAL EFFECTS SYNC ---
+Creating Test Product with Effects...
+Product Created. Specs in DB: 10x10x10
+Creating Linked Order...
+Updating Product (Adding New Effect)...
+Update Error: {"code":"42804","details":null,"hint":"You will need to rewrite or cast the expression.","message":"column \"ups\" is of type integer but expression is of type text"}
+--- RESULTS ---
+Product Specs: 10x10x10
+Order Specs  : 10x10x10
+Success? NO

@@ -799,9 +799,28 @@ Plate No   : ${formData.plate_no || '-'}`;
                             </div>
                         </div>
 
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {formData.artwork_pdf && (
+                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-colors">
+                                    <FileText className="w-3.5 h-3.5" />
+                                    ART PDF
+                                </a>
+                            )}
+                            {formData.artwork_cdr && (
+                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-bold border border-orange-100 hover:bg-orange-100 transition-colors">
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    ART CDR
+                                </a>
+                            )}
+                        </div>
+
                         {product?.product_image && (
                             <div className="mt-6 rounded-lg overflow-hidden bg-white border border-slate-100 p-1">
-                                <img src={`/uploads/${product.product_image}`} alt="Ref" className="w-full h-32 object-contain" />
+                                <img
+                                    src={product.product_image.startsWith('http') ? product.product_image : `/uploads/${product.product_image}`}
+                                    alt="Ref"
+                                    className="w-full h-32 object-contain"
+                                />
                                 <div className="text-[8px] text-center text-slate-300 font-bold uppercase mt-1">Ref Image</div>
                             </div>
                         )}

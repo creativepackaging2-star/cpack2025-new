@@ -1,0 +1,6 @@
+{
+  "order_id": 1467,
+  "snapshot_code": "YKPMDBXIN/OC1",
+  "linked_product_code": "YKPMDBXIN/OC1",
+  "linked_product_id": "306b8bab-1132-426e-9366-fa8e5e38347c"
+}

@@ -208,10 +208,10 @@ Plate No   : ${order.plate_no || '-'}`;
             <div className={`p-4 ${isExpanded ? 'bg-indigo-50/30' : 'bg-white'} border-l-4 ${s === 'hold' ? 'border-red-500' : s === 'ready' ? 'border-emerald-500' : 'border-transparent'}`} onClick={() => toggleRow(order.id)}>
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                        <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled'}</div>
+                        <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
-                                {order.artwork_code || order.products?.artwork_code || '-'}
+                                {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
                             <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
                                 <MessageCircle className="w-3.5 h-3.5" />
@@ -305,10 +305,10 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2">
-                    <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.product_name || order.products?.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
-                            {order.artwork_code || order.products?.artwork_code || '-'}
+                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                            {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
                     </div>
                 </td>
@@ -363,6 +363,17 @@ Plate No   : ${order.plate_no || '-'}`;
                         >
                             {isUpdating === order.id ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className={`w-4 h-4 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
                         </button>
+                        <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+                        {order.artwork_pdf && (
+                            <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View Artwork PDF" className="p-1 hover:bg-red-50 rounded-full transition-colors">
+                                <FileText className="w-4 h-4 text-red-500" />
+                            </a>
+                        )}
+                        {order.artwork_cdr && (
+                            <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View Artwork CDR" className="p-1 hover:bg-orange-50 rounded-full transition-colors">
+                                <Edit className="w-4 h-4 text-orange-500" />
+                            </a>
+                        )}
                         <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
                         <Link
                             href={`/orders/${order.id}/coa`}
@@ -442,8 +453,8 @@ Plate No   : ${order.plate_no || '-'}`;
                                     </div>
                                 )}
                                 <div className="flex flex-wrap gap-2 pt-2">
-                                    {order.artwork_pdf && <Link href={`/uploads/${order.artwork_pdf}`} target="_blank"><DocBadge label="PDF" /></Link>}
-                                    {order.artwork_cdr && <Link href={`/uploads/${order.artwork_cdr}`} target="_blank"><DocBadge label="CDR" /></Link>}
+                                    {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer"><DocBadge label="PDF" /></a>}
+                                    {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer"><DocBadge label="CDR" /></a>}
                                 </div>
                             </div>
                         </div>
