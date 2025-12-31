@@ -87,11 +87,11 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                 <div className="flex items-center justify-center gap-2">
                     {product.artwork_pdf ? (
                         <a
-                            href={`/uploads/${product.artwork_pdf}`}
-                            download
+                            href={product.artwork_pdf}
                             target="_blank"
+                            rel="noopener noreferrer"
                             className="group relative"
-                            title={`Download ${product.artwork_pdf}`}
+                            title={`View ${product.artwork_pdf}`}
                         >
                             <FileText className="h-5 w-5 text-red-500 cursor-pointer hover:scale-110 transition-transform" />
                             <span className="sr-only">PDF Available</span>
@@ -100,11 +100,11 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
 
                     {product.artwork_cdr ? (
                         <a
-                            href={`/uploads/${product.artwork_cdr}`}
-                            download
+                            href={product.artwork_cdr}
                             target="_blank"
+                            rel="noopener noreferrer"
                             className="group relative"
-                            title={`Download ${product.artwork_cdr}`}
+                            title={`View ${product.artwork_cdr}`}
                         >
                             <div className="h-5 w-5 rounded bg-amber-500 text-[8px] font-bold text-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
                                 CDR
@@ -510,12 +510,12 @@ const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
             <div className="flex items-center justify-between gap-3 pt-1">
                 <div className="flex gap-2">
                     {product.artwork_pdf && (
-                        <a href={`/uploads/${product.artwork_pdf}`} target="_blank" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
+                        <a href={product.artwork_pdf} target="_blank" rel="noopener noreferrer" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
                             <FileText className="h-4 w-4" />
                         </a>
                     )}
                     {product.artwork_cdr && (
-                        <a href={`/uploads/${product.artwork_cdr}`} target="_blank" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
+                        <a href={product.artwork_cdr} target="_blank" rel="noopener noreferrer" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
                             <div className="text-[8px] font-black">CDR</div>
                         </a>
                     )}

@@ -207,24 +207,24 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
                             <DetailItem label="Artwork PDF" value={
                                 product.artwork_pdf ? (
                                     <a
-                                        href={`/uploads/${product.artwork_pdf}`}
-                                        download
+                                        href={product.artwork_pdf}
                                         target="_blank"
+                                        rel="noopener noreferrer"
                                         className="text-indigo-600 underline flex items-center gap-1 hover:text-indigo-800"
                                     >
-                                        <FileText className="h-4 w-4" /> {product.artwork_pdf}
+                                        <FileText className="h-4 w-4" /> {product.artwork_pdf.split('/').pop()}
                                     </a>
                                 ) : '-'
                             } />
                             <DetailItem label="Artwork CDR" value={
                                 product.artwork_cdr ? (
                                     <a
-                                        href={`/uploads/${product.artwork_cdr}`}
-                                        download
+                                        href={product.artwork_cdr}
                                         target="_blank"
+                                        rel="noopener noreferrer"
                                         className="text-indigo-600 underline flex items-center gap-1 hover:text-indigo-800"
                                     >
-                                        <Upload className="h-4 w-4" /> {product.artwork_cdr}
+                                        <Upload className="h-4 w-4" /> {product.artwork_cdr.split('/').pop()}
                                     </a>
                                 ) : '-'
                             } />
