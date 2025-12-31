@@ -773,7 +773,6 @@ export default function OrdersPage() {
                     <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                         Orders
                         <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                        <span className="hidden sm:inline-flex text-[10px] text-indigo-600 font-mono ml-2 border border-indigo-200 bg-indigo-50 px-2 py-0.5 rounded shadow-sm font-bold">v0.2.0 ✓</span>
                     </h2>
                     <Link href="/orders/new" className="lg:hidden inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-1 h-4 w-4" />

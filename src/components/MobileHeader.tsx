@@ -94,7 +94,6 @@ export function MobileHeader() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-white">Admin User</p>
-                            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1">v0.2.0-stable</p>
                         </div>
                     </div>
                 </div>

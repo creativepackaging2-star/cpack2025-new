@@ -318,17 +318,9 @@ export default function ProductsPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                     Product Catalog
-                    <span className="text-[10px] text-emerald-600 font-mono ml-2 border border-emerald-200 bg-emerald-50 px-1 rounded">v2.1 Cleanup</span>
                 </h1>
-                <Link
-                    href="/products/audit"
-                    className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm border border-slate-300 hover:bg-slate-50 transition-colors"
-                >
-                    <Database className="mr-2 h-4 w-4 text-slate-500" />
-                    Audit Data
-                </Link>
                 <Link
                     href="/products/new"
                     className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 transition-colors"

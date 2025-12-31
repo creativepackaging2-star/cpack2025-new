@@ -35,7 +35,7 @@ const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
                 isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
             )}
         />
-        {!isCollapsed && <span className="text-sm font-semibold tracking-wide whitespace-nowrap">{item.name}</span>}
+        {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap will-change-transform">{item.name}</span>}
     </Link>
 ));
 NavItem.displayName = 'NavItem';
@@ -88,7 +88,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                     </div>
                     <div className="overflow-hidden">
                         <p className="text-sm font-bold text-white truncate">Admin User</p>
-                        <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-0.5">v0.2.0-stable</p>
                     </div>
                 </div>
             </div>

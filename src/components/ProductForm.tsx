@@ -153,7 +153,7 @@ export default function ProductForm({ initialData }: Props) {
             const ext = fieldName === 'artwork_pdf' ? 'pdf' : 'cdr';
             const cleanName = (formData.product_name || 'Product').replace(/[/\\?%*:|"<>]/g, '-').trim();
             const finalName = `${cleanName}.${ext}`;
-            const filePath = `artworks/${finalName}`;
+            const filePath = finalName;
 
             // 2. Upload to Supabase Storage (Bucket: 'product-files')
             const { error } = await supabase.storage
