@@ -9,8 +9,15 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Print Manufacturing App",
-  description: "Managed by CPack",
+  title: "CPack Manufacturing",
+  description: "Live Production Tracking & Order Management",
+  themeColor: "#4f46e5",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CPack",
+  },
 };
 
 export default function RootLayout({
