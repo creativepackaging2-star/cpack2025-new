@@ -369,12 +369,12 @@ Plate No   : ${order.plate_no || '-'}`;
                             <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
                             {order.artwork_pdf && (
                                 <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
-                                    <PdfLogo className="w-8 h-4" />
+                                    <PdfLogo className="w-6 h-6" />
                                 </a>
                             )}
                             {order.artwork_cdr && (
                                 <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
-                                    <CdrLogo className="w-8 h-4" />
+                                    <CdrLogo className="w-6 h-6" />
                                 </a>
                             )}
                         </div>
@@ -463,8 +463,8 @@ Plate No   : ${order.plate_no || '-'}`;
                                     </div>
                                 )}
                                 <div className="flex flex-wrap gap-2 pt-2">
-                                    {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF"><PdfLogo className="w-10 h-5 text-[10px]" /></a>}
-                                    {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR"><CdrLogo className="w-10 h-5 text-[10px]" /></a>}
+                                    {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF"><PdfLogo className="w-8 h-8" /></a>}
+                                    {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR"><CdrLogo className="w-8 h-8" /></a>}
                                 </div>
                             </div>
                         </div>

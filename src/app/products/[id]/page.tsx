@@ -213,7 +213,7 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                                     >
-                                        <PdfLogo className="w-10 h-5" />
+                                        <PdfLogo className="w-8 h-8" />
                                         <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px]">{product.artwork_pdf.split('/').pop()}</span>
                                     </a>
                                 ) : '-'
@@ -226,7 +226,7 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                                     >
-                                        <CdrLogo className="w-10 h-5" />
+                                        <CdrLogo className="w-8 h-8" />
                                         <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px]">{product.artwork_cdr.split('/').pop()}</span>
                                     </a>
                                 ) : '-'

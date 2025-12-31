@@ -94,9 +94,9 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                             className="group relative"
                             title="View PDF"
                         >
-                            <PdfLogo className="w-10 h-5" />
+                            <PdfLogo className="w-7 h-7" />
                         </a>
-                    ) : <span className="w-8 h-4 invisible" />}
+                    ) : <span className="w-7 h-7 invisible" />}
 
                     {product.artwork_cdr ? (
                         <a
@@ -106,9 +106,9 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                             className="group relative"
                             title="View CDR"
                         >
-                            <CdrLogo className="w-10 h-5" />
+                            <CdrLogo className="w-7 h-7" />
                         </a>
-                    ) : <span className="w-8 h-4 invisible" />}
+                    ) : <span className="w-7 h-7 invisible" />}
                 </div>
             </td>
 
@@ -500,13 +500,13 @@ const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
             <div className="flex items-center justify-between gap-3 pt-1">
                 <div className="flex gap-2">
                     {product.artwork_pdf && (
-                        <a href={product.artwork_pdf} target="_blank" rel="noopener noreferrer" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
-                            <PdfLogo className="w-10 h-5" />
+                        <a href={product.artwork_pdf} target="_blank" rel="noopener noreferrer" className="p-1 hover:scale-105 transition-transform">
+                            <PdfLogo className="w-10 h-10" />
                         </a>
                     )}
                     {product.artwork_cdr && (
-                        <a href={product.artwork_cdr} target="_blank" rel="noopener noreferrer" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
-                            <CdrLogo className="w-10 h-5" />
+                        <a href={product.artwork_cdr} target="_blank" rel="noopener noreferrer" className="p-1 hover:scale-105 transition-transform">
+                            <CdrLogo className="w-10 h-10" />
                         </a>
                     )}
                 </div>
