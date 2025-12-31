@@ -182,6 +182,42 @@ export default function ProductForm({ initialData }: Props) {
         }
     };
 
+    const handleDeleteFile = async (fieldName: 'artwork_pdf' | 'artwork_cdr') => {
+        const fileUrl = formData[fieldName];
+        if (!fileUrl) return;
+
+        if (!window.confirm(`Are you sure you want to permanently delete this ${fieldName === 'artwork_pdf' ? 'PDF' : 'CDR'}?`)) return;
+
+        const setUploading = fieldName === 'artwork_pdf' ? setUploadingPdf : setUploadingCdr;
+        setUploading(true);
+
+        try {
+            // 1. Extract path from URL (Supabase URL structure)
+            // Example: .../storage/v1/object/public/product-files/artworks/Product.pdf
+            const pathParts = fileUrl.split('/product-files/');
+            const filePath = pathParts.length > 1 ? pathParts[1] : null;
+
+            if (filePath) {
+                // 2. Delete from Storage
+                const { error } = await supabase.storage
+                    .from('product-files')
+                    .remove([filePath]);
+
+                if (error) throw error;
+            }
+
+            // 3. Clear from Form
+            setFormData(prev => ({ ...prev, [fieldName]: '' }));
+            alert('File deleted successfully.');
+
+        } catch (err: any) {
+            console.error('Delete Error:', err);
+            alert(`Failed to delete file: ${err.message}`);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -394,9 +430,18 @@ export default function ProductForm({ initialData }: Props) {
                                 />
                             </div>
                             {formData.artwork_pdf && (
-                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline mt-1 block font-bold">
-                                    View Uploaded PDF →
-                                </a>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline font-bold">
+                                        View Uploaded PDF →
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteFile('artwork_pdf')}
+                                        className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-100 hover:bg-red-600 hover:text-white transition-colors"
+                                    >
+                                        Delete File
+                                    </button>
+                                </div>
                             )}
                         </div>
                         <div>
@@ -426,9 +471,18 @@ export default function ProductForm({ initialData }: Props) {
                                 />
                             </div>
                             {formData.artwork_cdr && (
-                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline mt-1 block font-bold">
-                                    View Uploaded CDR →
-                                </a>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline font-bold">
+                                        View Uploaded CDR →
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteFile('artwork_cdr')}
+                                        className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-100 hover:bg-red-600 hover:text-white transition-colors"
+                                    >
+                                        Delete File
+                                    </button>
+                                </div>
                             )}
                         </div>
                         <div className="md:col-span-1">
