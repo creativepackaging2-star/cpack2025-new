@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
+import { twMerge } from 'tailwind-merge';
 import { Loader2, Save, X } from 'lucide-react';
 import Link from 'next/link';
 
@@ -140,6 +141,9 @@ export default function ProductForm({ initialData }: Props) {
 
     const [uploadingPdf, setUploadingPdf] = useState(false);
     const [uploadingCdr, setUploadingCdr] = useState(false);
+    const [confirmDeletePdf, setConfirmDeletePdf] = useState(false);
+    const [confirmDeleteCdr, setConfirmDeleteCdr] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'artwork_pdf' | 'artwork_cdr') => {
         const file = e.target.files?.[0];
@@ -151,9 +155,9 @@ export default function ProductForm({ initialData }: Props) {
         try {
             // 1. Precise Naming: [Product Name].pdf or [Product Name].cdr
             const ext = fieldName === 'artwork_pdf' ? 'pdf' : 'cdr';
-            const cleanName = (formData.product_name || 'Product').replace(/[/\\?%*:|"<>]/g, '-').trim();
+            const cleanName = (formData.product_name || 'Product').replace(/[/\\?%*:|"<>]/g, '').trim();
             const finalName = `${cleanName}.${ext}`;
-            const filePath = finalName;
+            const filePath = finalName; // Save at root
 
             // 2. Upload to Supabase Storage (Bucket: 'product-files')
             const { error } = await supabase.storage
@@ -171,7 +175,9 @@ export default function ProductForm({ initialData }: Props) {
                 .getPublicUrl(filePath);
 
             if (urlData.publicUrl) {
-                setFormData(prev => ({ ...prev, [fieldName]: urlData.publicUrl }));
+                startTransition(() => {
+                    setFormData(prev => ({ ...prev, [fieldName]: urlData.publicUrl }));
+                });
             }
 
         } catch (err: any) {
@@ -186,29 +192,40 @@ export default function ProductForm({ initialData }: Props) {
         const fileUrl = formData[fieldName];
         if (!fileUrl) return;
 
-        if (!window.confirm(`Are you sure you want to permanently delete this ${fieldName === 'artwork_pdf' ? 'PDF' : 'CDR'}?`)) return;
+        const isPdf = fieldName === 'artwork_pdf';
+        const hasConfirmed = isPdf ? confirmDeletePdf : confirmDeleteCdr;
 
-        const setUploading = fieldName === 'artwork_pdf' ? setUploadingPdf : setUploadingCdr;
+        if (!hasConfirmed) {
+            if (isPdf) setConfirmDeletePdf(true);
+            else setConfirmDeleteCdr(true);
+
+            // Auto-reset confirmation after 4 seconds
+            setTimeout(() => {
+                if (isPdf) setConfirmDeletePdf(false);
+                else setConfirmDeleteCdr(false);
+            }, 4000);
+            return;
+        }
+
+        const setUploading = isPdf ? setUploadingPdf : setUploadingCdr;
         setUploading(true);
 
         try {
-            // 1. Extract path from URL (Supabase URL structure)
-            // Example: .../storage/v1/object/public/product-files/artworks/Product.pdf
             const pathParts = fileUrl.split('/product-files/');
             const filePath = pathParts.length > 1 ? pathParts[1] : null;
 
             if (filePath) {
-                // 2. Delete from Storage
                 const { error } = await supabase.storage
                     .from('product-files')
                     .remove([filePath]);
-
                 if (error) throw error;
             }
 
-            // 3. Clear from Form
-            setFormData(prev => ({ ...prev, [fieldName]: '' }));
-            alert('File deleted successfully.');
+            startTransition(() => {
+                setFormData(prev => ({ ...prev, [fieldName]: '' }));
+                if (isPdf) setConfirmDeletePdf(false);
+                else setConfirmDeleteCdr(false);
+            });
 
         } catch (err: any) {
             console.error('Delete Error:', err);
@@ -437,9 +454,14 @@ export default function ProductForm({ initialData }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteFile('artwork_pdf')}
-                                        className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-100 hover:bg-red-600 hover:text-white transition-colors"
+                                        className={twMerge(
+                                            "text-[10px] px-2 py-0.5 rounded border transition-all font-bold",
+                                            confirmDeletePdf
+                                                ? "bg-amber-500 text-white border-amber-600 animate-pulse"
+                                                : "bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white"
+                                        )}
                                     >
-                                        Delete File
+                                        {confirmDeletePdf ? 'Click again to confirm' : 'Delete File'}
                                     </button>
                                 </div>
                             )}
@@ -478,9 +500,14 @@ export default function ProductForm({ initialData }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteFile('artwork_cdr')}
-                                        className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-100 hover:bg-red-600 hover:text-white transition-colors"
+                                        className={twMerge(
+                                            "text-[10px] px-2 py-0.5 rounded border transition-all font-bold",
+                                            confirmDeleteCdr
+                                                ? "bg-amber-500 text-white border-amber-600 animate-pulse"
+                                                : "bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white"
+                                        )}
                                     >
-                                        Delete File
+                                        {confirmDeleteCdr ? 'Click again to confirm' : 'Delete File'}
                                     </button>
                                 </div>
                             )}

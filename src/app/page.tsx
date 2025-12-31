@@ -59,7 +59,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard Overview</h2>
-        <p className="text-sm text-slate-500 font-medium">Live System Status v0.2.0</p>
+        <p className="text-sm text-slate-500 font-medium">Live System Status</p>
       </div>
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
@@ -112,11 +112,14 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-500 font-medium">Product-Order Sync</span>
-              <span className="text-indigo-600 font-bold">Active v2.0</span>
+              <span className="text-indigo-600 font-bold">Active</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500 font-medium">Google Drive API</span>
-              <span className="text-slate-400 font-bold italic">Configuring...</span>
+              <span className="text-slate-500 font-medium">Supabase Storage</span>
+              <span className="text-emerald-600 font-bold flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                Active
+              </span>
             </div>
             <div className="pt-4 border-t border-slate-100">
               <p className="text-[11px] text-slate-400 italic">
