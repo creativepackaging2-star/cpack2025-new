@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, FileText, Image as ImageIcon, Trash2, Archive, Filter, Database } from 'lucide-react';
+import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database } from 'lucide-react';
 import Link from 'next/link';
+import { PdfLogo, CdrLogo } from '@/components/FileLogos';
 
 // Memoized Product Row Component to prevent unnecessary re-renders
 const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
@@ -40,7 +41,7 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                 <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-300">
                         {product.product_image ? (
-                            <ImageIcon className="h-5 w-5 text-slate-400" />
+                            <img src={product.product_image} alt={product.product_name || 'Product Image'} className="h-full w-full object-cover rounded-lg" />
                         ) : (
                             <span className="text-xs font-bold text-slate-400">IMG</span>
                         )}
@@ -91,12 +92,11 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group relative"
-                            title={`View ${product.artwork_pdf}`}
+                            title="View PDF"
                         >
-                            <FileText className="h-5 w-5 text-red-500 cursor-pointer hover:scale-110 transition-transform" />
-                            <span className="sr-only">PDF Available</span>
+                            <PdfLogo className="w-10 h-5" />
                         </a>
-                    ) : <span className="w-5" />}
+                    ) : <span className="w-8 h-4 invisible" />}
 
                     {product.artwork_cdr ? (
                         <a
@@ -104,13 +104,11 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group relative"
-                            title={`View ${product.artwork_cdr}`}
+                            title="View CDR"
                         >
-                            <div className="h-5 w-5 rounded bg-amber-500 text-[8px] font-bold text-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                                CDR
-                            </div>
+                            <CdrLogo className="w-10 h-5" />
                         </a>
-                    ) : <span className="w-5" />}
+                    ) : <span className="w-8 h-4 invisible" />}
                 </div>
             </td>
 
@@ -470,7 +468,7 @@ const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
                 <div className="flex items-center gap-3">
                     <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
                         {product.product_image ? (
-                            <ImageIcon className="h-6 w-6 text-slate-400" />
+                            <img src={product.product_image} alt={product.product_name || 'Product Image'} className="h-full w-full object-cover rounded-lg" />
                         ) : (
                             <span className="text-[10px] font-black text-slate-400">IMG</span>
                         )}
@@ -503,12 +501,12 @@ const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
                 <div className="flex gap-2">
                     {product.artwork_pdf && (
                         <a href={product.artwork_pdf} target="_blank" rel="noopener noreferrer" className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
-                            <FileText className="h-4 w-4" />
+                            <PdfLogo className="w-10 h-5" />
                         </a>
                     )}
                     {product.artwork_cdr && (
                         <a href={product.artwork_cdr} target="_blank" rel="noopener noreferrer" className="p-2 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
-                            <div className="text-[8px] font-black">CDR</div>
+                            <CdrLogo className="w-10 h-5" />
                         </a>
                     )}
                 </div>

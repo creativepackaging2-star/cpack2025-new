@@ -5,6 +5,7 @@ import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
 import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database } from 'lucide-react';
 import Link from 'next/link';
+import { PdfLogo, CdrLogo } from '@/components/FileLogos';
 
 // --- Memoized Components for Performance ---
 
@@ -348,48 +349,57 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                        <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
-                            <MessageCircle className="w-4 h-4 text-emerald-600" />
-                        </button>
-                        <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-1 hover:bg-blue-50 rounded-full transition-colors">
-                            <UserCheck className="w-4 h-4 text-blue-600" />
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
-                            disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
-                            title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
-                            className={`p-1 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
-                        >
-                            {isUpdating === order.id ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className={`w-4 h-4 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
-                        </button>
-                        <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
-                        {order.artwork_pdf && (
-                            <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View Artwork PDF" className="p-1 hover:bg-red-50 rounded-full transition-colors">
-                                <FileText className="w-4 h-4 text-red-500" />
-                            </a>
-                        )}
-                        {order.artwork_cdr && (
-                            <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View Artwork CDR" className="p-1 hover:bg-orange-50 rounded-full transition-colors">
-                                <Edit className="w-4 h-4 text-orange-500" />
-                            </a>
-                        )}
-                        <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
-                        <Link
-                            href={`/orders/${order.id}/coa`}
-                            target="_blank"
-                            title="Generate COA"
-                            className="p-1 hover:bg-indigo-50 rounded-full transition-colors inline-flex"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <FileText className="w-4 h-4 text-indigo-400 opacity-60 hover:opacity-100" />
-                        </Link>
-                        <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label" className="p-1 hover:bg-amber-50 rounded-full transition-colors">
-                            <Truck className="w-4 h-4 text-amber-400 opacity-60 hover:opacity-100" />
-                        </button>
-                        <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card" className="p-1 hover:bg-rose-50 rounded-full transition-colors">
-                            <Palette className="w-4 h-4 text-rose-400 opacity-60 hover:opacity-100" />
-                        </button>
+                    <div className="flex flex-col items-center gap-2 py-1">
+                        {/* 1st Line: Actions & Artwork */}
+                        <div className="flex items-center gap-2">
+                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
+                                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                            </button>
+                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-1 hover:bg-blue-50 rounded-full transition-colors">
+                                <UserCheck className="w-4 h-4 text-blue-600" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
+                                disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
+                                title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
+                                className={`p-1 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
+                            >
+                                {isUpdating === order.id ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className={`w-4 h-4 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
+                            </button>
+                            <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+                            {order.artwork_pdf && (
+                                <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
+                                    <PdfLogo className="w-8 h-4" />
+                                </a>
+                            )}
+                            {order.artwork_cdr && (
+                                <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
+                                    <CdrLogo className="w-8 h-4" />
+                                </a>
+                            )}
+                        </div>
+
+                        {/* 2nd Line: Document Generation */}
+                        <div className="flex items-center gap-4 border-t border-slate-100 pt-1.5 px-2">
+                            <Link
+                                href={`/orders/${order.id}/coa`}
+                                target="_blank"
+                                title="Generate COA"
+                                className="flex items-center gap-1 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                                <span className="text-[9px] font-bold text-indigo-600 uppercase">COA</span>
+                            </Link>
+                            <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label" className="flex items-center gap-1 hover:bg-amber-50 px-1.5 py-0.5 rounded transition-colors">
+                                <Truck className="w-3.5 h-3.5 text-amber-400" />
+                                <span className="text-[9px] font-bold text-amber-600 uppercase">DEL</span>
+                            </button>
+                            <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card" className="flex items-center gap-1 hover:bg-rose-50 px-1.5 py-0.5 rounded transition-colors">
+                                <Palette className="w-3.5 h-3.5 text-rose-400" />
+                                <span className="text-[9px] font-bold text-rose-600 uppercase">Shade</span>
+                            </button>
+                        </div>
                     </div>
                 </td>
 
@@ -453,8 +463,8 @@ Plate No   : ${order.plate_no || '-'}`;
                                     </div>
                                 )}
                                 <div className="flex flex-wrap gap-2 pt-2">
-                                    {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer"><DocBadge label="PDF" /></a>}
-                                    {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer"><DocBadge label="CDR" /></a>}
+                                    {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF"><PdfLogo className="w-10 h-5 text-[10px]" /></a>}
+                                    {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR"><CdrLogo className="w-10 h-5 text-[10px]" /></a>}
                                 </div>
                             </div>
                         </div>

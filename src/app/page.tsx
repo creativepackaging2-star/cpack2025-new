@@ -25,17 +25,18 @@ export default function Dashboard() {
         .from('orders')
         .select('*', { count: 'exact', head: true });
 
-      // Pending Orders (status is not 'Complete')
+      // Pending Orders (status is not 'Complete' or 'Delivered')
       const { count: pendingCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
-        .not('status', 'eq', 'Complete');
+        .not('status', 'ilike', 'Complete')
+        .not('status', 'ilike', 'Delivered');
 
       // Completed Orders
       const { count: completedCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Complete');
+        .or('status.ilike.Complete,status.ilike.Delivered');
 
       // Recent Activity
       const { data: recent } = await supabase

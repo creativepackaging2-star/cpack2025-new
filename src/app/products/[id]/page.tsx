@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft, Edit2, FileText, Upload } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ReactNode } from 'react';
+import { PdfLogo, CdrLogo } from '@/components/FileLogos';
 
 export const revalidate = 0;
 
@@ -210,9 +211,10 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
                                         href={product.artwork_pdf}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-indigo-600 underline flex items-center gap-1 hover:text-indigo-800"
+                                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                                     >
-                                        <FileText className="h-4 w-4" /> {product.artwork_pdf.split('/').pop()}
+                                        <PdfLogo className="w-10 h-5" />
+                                        <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px]">{product.artwork_pdf.split('/').pop()}</span>
                                     </a>
                                 ) : '-'
                             } />
@@ -222,9 +224,10 @@ export default async function ProductDetailsPage(props: { params: Promise<{ id: 
                                         href={product.artwork_cdr}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-indigo-600 underline flex items-center gap-1 hover:text-indigo-800"
+                                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                                     >
-                                        <Upload className="h-4 w-4" /> {product.artwork_cdr.split('/').pop()}
+                                        <CdrLogo className="w-10 h-5" />
+                                        <span className="text-[10px] text-slate-500 font-mono truncate max-w-[150px]">{product.artwork_cdr.split('/').pop()}</span>
                                     </a>
                                 ) : '-'
                             } />
