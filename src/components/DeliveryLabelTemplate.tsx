@@ -76,7 +76,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 __html: `
                 @media print {
                     @page {
-                        size: 6in 4in landscape;
+                        size: 5.6in 4in landscape;
                         margin: 0mm;
                     }
                     body {
@@ -89,7 +89,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         top: 0;
                         left: 0;
                         z-index: 9999;
-                        width: 6in !important;
+                        width: 5.6in !important;
                         height: 4in !important;
                         margin: 0 !important;
                         padding: 0.25in !important;
@@ -116,14 +116,13 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 <div
                     className="label-container bg-white p-4 text-black font-sans relative shadow-xl print:shadow-none"
                     style={{
-                        width: '6in',
+                        width: '5.6in',
                         height: '4in',
                         transform: scale < 1 ? `scale(${scale})` : 'none',
                         transformOrigin: 'top center',
                         margin: '0 auto',
                         display: 'flex',
-                        flexDirection: 'column',
-                        border: '1px solid #000'
+                        flexDirection: 'column'
                     }}
                 >
                     {/* Main Content - Horizontal Layout */}

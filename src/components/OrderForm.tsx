@@ -281,7 +281,18 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        let extraUpdates = {};
+        if (name === 'delivery_date' && value) {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const yy = String(date.getFullYear()).slice(-2);
+                extraUpdates = { batch_no: `${mm}/${yy}` };
+            }
+        }
+
+        setFormData(prev => ({ ...prev, [name]: value, ...extraUpdates }));
     };
 
     const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,7 +393,6 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }
 
         const msg = `*PAPER ORDER*
-Job ID      : ${formData.order_id || '-'}
 Size        : ${formData.paper_order_size || '-'}
 Qty         : ${formData.paper_order_qty || '-'}
 Paper       : ${formData.paper_type_name || '-'}
@@ -401,7 +411,6 @@ Delivery At : ${formData.printer_name || '-'}`;
         }
 
         const msg = `*PRINTING ORDER*
-Job ID     : ${formData.order_id || '-'}
 Product    : ${formData.product_name || '-'}
 Print Size : ${formData.print_size || '-'}
 Print Qty  : ${formData.total_print_qty || '-'}
@@ -536,14 +545,6 @@ Plate No   : ${formData.plate_no || '-'}`;
                             />
                         </div>
                         <div>
-                            <label className="label text-indigo-600">Batch No (Auto)</label>
-                            <input name="batch_no" value={formData.batch_no || ''} readOnly className="input-field bg-slate-50 border-indigo-100 text-slate-500 cursor-not-allowed" placeholder="MM/YY" />
-                        </div>
-                        <div>
-                            <label className="label text-indigo-600">Invoice No</label>
-                            <input name="inv_no" value={formData.inv_no || ''} onChange={handleChange} className="input-field border-indigo-200 focus:ring-indigo-500" placeholder="e.g. INV-123" />
-                        </div>
-                        <div>
                             <label className="label">Invoicing & Delivery</label>
                             <select name="from_our_company" value={formData.from_our_company || ''} onChange={handleChange} className="input-field">
                                 <option value="">Select...</option>
@@ -551,10 +552,6 @@ Plate No   : ${formData.plate_no || '-'}`;
                                 <option value="Packaging">Packaging</option>
                                 <option value="Enterprise">Enterprise</option>
                             </select>
-                        </div>
-                        <div>
-                            <label className="label">Batch No</label>
-                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field" />
                         </div>
 
                         <SectionHeader icon={Truck} title="Partners" />
@@ -673,7 +670,11 @@ Plate No   : ${formData.plate_no || '-'}`;
                         <SectionHeader icon={FileText} title="Invoicing & Delivery" />
                         <div>
                             <label className="label">Inv No</label>
-                            <input name="invoice_no" value={formData.invoice_no || ''} onChange={handleChange} className="input-field" />
+                            <input name="inv_no" value={formData.inv_no || ''} onChange={handleChange} className="input-field" />
+                        </div>
+                        <div>
+                            <label className="label">Batch No</label>
+                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field" placeholder="Auto-gen from Del Date" />
                         </div>
                         <div>
                             <label className="label">Qty Delivered</label>

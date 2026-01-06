@@ -156,7 +156,6 @@ const OrderRow = memo(({
         }
 
         const msg = `*PAPER ORDER*
-Job ID      : ${order.order_id || '-'}
 Size        : ${order.paper_order_size || '-'}
 Qty         : ${order.paper_order_qty || '-'}
 Paper       : ${order.paper_type_name || '-'}
@@ -176,7 +175,6 @@ Delivery At : ${order.printer_name || '-'}`;
         }
 
         const msg = `*PRINTING ORDER*
-Job ID     : ${order.order_id || '-'}
 Product    : ${order.products?.product_name || order.product_name || '-'}
 Print Size : ${order.print_size || '-'}
 Print Qty  : ${order.total_print_qty || '-'}

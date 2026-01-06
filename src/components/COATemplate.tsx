@@ -179,7 +179,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Date of Mfg.:</span>
-                                <span>{order.order_date || '<<[Ready Date]>>'}</span>
+                                <span>{order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : (order.order_date || '<<[Mfg. Date]>>')}</span>
                             </div>
 
                             <div className="col-span-2 flex border-b border-slate-200 pb-1">
@@ -189,7 +189,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
 
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Quantity:</span>
-                                <span>{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</span>
+                                <span>{(order.qty_delivered || 0).toLocaleString()}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Batch No:</span>
