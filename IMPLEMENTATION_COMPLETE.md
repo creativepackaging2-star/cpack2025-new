@@ -14,18 +14,17 @@ When you edit and save a product, ALL linked orders automatically update with:
 
 **Status**: ✅ Working - Test by editing any product
 
-### 2. Google Drive File Upload (READY - Needs Setup)
+### 2. Supabase Storage File Upload (DONE)
 **Files**: 
-- `src/app/api/upload-drive/route.ts` (API endpoint)
 - `src/components/ProductForm.tsx` (Upload UI)
 
 **Features**:
-- Click "Upload PDF to Drive" or "Upload CDR to Drive" in Product Form
-- Files automatically upload to your Google Drive folder
-- Google Drive link is stored in database
-- Link syncs to all related orders
+- Click "Upload PDF" or "Upload CDR" in Product Form
+- Files automatically upload to Supabase Storage (`product-files` bucket)
+- Direct public links are stored in the database
+- Links sync to all related orders automatically
 
-**Status**: ⚙️ Needs Google API setup (see GOOGLE_DRIVE_SETUP.md)
+**Status**: ✅ Working - No setup needed!
 
 ### 3. Special Effects Display Fix (DONE)
 **File**: `src/app/products/[id]/page.tsx`
@@ -36,14 +35,12 @@ Product detail view now correctly displays special effect names instead of IDs.
 
 ## 📋 Next Steps
 
-### To Enable Google Drive Upload:
+### To Use File Upload:
 
-1. **Follow the setup guide**: Open `GOOGLE_DRIVE_SETUP.md`
-2. **Create Google Cloud Service Account** (5 minutes)
-3. **Add credentials to `.env.local`**
-4. **Share Drive folder with service account**
-5. **Restart dev server**: `npm run dev`
-6. **Test upload** in Product Form
+1. **Open Product Form**
+2. **Select File** for PDF or CDR
+3. **Wait for upload** (Progress shown in button)
+4. **Save Product** → Link automatically syncs to orders!
 
 ### To Fix Existing Orders:
 
@@ -77,10 +74,8 @@ This will update all orders with:
 
 ## 📁 Files Modified
 
-1. `src/components/ProductForm.tsx` - Product form with sync & upload
-2. `src/app/api/upload-drive/route.ts` - Google Drive upload API
-3. `src/app/products/[id]/page.tsx` - Product detail view fix
-4. `package.json` - Added googleapis dependency
+1. `src/components/ProductForm.tsx` - Product form with sync & Supabase upload
+2. `src/app/products/[id]/page.tsx` - Product detail view fix
 
 ## 🔧 Scripts Created
 
@@ -97,7 +92,7 @@ This will update all orders with:
 ## 🎉 Benefits
 
 ✅ Edit product once → All orders update automatically
-✅ Files stored in your Google Drive (centralized, backed up)
-✅ No local file storage needed
+✅ Files stored in Supabase Storage (product-files bucket)
+✅ Internal storage, no external API setup needed
 ✅ Special effects always show names, never IDs
 ✅ Specs always in sync between products and orders

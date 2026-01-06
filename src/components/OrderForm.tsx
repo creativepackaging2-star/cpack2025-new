@@ -4,8 +4,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order, Product } from '@/types';
-import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Image as ImageIcon, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle, UserCheck } from 'lucide-react';
+import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle, UserCheck } from 'lucide-react';
 import Link from 'next/link';
+import { WhatsAppLogo, PaperwalaWhatsAppLogo, PdfLogo, CdrLogo } from '@/components/FileLogos';
 
 type Props = {
     initialData?: Order | null;
@@ -380,8 +381,8 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             return;
         }
 
-        const msg = `*Paper Order Details*
-
+        const msg = `*PAPER ORDER*
+Job ID      : ${formData.order_id || '-'}
 Size        : ${formData.paper_order_size || '-'}
 Qty         : ${formData.paper_order_qty || '-'}
 Paper       : ${formData.paper_type_name || '-'}
@@ -399,7 +400,9 @@ Delivery At : ${formData.printer_name || '-'}`;
             return;
         }
 
-        const msg = `Product    : ${formData.product_name || '-'}
+        const msg = `*PRINTING ORDER*
+Job ID     : ${formData.order_id || '-'}
+Product    : ${formData.product_name || '-'}
 Print Size : ${formData.print_size || '-'}
 Print Qty  : ${formData.total_print_qty || '-'}
 Paper      : ${formData.paper_type_name || '-'}
@@ -747,14 +750,14 @@ Plate No   : ${formData.plate_no || '-'}`;
                         <div className="flex items-center gap-3">
                             <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPaperwala}>
                                 <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                                    <MessageCircle className="w-8 h-8 text-emerald-600" />
+                                    <PaperwalaWhatsAppLogo className="w-8 h-8" />
                                 </div>
                                 <span className="text-[8px] font-black text-slate-400 uppercase">WA Paper</span>
                                 <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">Paperwala</div>
                             </div>
                             <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPrinter}>
                                 <div className="p-1 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                    <UserCheck className="w-8 h-8 text-blue-600" />
+                                    <WhatsAppLogo className="w-8 h-8" />
                                 </div>
                                 <span className="text-[8px] font-black text-slate-400 uppercase">WA Printer</span>
                                 <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">Supervisor</div>
@@ -801,15 +804,15 @@ Plate No   : ${formData.plate_no || '-'}`;
 
                         <div className="mt-4 flex flex-wrap gap-2">
                             {formData.artwork_pdf && (
-                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-colors">
-                                    <FileText className="w-3.5 h-3.5" />
-                                    ART PDF
+                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-colors">
+                                    <PdfLogo className="w-6 h-6" />
+                                    PDF
                                 </a>
                             )}
                             {formData.artwork_cdr && (
-                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-bold border border-orange-100 hover:bg-orange-100 transition-colors">
-                                    <ImageIcon className="w-3.5 h-3.5" />
-                                    ART CDR
+                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-bold border border-orange-100 hover:bg-orange-100 transition-colors">
+                                    <CdrLogo className="w-6 h-6" />
+                                    CDR
                                 </a>
                             )}
                         </div>

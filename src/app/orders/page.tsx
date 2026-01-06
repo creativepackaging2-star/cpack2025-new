@@ -5,7 +5,7 @@ import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
 import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database } from 'lucide-react';
 import Link from 'next/link';
-import { PdfLogo, CdrLogo } from '@/components/FileLogos';
+import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/components/FileLogos';
 
 // --- Memoized Components for Performance ---
 
@@ -155,7 +155,8 @@ const OrderRow = memo(({
             return;
         }
 
-        const msg = `*Paper Order*
+        const msg = `*PAPER ORDER*
+Job ID      : ${order.order_id || '-'}
 Size        : ${order.paper_order_size || '-'}
 Qty         : ${order.paper_order_qty || '-'}
 Paper       : ${order.paper_type_name || '-'}
@@ -174,13 +175,14 @@ Delivery At : ${order.printer_name || '-'}`;
             return;
         }
 
-        const msg = `*Printing Order*
-Product    : ${order.product_name || '-'}
+        const msg = `*PRINTING ORDER*
+Job ID     : ${order.order_id || '-'}
+Product    : ${order.products?.product_name || order.product_name || '-'}
 Print Size : ${order.print_size || '-'}
 Print Qty  : ${order.total_print_qty || '-'}
 Paper      : ${order.paper_type_name || '-'}
 GSM        : ${order.gsm_value || '-'}
-Code       : ${order.artwork_code || '-'}
+Code       : ${order.products?.artwork_code || order.artwork_code || '-'}
 Ink        : ${order.ink || '-'}
 Plate No   : ${order.plate_no || '-'}`;
 
@@ -215,11 +217,11 @@ Plate No   : ${order.plate_no || '-'}`;
                                 {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
                             <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
-                                <MessageCircle className="w-3.5 h-3.5" />
+                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
                                 Paper
                             </button>
                             <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold border border-blue-100 active:bg-blue-100 transition-colors">
-                                <UserCheck className="w-3.5 h-3.5" />
+                                <WhatsAppLogo className="w-4 h-4" />
                                 Printer
                             </button>
                             <button
@@ -353,10 +355,10 @@ Plate No   : ${order.plate_no || '-'}`;
                         {/* 1st Line: Actions & Artwork */}
                         <div className="flex items-center gap-2">
                             <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
-                                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                                <PaperwalaWhatsAppLogo className="w-5 h-5" />
                             </button>
                             <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-1 hover:bg-blue-50 rounded-full transition-colors">
-                                <UserCheck className="w-4 h-4 text-blue-600" />
+                                <WhatsAppLogo className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
