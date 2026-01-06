@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/components/FileLogos';
 
@@ -31,7 +31,7 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 ));
 DetailGroup.displayName = 'DetailGroup';
 
-const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry }: any) => {
+const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder }: any) => {
     return (
         <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm mb-8">
             <div className="bg-slate-50 px-6 py-3 border-b border-slate-300 flex items-center gap-2">
@@ -68,6 +68,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                 setEditProgress={setEditProgress}
                                 handleQuickUpdate={handleQuickUpdate}
                                 handlePaperEntry={handlePaperEntry}
+                                handleSplitOrder={handleSplitOrder}
                                 view="table"
                             />
                         ))}
@@ -91,6 +92,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                         setEditProgress={setEditProgress}
                         handleQuickUpdate={handleQuickUpdate}
                         handlePaperEntry={handlePaperEntry}
+                        handleSplitOrder={handleSplitOrder}
                         view="mobile"
                     />
                 ))}
@@ -126,6 +128,7 @@ const OrderRow = memo(({
     setEditProgress,
     handleQuickUpdate,
     handlePaperEntry,
+    handleSplitOrder,
     view = "table"
 }: any) => {
     const [confirming, setConfirming] = useState(false);
@@ -146,6 +149,11 @@ const OrderRow = memo(({
             handleMarkComplete(order.id);
             setConfirming(false);
         }
+    };
+
+    const handleSplit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        handleSplitOrder(order);
     };
 
     const sendToPaperwala = (e: React.MouseEvent) => {
@@ -275,6 +283,13 @@ Plate No   : ${order.plate_no || '-'}`;
                                 {confirming ? <CheckCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
                             </button>
                         )}
+                        <button
+                            onClick={handleSplit}
+                            className="p-1.5 text-amber-600 bg-amber-50 rounded-full border border-amber-100"
+                            title="Split Lot"
+                        >
+                            <Split className="w-4 h-4" />
+                        </button>
                         <Link href={`/orders/${order.id}`} className="p-1.5 text-slate-400 border border-slate-100 rounded-full">
                             <Edit className="w-4 h-4" />
                         </Link>
@@ -415,6 +430,14 @@ Plate No   : ${order.plate_no || '-'}`;
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                             </button>
                         )}
+                        <button
+                            onClick={handleSplit}
+                            disabled={isUpdating}
+                            className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-full transition-colors border border-amber-100"
+                            title="Split for Partial Delivery"
+                        >
+                            <Split className="w-4 h-4" />
+                        </button>
                         <Link href={`/orders/${order.id}`} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
                             <Edit className="w-4 h-4" />
                         </Link>
@@ -720,6 +743,53 @@ export default function OrdersPage() {
         }
     }, []);
 
+    const handleSplitOrder = useCallback(async (order: any) => {
+        const splitQtyStr = window.prompt(`Current Qty: ${order.quantity}\n\nEnter quantity to split for Partial Delivery:`, "0");
+        if (!splitQtyStr) return;
+
+        const splitQty = parseInt(splitQtyStr);
+        if (isNaN(splitQty) || splitQty <= 0 || splitQty >= (order.quantity || 0)) {
+            alert('Invalid quantity. Must be a number greater than 0 and less than ' + (order.quantity || 0));
+            return;
+        }
+
+        setIsUpdating(order.id);
+        try {
+            // Clone order data (excluding relational fields and IDs)
+            const { id, created_at, updated_at, products, ...rawOrder } = order;
+
+            // Prepare New Partial Order
+            const partialOrder = {
+                ...rawOrder,
+                quantity: splitQty,
+                qty_delivered: splitQty,
+                inv_no: '', // Reset for input
+                status: 'Partially Delivered',
+                progress: 'Ready',
+                order_id: order.order_id ? `${order.order_id}-P` : `SPLIT-${Date.now().toString(36).toUpperCase()}`
+            };
+
+            const { error: insertError } = await supabase.from('orders').insert([partialOrder]);
+            if (insertError) throw insertError;
+
+            // Update original order
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({ quantity: (order.quantity || 0) - splitQty })
+                .eq('id', order.id);
+
+            if (updateError) throw updateError;
+
+            alert(`✅ Successfully split ${splitQty} into a new order lot.`);
+            fetchOrders();
+        } catch (err: any) {
+            console.error('Split Error:', err);
+            alert('Split failed: ' + (err.message || 'Unknown error'));
+        } finally {
+            setIsUpdating(null);
+        }
+    }, [orders]);
+
     const toggleRow = useCallback((id: number) => {
         setExpandedOrderId(prev => prev === id ? null : id);
     }, []);
@@ -853,6 +923,7 @@ export default function OrdersPage() {
                                 setEditProgress={setEditProgress}
                                 handleQuickUpdate={handleQuickUpdate}
                                 handlePaperEntry={handlePaperEntry}
+                                handleSplitOrder={handleSplitOrder}
                             />
                         ))}
 

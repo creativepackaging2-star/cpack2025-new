@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order, Product } from '@/types';
-import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle, UserCheck } from 'lucide-react';
+import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle, UserCheck, Split } from 'lucide-react';
 import Link from 'next/link';
 import { WhatsAppLogo, PaperwalaWhatsAppLogo, PdfLogo, CdrLogo } from '@/components/FileLogos';
 
@@ -433,10 +433,61 @@ Plate No   : ${formData.plate_no || '-'}`;
         }
 
         if (type === 'COA') {
-            console.log('Generating COA for order (Form):', id);
             window.open(`/orders/${id}/coa`, '_blank');
+        } else if (type === 'Delivery Label') {
+            window.open(`/orders/${id}/delivery-label`, '_blank');
+        } else if (type === 'Shade Card') {
+            window.open(`/orders/${id}/shade-card`, '_blank');
         } else {
             alert(`${type} generation will be available once templates are defined.`);
+        }
+    };
+
+    const handleSplitOrder = async () => {
+        if (!initialData?.id) return;
+        const splitQtyStr = window.prompt(`Current Qty: ${formData.quantity}\n\nEnter quantity to split for Partial Delivery:`, "0");
+        if (!splitQtyStr) return;
+
+        const splitQty = parseInt(splitQtyStr);
+        if (isNaN(splitQty) || splitQty <= 0 || splitQty >= (formData.quantity || 0)) {
+            alert('Invalid quantity. Must be a number greater than 0 and less than ' + (formData.quantity || 0));
+            return;
+        }
+
+        setSaving(true);
+        try {
+            // Prepare New Partial Order lot
+            const { id: _, created_at: __, updated_at: ___, ...rawOrderData } = formData as any;
+
+            const partialOrder = {
+                ...rawOrderData,
+                quantity: splitQty,
+                qty_delivered: splitQty,
+                inv_no: '',
+                status: 'Partially Delivered',
+                progress: 'Ready',
+                order_id: formData.order_id ? `${formData.order_id}-P` : `SPLIT-${Date.now().toString(36).toUpperCase()}`
+            };
+
+            const { error: insertError } = await supabase.from('orders').insert([partialOrder]);
+            if (insertError) throw insertError;
+
+            // Update original order balance
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({ quantity: (formData.quantity || 0) - splitQty })
+                .eq('id', initialData.id);
+
+            if (updateError) throw updateError;
+
+            alert(`✅ Successfully split ${splitQty} into a new order lot.`);
+            router.push('/orders');
+            router.refresh();
+        } catch (err: any) {
+            console.error('Split Error:', err);
+            alert('Split failed: ' + (err.message || 'Unknown error'));
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -801,6 +852,16 @@ Plate No   : ${formData.plate_no || '-'}`;
                                 <span className="text-[8px] font-black text-slate-400 uppercase">GEN Shade</span>
                                 <div className="text-[7px] bg-rose-50 text-rose-600 px-1 rounded font-bold border border-rose-100 italic">Auto-Gen</div>
                             </div>
+
+                            {initialData?.id && (
+                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleSplitOrder}>
+                                    <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
+                                        <Split className="w-8 h-8 text-amber-600" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">Split Lot</span>
+                                    <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Partial</div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
