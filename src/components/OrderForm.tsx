@@ -51,7 +51,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             paper_required: 0,
             paper_order_qty: 0,
             ready_delivery: '',
-            inv_no: '',
+            invoice_no: '',
             qty_delivered: 0,
             packing_detail: '',
             ready_date: '',
@@ -463,7 +463,7 @@ Plate No   : ${formData.plate_no || '-'}`;
                 ...rawOrderData,
                 quantity: splitQty,
                 qty_delivered: splitQty,
-                inv_no: '',
+                invoice_no: '',
                 status: 'Partially Delivered',
                 progress: 'Ready',
                 order_id: formData.order_id ? `${formData.order_id}-P` : `SPLIT-${Date.now().toString(36).toUpperCase()}`
@@ -721,7 +721,7 @@ Plate No   : ${formData.plate_no || '-'}`;
                         <SectionHeader icon={FileText} title="Invoicing & Delivery" />
                         <div>
                             <label className="label">Inv No</label>
-                            <input name="inv_no" value={formData.inv_no || ''} onChange={handleChange} className="input-field" />
+                            <input name="invoice_no" value={formData.invoice_no || ''} onChange={handleChange} className="input-field" />
                         </div>
                         <div>
                             <label className="label">Batch No</label>

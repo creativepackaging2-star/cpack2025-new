@@ -34,7 +34,7 @@ export default function COAPage() {
                         quantity: 25000,
                         order_date: '2025-12-20',
                         batch_no: 'AZ-FL-9921',
-                        inv_no: 'CP/2245/25',
+                        invoice_no: 'CP/2245/25',
                         artwork_code: 'ART-AZI-500-V4',
                         specs: '300 GSM SBS BOARD, 4 COLOR OFFSET + MATTE VARNISH + DIE-CUTTING + LINE EMBOSSING',
                         specification: '300 GSM SBS BOARD, 4 COLOR OFFSET + MATTE VARNISH + DIE-CUTTING + LINE EMBOSSING',

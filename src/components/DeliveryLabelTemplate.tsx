@@ -158,7 +158,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                                 <div className="text-[10px] font-medium text-gray-500 uppercase">Invoice No</div>
                             </div>
                             <div className="flex items-center justify-center" style={{ flex: 1 }}>
-                                <div className="text-xs font-medium">{order.inv_no || '<<[Inv No]>>'}</div>
+                                <div className="text-xs font-medium">{order.invoice_no || '<<[Inv No]>>'}</div>
                             </div>
                         </div>
                     </div>

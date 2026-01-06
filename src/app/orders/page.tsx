@@ -763,7 +763,7 @@ export default function OrdersPage() {
                 ...rawOrder,
                 quantity: splitQty,
                 qty_delivered: splitQty,
-                inv_no: '', // Reset for input
+                invoice_no: '', // Reset for input
                 status: 'Partially Delivered',
                 progress: 'Ready',
                 order_id: order.order_id ? `${order.order_id}-P` : `SPLIT-${Date.now().toString(36).toUpperCase()}`

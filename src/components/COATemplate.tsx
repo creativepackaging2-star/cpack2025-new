@@ -198,7 +198,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
 
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Invoice No:</span>
-                                <span>{order.inv_no || '<<[Inv no]>>'}</span>
+                                <span>{order.invoice_no || '<<[Inv no]>>'}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Artwork Code:</span>

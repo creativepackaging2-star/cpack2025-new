@@ -33,7 +33,7 @@ export default function DeliveryLabelPage() {
                         quantity: 25000,
                         order_date: '2025-12-20',
                         batch_no: 'AZ-FL-9921',
-                        inv_no: 'CP/2245/25',
+                        invoice_no: 'CP/2245/25',
                         from_our_company: 'Enterprise',
                         status: 'Complete',
                         progress: 'Ready',
