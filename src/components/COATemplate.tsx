@@ -175,7 +175,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
                         <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Date :</span>
-                                <span>{todayDate || '<<[Delivery Date]>>'}</span>
+                                <span>{order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : '<<[Delivery Date]>>'}</span>
                             </div>
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Date of Mfg.:</span>

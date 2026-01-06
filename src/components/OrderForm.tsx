@@ -181,7 +181,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             setProduct(prod);
             // Auto-fill category and recalculate batch
             const categoryName = cat.data?.name || '';
-            const newBatchNo = calculateBatchNo(prod.product_name, categoryName, formData.order_date);
+            const newBatchNo = generateBatchNoFromDate(formData.delivery_date);
 
             setFormData(prev => ({
                 ...prev,
@@ -260,36 +260,21 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         });
     }, [formData.quantity, formData.rate, formData.extra, formData.paper_ups, product?.ups]);
 
-    const calculateBatchNo = (product: string | null | undefined, category: string | null | undefined, dateStr: string | null | undefined) => {
-        if (!product) return '';
-        const cleanProduct = product.replace(/[\s-]/g, '').substring(0, 6).toUpperCase();
-        const catLetter = (category || '').substring(0, 1).toUpperCase();
-
-        let datePart = '';
-        // Default to today if dateStr is missing to ensure DDMMYY is always present
-        const effectiveDateStr = dateStr || new Date().toISOString().split('T')[0];
-        const date = new Date(effectiveDateStr);
-        if (!isNaN(date.getTime())) {
-            const dd = String(date.getDate()).padStart(2, '0');
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const yy = String(date.getFullYear()).slice(-2);
-            datePart = `${dd}${mm}${yy}`;
-        }
-
-        return `${cleanProduct}${datePart}${catLetter}`;
+    const generateBatchNoFromDate = (dateStr: string | null | undefined) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '';
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yy = String(date.getFullYear()).slice(-2);
+        return `${mm}/${yy}`;
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
 
         let extraUpdates = {};
-        if (name === 'delivery_date' && value) {
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const yy = String(date.getFullYear()).slice(-2);
-                extraUpdates = { batch_no: `${mm}/${yy}` };
-            }
+        if (name === 'delivery_date') {
+            extraUpdates = { batch_no: generateBatchNoFromDate(value) };
         }
 
         setFormData(prev => ({ ...prev, [name]: value, ...extraUpdates }));
