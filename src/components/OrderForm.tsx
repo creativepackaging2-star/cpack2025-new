@@ -51,7 +51,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             paper_required: 0,
             paper_order_qty: 0,
             ready_delivery: '',
-            invoice_no: '',
+            inv_no: '',
             qty_delivered: 0,
             packing_detail: '',
             ready_date: '',

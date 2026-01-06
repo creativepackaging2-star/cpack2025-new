@@ -74,6 +74,8 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
         <>
             <style dangerouslySetInnerHTML={{
                 __html: `
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+                
                 @media print {
                     @page {
                         size: 5.6in 4in landscape;
@@ -101,6 +103,9 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         visibility: visible;
                     }
                 }
+                .label-container {
+                    font-family: 'Montserrat', sans-serif !important;
+                }
             `}} />
 
             <div
@@ -114,7 +119,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 }}
             >
                 <div
-                    className="label-container bg-white p-4 text-black font-sans relative shadow-xl print:shadow-none"
+                    className="label-container bg-white p-4 text-black relative shadow-xl print:shadow-none"
                     style={{
                         width: '5.6in',
                         height: '4in',
@@ -129,8 +134,8 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                     <div className="flex gap-3 mb-3" style={{ flex: 1 }}>
                         {/* Left: Delivery Address Section */}
                         <div className="border border-black p-3" style={{ flex: '1.5' }}>
-                            <div className="text-xs font-bold text-gray-600 mb-2">DELIVERY ADDRESS:</div>
-                            <div className="text-base font-bold leading-relaxed whitespace-pre-wrap">
+                            <div className="text-[10px] font-medium text-gray-500 mb-2 uppercase tracking-tight">DELIVERY ADDRESS:</div>
+                            <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
                                 {order.delivery_address || '<<[Delivery Address]>>'}
                             </div>
                         </div>
@@ -138,22 +143,22 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         {/* Right: Product Details - 6 Equal Rows */}
                         <div className="border border-black flex flex-col" style={{ flex: '1' }}>
                             <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                                <div className="text-xs font-bold text-gray-600">Product</div>
+                                <div className="text-[10px] font-medium text-gray-500 uppercase">Product</div>
                             </div>
                             <div className="border-b border-black flex items-center justify-center px-2" style={{ flex: 1 }}>
-                                <div className="text-sm font-semibold text-center">{order.product_name || '<<[Product Name]>>'}</div>
+                                <div className="text-xs font-bold text-center leading-tight uppercase">{order.product_name || '<<[Product Name]>>'}</div>
                             </div>
                             <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                                <div className="text-xs font-bold text-gray-600">Qty</div>
+                                <div className="text-[10px] font-medium text-gray-500 uppercase">Qty</div>
                             </div>
                             <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                                <div className="text-sm font-semibold">{(order.quantity || 0).toLocaleString() || '<<[Qty Delivered]>>'}</div>
+                                <div className="text-xs font-medium">{(order.quantity || 0).toLocaleString()}</div>
                             </div>
                             <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
-                                <div className="text-xs font-bold text-gray-600">Invoice No</div>
+                                <div className="text-[10px] font-medium text-gray-500 uppercase">Invoice No</div>
                             </div>
                             <div className="flex items-center justify-center" style={{ flex: 1 }}>
-                                <div className="text-sm font-semibold">{order.inv_no || '<<[Inv No]>>'}</div>
+                                <div className="text-xs font-medium">{order.inv_no || '<<[Inv No]>>'}</div>
                             </div>
                         </div>
                     </div>
@@ -161,9 +166,9 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                     {/* Company Branding Footer */}
                     <div className="border-t border-black pt-2">
                         <div className="text-center">
-                            <div className="font-bold text-sm mb-1">{branding.name}</div>
-                            <div className="text-[10px] mb-0.5">{branding.address}</div>
-                            <div className="text-[10px] font-semibold">
+                            <div className="font-semibold text-[11px] mb-0.5">{branding.name}</div>
+                            <div className="text-[9px] font-light mb-0.5">{branding.address}</div>
+                            <div className="text-[9px] font-medium">
                                 M: {branding.mobile} | {branding.email}
                             </div>
                         </div>
