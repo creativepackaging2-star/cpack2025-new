@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo, Fragment, useTransition, memo, useCallback } from 'react';
+import { useEffect, useState, useMemo, Fragment, useTransition, useDeferredValue, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/components/FileLogos';
 
@@ -31,7 +31,7 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 ));
 DetailGroup.displayName = 'DetailGroup';
 
-const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder }: any) => {
+const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder, selectedIds, toggleSelect, selectAll }: any) => {
     const categoryValue = catOrders.reduce((sum: number, o: any) => sum + (o.value || 0), 0);
 
     return (
@@ -50,7 +50,15 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
             <div className="overflow-x-auto hidden md:block">
                 <table className="min-w-full divide-y divide-slate-300">
                     <thead className="bg-slate-50">
-                        <tr>
+                        <tr className="bg-slate-50">
+                            <th className="px-3 py-3 text-left w-[40px]">
+                                <input
+                                    type="checkbox"
+                                    checked={catOrders.every((o: any) => selectedIds.includes(o.id))}
+                                    onChange={() => selectAll(catOrders.map((o: any) => o.id))}
+                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                            </th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[40px]"></th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Product</th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Qty</th>
@@ -77,6 +85,8 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                 handleQuickUpdate={handleQuickUpdate}
                                 handlePaperEntry={handlePaperEntry}
                                 handleSplitOrder={handleSplitOrder}
+                                selected={selectedIds.includes(order.id)}
+                                toggleSelect={toggleSelect}
                                 view="table"
                             />
                         ))}
@@ -101,11 +111,13 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                         handleQuickUpdate={handleQuickUpdate}
                         handlePaperEntry={handlePaperEntry}
                         handleSplitOrder={handleSplitOrder}
+                        selected={selectedIds.includes(order.id)}
+                        toggleSelect={toggleSelect}
                         view="mobile"
                     />
                 ))}
             </div>
-        </div>
+        </div >
     );
 });
 OrderGroup.displayName = 'OrderGroup';
@@ -137,6 +149,8 @@ const OrderRow = memo(({
     handleQuickUpdate,
     handlePaperEntry,
     handleSplitOrder,
+    selected,
+    toggleSelect,
     view = "table"
 }: any) => {
     const [confirming, setConfirming] = useState(false);
@@ -226,6 +240,14 @@ Plate No   : ${order.plate_no || '-'}`;
         return (
             <div className={`p-4 ${isExpanded ? 'bg-indigo-50/30' : 'bg-white'} border-l-4 ${s === 'hold' ? 'border-red-500' : s === 'ready' ? 'border-emerald-500' : 'border-transparent'}`} onClick={() => toggleRow(order.id)}>
                 <div className="flex justify-between items-start mb-2">
+                    <div className="mr-3 pt-0.5" onClick={e => e.stopPropagation()}>
+                        <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggleSelect(order.id)}
+                            className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                    </div>
                     <div className="flex-1">
                         <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
                         <div className="flex items-center gap-2 mt-1">
@@ -330,6 +352,14 @@ Plate No   : ${order.plate_no || '-'}`;
     return (
         <Fragment>
             <tr className={rowClassName} onClick={() => toggleRow(order.id)}>
+                <td className="px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
+                    <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleSelect(order.id)}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                </td>
                 <td className="px-3 py-2 text-center">
                     <button className="p-1 hover:bg-slate-200 rounded-md transition-colors">
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-600" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
@@ -538,6 +568,7 @@ export default function OrdersPage() {
     const [showCompleted, setShowCompleted] = useState(false);
     const [groupByCategory, setGroupByCategory] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const deferredSearchTerm = useDeferredValue(searchTerm);
     const [isPending, startTransition] = useTransition();
 
     // Pagination State
@@ -550,6 +581,27 @@ export default function OrdersPage() {
 
     // Expanded Rows State
     const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+
+    // Multi-select State
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+    const toggleSelect = useCallback((id: number, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    }, []);
+
+    const selectAll = useCallback((ids: number[]) => {
+        setSelectedIds(prev => {
+            const allSelected = ids.every(id => prev.includes(id));
+            if (allSelected) {
+                return prev.filter(id => !ids.includes(id));
+            } else {
+                return [...new Set([...prev, ...ids])];
+            }
+        });
+    }, []);
 
     useEffect(() => {
         fetchOrders();
@@ -845,15 +897,15 @@ export default function OrdersPage() {
                 if (isDone) return false;
             }
 
-            if (!searchTerm) return true;
-            const search = searchTerm.toLowerCase();
+            if (!deferredSearchTerm) return true;
+            const search = deferredSearchTerm.toLowerCase();
             const pNameSnapshot = order.product_name?.toLowerCase() || '';
             const pNameRaw = order.products?.product_name?.toLowerCase() || '';
             const oId = order.order_id?.toLowerCase() || '';
             const printer = order.printer_name?.toLowerCase() || '';
             return pNameSnapshot.includes(search) || pNameRaw.includes(search) || oId.includes(search) || printer.includes(search);
         });
-    }, [orders, searchTerm, showCompleted]);
+    }, [orders, deferredSearchTerm, showCompleted]);
 
     useEffect(() => {
         setPage(1);
@@ -909,6 +961,26 @@ export default function OrdersPage() {
                     </Link>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1.5 shadow-sm gap-1">
+                        <Link
+                            href="/orders/summary/printer"
+                            title="Printer Summary"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-md transition-all"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Printers</span>
+                        </Link>
+                        <div className="w-[1px] h-4 bg-slate-200"></div>
+                        <Link
+                            href="/orders/summary/paper"
+                            title="Paper Order Summary"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-md transition-all"
+                        >
+                            <Truck className="w-3.5 h-3.5" />
+                            <span>Paper Order</span>
+                        </Link>
+                    </div>
+
                     <label className="flex flex-1 sm:flex-none items-center gap-2 text-[11px] md:text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
                         <input
                             type="checkbox"
@@ -973,8 +1045,50 @@ export default function OrdersPage() {
                                 handleQuickUpdate={handleQuickUpdate}
                                 handlePaperEntry={handlePaperEntry}
                                 handleSplitOrder={handleSplitOrder}
+                                selectedIds={selectedIds}
+                                toggleSelect={toggleSelect}
+                                selectAll={selectAll}
                             />
                         ))}
+
+                        {/* Floating Selection Bar */}
+                        {selectedIds.length > 0 && (
+                            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in">
+                                <div className="bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl border border-slate-700 flex flex-col md:flex-row items-center gap-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-500/20">
+                                            {selectedIds.length}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Selected Orders</p>
+                                            <button
+                                                onClick={() => setSelectedIds([])}
+                                                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase underline"
+                                            >
+                                                Clear Selection
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="h-10 w-[1px] bg-slate-700 hidden md:block"></div>
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={`/orders/summary/printer?ids=${selectedIds.join(',')}`}
+                                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                                        >
+                                            <Printer className="w-4 h-4" />
+                                            Printer Summary
+                                        </Link>
+                                        <Link
+                                            href={`/orders/summary/paper?ids=${selectedIds.join(',')}`}
+                                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                                        >
+                                            <Truck className="w-4 h-4" />
+                                            Paper Summary
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {totalPages > 1 && (
                             <>

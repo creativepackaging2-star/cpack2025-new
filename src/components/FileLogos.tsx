@@ -15,7 +15,11 @@ export const PdfLogo = memo(({ className, onClick }: LogoProps) => (
         decoding="async"
         width={32}
         height={32}
-        className={twMerge("w-8 h-8 cursor-pointer hover:scale-110 active:scale-95 transition-transform will-change-transform select-none object-contain", className)}
+        className={twMerge(
+            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
+            className
+        )}
     />
 ));
 PdfLogo.displayName = 'PdfLogo';
@@ -29,7 +33,11 @@ export const CdrLogo = memo(({ className, onClick }: LogoProps) => (
         decoding="async"
         width={32}
         height={32}
-        className={twMerge("w-8 h-8 cursor-pointer hover:scale-110 active:scale-95 transition-transform will-change-transform select-none object-contain", className)}
+        className={twMerge(
+            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
+            className
+        )}
     />
 ));
 CdrLogo.displayName = 'CdrLogo';
@@ -43,7 +51,11 @@ export const WhatsAppLogo = memo(({ className, onClick }: LogoProps) => (
         decoding="async"
         width={32}
         height={32}
-        className={twMerge("w-8 h-8 cursor-pointer hover:scale-110 active:scale-95 transition-transform will-change-transform select-none object-contain", className)}
+        className={twMerge(
+            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
+            className
+        )}
     />
 ));
 WhatsAppLogo.displayName = 'WhatsAppLogo';
@@ -57,7 +69,11 @@ export const PaperwalaWhatsAppLogo = memo(({ className, onClick }: LogoProps) =>
         decoding="async"
         width={32}
         height={32}
-        className={twMerge("w-8 h-8 cursor-pointer hover:scale-110 active:scale-95 transition-transform will-change-transform select-none object-contain", className)}
+        className={twMerge(
+            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
+            className
+        )}
     />
 ));
 PaperwalaWhatsAppLogo.displayName = 'PaperwalaWhatsAppLogo';

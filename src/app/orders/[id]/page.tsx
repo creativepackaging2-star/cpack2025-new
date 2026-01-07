@@ -13,12 +13,6 @@ export default function EditOrderPage() {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (id) {
-            fetchOrder();
-        }
-    }, [id]);
-
     async function fetchOrder() {
         setLoading(true);
         const { data, error } = await supabase
@@ -30,6 +24,12 @@ export default function EditOrderPage() {
         if (data) setOrder(data);
         setLoading(false);
     }
+
+    useEffect(() => {
+        if (id) {
+            fetchOrder();
+        }
+    }, [id]);
 
     if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-indigo-600" /></div>;
 
