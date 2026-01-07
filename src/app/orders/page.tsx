@@ -163,11 +163,13 @@ const OrderRow = memo(({
             return;
         }
 
+        const gsmDisplay = order.products?.actual_gsm_used || order.gsm_value || '-';
+
         const msg = `*PAPER ORDER*
 Size        : ${order.paper_order_size || '-'}
 Qty         : ${order.paper_order_qty || '-'}
 Paper       : ${order.paper_type_name || '-'}
-GSM         : ${order.gsm_value || '-'}
+GSM         : ${gsmDisplay}
 Delivery At : ${order.printer_name || '-'}`;
 
         const phone = order.paperwala_mobile.replace(/\D/g, '');
@@ -574,7 +576,8 @@ export default function OrdersPage() {
                     artwork_cdr, 
                     category_id,
                     paper_type_id,
-                    gsm_id
+                    gsm_id,
+                    actual_gsm_used
                 )
             `)
             .order('created_at', { ascending: false });
@@ -691,6 +694,9 @@ export default function OrdersPage() {
             console.log(`Calculating Entry for Order ${order.id}:`, { inQty, outQty });
 
             // 1. PAPER IN - Condition: if paper_type_name is not blank
+            const actualGsm = order.products?.actual_gsm_used;
+            const noteSuffix = actualGsm ? ` (Actual: ${actualGsm})` : '';
+
             if (order.paper_type_name && inQty > 0) {
                 transactions.push({
                     tx_type: 'IN',
@@ -701,7 +707,7 @@ export default function OrdersPage() {
                     qty: inQty,
                     unit: 'sheets',
                     reference: order.order_id,
-                    notes: `Warehouse: ${order.printer_name || 'Stock'}`
+                    notes: `Warehouse: ${order.printer_name || 'Stock'}${noteSuffix}`
                 });
             }
 
@@ -716,7 +722,7 @@ export default function OrdersPage() {
                     qty: outQty,
                     unit: 'sheets',
                     reference: order.order_id,
-                    notes: `Warehouse: ${order.printer_name || 'Stock'}`
+                    notes: `Warehouse: ${order.printer_name || 'Stock'}${noteSuffix}`
                 });
             }
 

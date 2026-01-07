@@ -19,7 +19,7 @@ export default function ProductForm({ initialData }: Props) {
     const [saving, setSaving] = useState(false);
 
     // Hardcoded Coating Options (Enum)
-    const COATING_OPTIONS = ['Varnish', 'Aqua Varnish', 'Gloss Lamination', 'Matt Lamination', 'Drip Off'];
+    const COATING_OPTIONS = ['Varnish', 'Aqua Varnish', 'Gloss Lamination', 'Matt Lamination', 'Drip Off', 'UV'];
 
     // Dropdown Data
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
