@@ -273,8 +273,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         const { name, value } = e.target;
 
         let extraUpdates = {};
+        // Only update batch_no from delivery date if it's NOT a split order
         if (name === 'delivery_date') {
-            extraUpdates = { batch_no: generateBatchNoFromDate(value) };
+            const isSplit = formData.parent_id || formData.order_id?.includes('-P') || formData.order_id?.includes('SPLIT-');
+            if (!isSplit) {
+                extraUpdates = { batch_no: generateBatchNoFromDate(value) };
+            }
         }
 
         setFormData(prev => ({ ...prev, [name]: value, ...extraUpdates }));
