@@ -598,14 +598,6 @@ export default function OrdersPage() {
             console.error('Error fetching orders:', ordersRes.error);
             setError(ordersRes.error.message);
         } else {
-            console.log('Orders loaded:', ordersRes.data?.length);
-            // Debugging status issue
-            if (ordersRes.data && ordersRes.data.length > 0) {
-                console.log('TOP 3 ORDERS STATUS CHECK:');
-                ordersRes.data.slice(0, 3).forEach(o => {
-                    console.log(`Order ID: ${o.id}, Job ID: ${o.order_id}, Status: '${o.status}', Progress: '${o.progress}'`);
-                });
-            }
             setOrders(ordersRes.data || []);
         }
 
@@ -695,8 +687,6 @@ export default function OrdersPage() {
 
             const inQty = order.paper_order_qty || 0;
             const outQty = order.paper_required || order.total_print_qty || 0;
-
-            console.log(`Calculating Entry for Order ${order.id}:`, { inQty, outQty });
 
             // 1. PAPER IN - Condition: if paper_type_name is not blank
             const actualGsm = order.products?.actual_gsm_used;
