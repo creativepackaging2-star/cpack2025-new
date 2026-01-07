@@ -16,6 +16,25 @@ export default function COAPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Helper to generate batch no if missing
+    const generateBatchNoFromDate = (dateStr: string | null | undefined) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '';
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yy = String(date.getFullYear()).slice(-2);
+        return `${dd}${mm}${yy}`;
+    };
+
+    const calculateBatchNo = (pName: string, cName: string, dDate: string) => {
+        const datePart = generateBatchNoFromDate(dDate);
+        if (!datePart) return '';
+        const namePart = (pName || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
+        const catPart = (cName || 'X').substring(0, 1).toUpperCase();
+        return `${namePart}${datePart}${catPart}`;
+    };
+
     useEffect(() => {
         const fetchOrder = async () => {
             if (!id) {
@@ -86,6 +105,11 @@ export default function COAPage() {
                                 }
                             }
                         }
+                    }
+
+                    // Force batch no calculation if missing but we have what we need
+                    if (!orderData.batch_no && orderData.product_name && orderData.delivery_date) {
+                        orderData.batch_no = calculateBatchNo(orderData.product_name, orderData.category_name || '', orderData.delivery_date);
                     }
 
                     setOrder(orderData);
