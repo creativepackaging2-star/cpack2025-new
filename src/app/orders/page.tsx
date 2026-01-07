@@ -32,13 +32,20 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 DetailGroup.displayName = 'DetailGroup';
 
 const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder }: any) => {
+    const categoryValue = catOrders.reduce((sum: number, o: any) => sum + (o.value || 0), 0);
+
     return (
         <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm mb-8">
-            <div className="bg-slate-50 px-6 py-3 border-b border-slate-300 flex items-center gap-2">
+            <div className="bg-slate-50 px-6 py-3 border-b border-slate-300 flex items-center gap-3">
                 <h3 className="text-sm font-semibold text-slate-800">{category}</h3>
-                <span className="text-xs font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
-                    {catOrders.length}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
+                        {catOrders.length}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                        ₹{categoryValue.toLocaleString()}
+                    </span>
+                </div>
             </div>
             <div className="overflow-x-auto hidden md:block">
                 <table className="min-w-full divide-y divide-slate-300">
@@ -873,6 +880,10 @@ export default function OrdersPage() {
 
     const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
 
+    const totalValue = useMemo(() => {
+        return filteredOrders.reduce((sum, o) => sum + (o.value || 0), 0);
+    }, [filteredOrders]);
+
     return (
         <div className={`space-y-6 max-w-[1600px] mx-auto pb-12 px-4 transition-opacity duration-200 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
             {error && (
@@ -883,9 +894,14 @@ export default function OrdersPage() {
 
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex items-center justify-between lg:justify-start gap-4">
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
                         Orders
-                        <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
+                            <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                                ₹{totalValue.toLocaleString()}
+                            </span>
+                        </div>
                     </h2>
                     <Link href="/orders/new" className="lg:hidden inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-1 h-4 w-4" />
