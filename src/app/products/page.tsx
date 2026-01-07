@@ -526,6 +526,11 @@ const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
                             <Edit2 className="h-4 w-4" />
                         </button>
                     </Link>
+                    <Link href={`/products/new?copy_id=${product.id}`}>
+                        <button className="p-2 text-indigo-600 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <Copy className="h-4 w-4" />
+                        </button>
+                    </Link>
                     {!isArchived && (
                         <button
                             onClick={handleDeleteClick}

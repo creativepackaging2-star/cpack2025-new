@@ -20,7 +20,7 @@ function NewProductContent() {
     const fetchProductToCopy = async (id: string) => {
         const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
         if (data) {
-            const { id: _, created_at: __, updated_at: ___, sku: ____, ...rest } = data;
+            const { id: _, created_at: __, updated_at: ___, sku: ____, artwork_pdf: _____, artwork_cdr: ______, ...rest } = data;
             setInitialData(rest);
         }
         setLoading(false);

@@ -7,6 +7,7 @@ import { Product } from '@/types';
 import { twMerge } from 'tailwind-merge';
 import { Loader2, Save, X } from 'lucide-react';
 import Link from 'next/link';
+import SearchableSelect from '@/components/SearchableSelect';
 
 type Props = {
     initialData?: Product | null;
@@ -107,8 +108,8 @@ export default function ProductForm({ initialData }: Props) {
             if (specs.status === 'fulfilled' && specs.value.data) setSpecifications(specs.value.data);
             if (addr.status === 'fulfilled' && addr.value.data) setDeliveryAddresses(addr.value.data);
 
-            // Auto-sku for NEW products
-            if (!initialData && existingSkus.status === 'fulfilled' && existingSkus.value.data) {
+            // Auto-sku for NEW products (including Copies which have no ID)
+            if ((!initialData || !initialData.id) && existingSkus.status === 'fulfilled' && existingSkus.value.data) {
                 const skus = existingSkus.value.data.map(p => parseInt(p.sku)).filter(n => !isNaN(n));
                 const nextSku = skus.length > 0 ? Math.max(...skus) + 1 : 1001;
                 setFormData(prev => ({ ...prev, sku: String(nextSku) }));
@@ -122,12 +123,16 @@ export default function ProductForm({ initialData }: Props) {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        startTransition(() => {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        });
     };
 
     const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : null }));
+        startTransition(() => {
+            setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : null }));
+        });
     };
 
     const handleEffectToggle = (id: string) => {
@@ -144,6 +149,24 @@ export default function ProductForm({ initialData }: Props) {
     const [confirmDeletePdf, setConfirmDeletePdf] = useState(false);
     const [confirmDeleteCdr, setConfirmDeleteCdr] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    const handleGenericAdd = async (table: string, name: string, setState: any, fieldName: string) => {
+        try {
+            const { data, error } = await supabase.from(table).insert([{ name }]).select('id, name').single();
+            if (error) throw error;
+
+            if (data) {
+                startTransition(() => {
+                    setState((prev: any[]) => [...prev, data]);
+                    setFormData((prev: any) => ({ ...prev, [fieldName]: data.id }));
+                });
+                return data; // Return for SearchableSelect to know it succeeded
+            }
+        } catch (error: any) {
+            console.error(`Error adding to ${table}:`, error);
+            alert(`Failed to add new item: ${error.message}`);
+        }
+    };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'artwork_pdf' | 'artwork_cdr') => {
         const file = e.target.files?.[0];
@@ -285,17 +308,23 @@ export default function ProductForm({ initialData }: Props) {
                         </div>
                         <div>
                             <label className="label">Category</label>
-                            <select name="category_id" value={formData.category_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Category</option>
-                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={categories}
+                                value={formData.category_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, category_id: val }))}
+                                onAdd={(name) => handleGenericAdd('category', name, setCategories, 'category_id')}
+                                placeholder="Select or Add Category"
+                            />
                         </div>
                         <div>
                             <label className="label">Customer</label>
-                            <select name="customer_id" value={formData.customer_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Customer</option>
-                                {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={customers}
+                                value={formData.customer_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))}
+                                onAdd={(name) => handleGenericAdd('customers', name, setCustomers, 'customer_id')}
+                                placeholder="Select or Add Customer"
+                            />
                         </div>
                         <div>
                             <label className="label">Artwork Code</label>
@@ -303,7 +332,7 @@ export default function ProductForm({ initialData }: Props) {
                         </div>
                         <div className="lg:col-span-1">
                             <label className="label">SKU (Auto)</label>
-                            <input name="sku" value={formData.sku || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono text-xs" readOnly={!!initialData} />
+                            <input name="sku" value={formData.sku || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono text-xs" readOnly={!!initialData?.id} />
                         </div>
                         <div>
                             <label className="label">UPS (Units/Sheet)</label>
@@ -318,17 +347,23 @@ export default function ProductForm({ initialData }: Props) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="label">Paper Type</label>
-                            <select name="paper_type_id" value={formData.paper_type_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Paper</option>
-                                {paperTypes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={paperTypes}
+                                value={formData.paper_type_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, paper_type_id: val }))}
+                                onAdd={(name) => handleGenericAdd('paper_types', name, setPaperTypes, 'paper_type_id')}
+                                placeholder="Select or Add Paper"
+                            />
                         </div>
                         <div>
                             <label className="label">GSM</label>
-                            <select name="gsm_id" value={formData.gsm_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select GSM</option>
-                                {gsms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={gsms}
+                                value={formData.gsm_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, gsm_id: val }))}
+                                onAdd={(name) => handleGenericAdd('gsm', name, setGsms, 'gsm_id')}
+                                placeholder="Select or Add GSM"
+                            />
                         </div>
                         <div>
                             <label className="label">Actual GSM Used</label>
@@ -336,10 +371,13 @@ export default function ProductForm({ initialData }: Props) {
                         </div>
                         <div>
                             <label className="label">Size</label>
-                            <select name="size_id" value={formData.size_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Size</option>
-                                {sizes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={sizes}
+                                value={formData.size_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, size_id: val }))}
+                                onAdd={(name) => handleGenericAdd('sizes', name, setSizes, 'size_id')}
+                                placeholder="Select or Add Size"
+                            />
                         </div>
                         <div>
                             <label className="label">Dimensions (WxHxD)</label>
@@ -377,25 +415,32 @@ export default function ProductForm({ initialData }: Props) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="label">Construction</label>
-                            <select name="construction_id" value={formData.construction_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Construction</option>
-                                {constructions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={constructions}
+                                value={formData.construction_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, construction_id: val }))}
+                                onAdd={(name) => handleGenericAdd('constructions', name, setConstructions, 'construction_id')}
+                                placeholder="Select or Add Construction"
+                            />
                         </div>
                         <div>
                             <label className="label">Pasting</label>
-                            <select name="pasting_id" value={formData.pasting_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Pasting</option>
-                                {pastings.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={pastings}
+                                value={formData.pasting_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, pasting_id: val }))}
+                                onAdd={(name) => handleGenericAdd('pasting', name, setPastings, 'pasting_id')}
+                                placeholder="Select or Add Pasting"
+                            />
                         </div>
                         <div>
                             <label className="label">Coating</label>
-                            <select name="coating" value={formData.coating || ''} onChange={handleChange} className="input-field">
-                                <option value="">Select Coating</option>
-                                <option value="">None</option>
-                                {COATING_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={[{ id: '', name: 'None' }, ...COATING_OPTIONS.map(opt => ({ id: opt, name: opt }))]}
+                                value={formData.coating}
+                                onChange={(val) => setFormData(prev => ({ ...prev, coating: val || '' }))}
+                                placeholder="Select Coating"
+                            />
                         </div>
                         <div className="md:col-span-3">
                             <label className="label mb-2 block">Special Effects</label>
@@ -514,17 +559,21 @@ export default function ProductForm({ initialData }: Props) {
                         </div>
                         <div className="md:col-span-1">
                             <label className="label">Delivery Address</label>
-                            <select name="delivery_address_id" value={formData.delivery_address_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Address</option>
-                                {deliveryAddresses.map(c => <option key={c.id} value={c.id}>{c.name || c.address}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={deliveryAddresses.map(d => ({ ...d, name: d.name || d.address || 'Unknown Address' }))}
+                                value={formData.delivery_address_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, delivery_address_id: val }))}
+                                placeholder="Search Address"
+                            />
                         </div>
                         <div className="md:col-span-1">
                             <label className="label">Specification</label>
-                            <select name="specification_id" value={formData.specification_id || ''} onChange={handleNumberChange} className="input-field">
-                                <option value="">Select Specification</option>
-                                {specifications.map(c => <option key={c.id} value={c.id}>{c.name || c.title}</option>)}
-                            </select>
+                            <SearchableSelect
+                                options={specifications.map(s => ({ ...s, name: s.name || s.title || 'Unknown Spec' }))}
+                                value={formData.specification_id}
+                                onChange={(val) => setFormData(prev => ({ ...prev, specification_id: val }))}
+                                placeholder="Search Specification"
+                            />
                         </div>
                         <div className="md:col-span-2">
                             <label className="label">Detailed Specs / Notes</label>
