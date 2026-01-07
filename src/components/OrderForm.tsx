@@ -498,6 +498,12 @@ Plate No   : ${formData.plate_no || '-'}`;
                         <span className={`px-2 py-0.5 rounded border ${printers.length > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
                             P({printers.length}) W({paperwalas.length}) S({sizes.length})
                         </span>
+                        {(formData.order_id?.includes('-P') || formData.order_id?.includes('SPLIT-')) && (
+                            <span className="px-2 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-100 flex items-center gap-1 animate-pulse">
+                                <Split className="w-2.5 h-2.5" />
+                                SPLIT ORDER LOT
+                            </span>
+                        )}
                     </p>
                 </div>
                 <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X className="w-6 h-6" /></Link>

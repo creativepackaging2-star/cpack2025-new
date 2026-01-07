@@ -222,6 +222,12 @@ Plate No   : ${order.plate_no || '-'}`;
                             <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
+                            {(order.order_id?.includes('-P') || order.order_id?.includes('SPLIT-')) && (
+                                <span className="text-[9px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
+                                    <Split className="w-2 h-2" />
+                                    Split Lot
+                                </span>
+                            )}
                             <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
                                 <PaperwalaWhatsAppLogo className="w-4 h-4" />
                                 Paper
@@ -326,6 +332,12 @@ Plate No   : ${order.plate_no || '-'}`;
                         <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
+                        {(order.order_id?.includes('-P') || order.order_id?.includes('SPLIT-')) && (
+                            <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1 shadow-sm">
+                                <Split className="w-2.5 h-2.5" />
+                                Split Order Lot
+                            </span>
+                        )}
                     </div>
                 </td>
 
