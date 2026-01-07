@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import ProductForm from '@/components/ProductForm';
 
-export default function NewProductPage() {
+function NewProductContent() {
     const params = useSearchParams();
     const copyId = params.get('copy_id');
     const [initialData, setInitialData] = useState<any>(null);
@@ -32,5 +32,13 @@ export default function NewProductPage() {
         <div className="py-6">
             <ProductForm initialData={initialData} />
         </div>
+    );
+}
+
+export default function NewProductPage() {
+    return (
+        <Suspense fallback={<div className="p-10 flex justify-center">Loading...</div>}>
+            <NewProductContent />
+        </Suspense>
     );
 }
