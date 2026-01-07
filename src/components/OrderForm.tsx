@@ -275,7 +275,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
         let extraUpdates = {};
         if (name === 'delivery_date') {
-            extraUpdates = { batch_no: generateBatchNoFromDate(value) };
+            const datePart = generateBatchNoFromDate(value);
+            if (datePart) {
+                const namePart = (formData.product_name || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
+                const catPart = (formData.category_name || product?.category?.name || 'X').substring(0, 1).toUpperCase();
+                extraUpdates = { batch_no: `${namePart}${datePart}${catPart}` };
+            }
         }
 
         setFormData(prev => ({ ...prev, [name]: value, ...extraUpdates }));
