@@ -100,6 +100,7 @@ export type Order = {
     category_name: string | null
     specs: string | null
     ups: number | null
+    parent_id?: number | null
     created_at: string
     updated_at: string
 }

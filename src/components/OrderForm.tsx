@@ -441,7 +441,6 @@ Plate No   : ${formData.plate_no || '-'}`;
 
         setSaving(true);
         try {
-            // Prepare New Partial Order lot
             const { id: _, created_at: __, updated_at: ___, ...rawOrderData } = formData as any;
 
             const partialOrder = {
@@ -451,6 +450,7 @@ Plate No   : ${formData.plate_no || '-'}`;
                 invoice_no: '',
                 status: 'Partially Delivered',
                 progress: 'Ready',
+                parent_id: initialData.id,
                 order_id: formData.order_id ? `${formData.order_id}-P` : `SPLIT-${Date.now().toString(36).toUpperCase()}`
             };
 
@@ -498,7 +498,7 @@ Plate No   : ${formData.plate_no || '-'}`;
                         <span className={`px-2 py-0.5 rounded border ${printers.length > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
                             P({printers.length}) W({paperwalas.length}) S({sizes.length})
                         </span>
-                        {(formData.order_id?.includes('-P') || formData.order_id?.includes('SPLIT-')) && (
+                        {(formData.parent_id || formData.order_id?.endsWith('-P') || formData.order_id?.includes('SPLIT-')) && (
                             <span className="px-2 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-100 flex items-center gap-1 animate-pulse">
                                 <Split className="w-2.5 h-2.5" />
                                 SPLIT ORDER LOT

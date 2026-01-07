@@ -222,7 +222,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
-                            {(order.order_id?.includes('-P') || order.order_id?.includes('SPLIT-')) && (
+                            {(order.parent_id || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                                 <span className="text-[9px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
                                     <Split className="w-2 h-2" />
                                     Split Lot
@@ -332,7 +332,7 @@ Plate No   : ${order.plate_no || '-'}`;
                         <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
-                        {(order.order_id?.includes('-P') || order.order_id?.includes('SPLIT-')) && (
+                        {(order.parent_id || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                             <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1 shadow-sm">
                                 <Split className="w-2.5 h-2.5" />
                                 Split Order Lot
@@ -778,6 +778,7 @@ export default function OrdersPage() {
                 invoice_no: '', // Reset for input
                 status: 'Partially Delivered',
                 progress: 'Ready',
+                parent_id: order.id,
                 order_id: order.order_id ? `${order.order_id}-P` : `SPLIT-${Date.now().toString(36).toUpperCase()}`
             };
 
@@ -806,8 +807,19 @@ export default function OrdersPage() {
         setExpandedOrderId(prev => prev === id ? null : id);
     }, []);
 
+    const sortedOrders = useMemo(() => {
+        const list = [...orders];
+        list.sort((a, b) => {
+            const aBase = a.parent_id || a.id;
+            const bBase = b.parent_id || b.id;
+            if (aBase !== bBase) return bBase - aBase; // Group by base ID, newest first
+            return a.id - b.id; // Within group, parent (smaller ID) first
+        });
+        return list;
+    }, [orders]);
+
     const filteredOrders = useMemo(() => {
-        return orders.filter(order => {
+        return sortedOrders.filter(order => {
             const s = (order.status || '').toLowerCase().trim();
             const isDone = s.includes('complete') || s === 'delivered';
 
