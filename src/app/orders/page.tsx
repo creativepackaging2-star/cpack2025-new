@@ -47,6 +47,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[40px]"></th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Product</th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Qty</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">U</th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Specs</th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Process</th>
                             <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">Files</th>
@@ -345,6 +346,10 @@ Plate No   : ${order.plate_no || '-'}`;
 
                 <td className="px-3 py-2 text-center">
                     <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                </td>
+
+                <td className="px-3 py-2 text-center">
+                    <div className="text-xs font-bold text-slate-600">{order.products?.actual_gsm_used || '-'}</div>
                 </td>
 
                 <td className="px-3 py-2 max-w-[300px]">
