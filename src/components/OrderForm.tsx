@@ -264,21 +264,18 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         if (!dateStr) return '';
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) return '';
+        const dd = String(date.getDate()).padStart(2, '0');
         const mm = String(date.getMonth() + 1).padStart(2, '0');
         const yy = String(date.getFullYear()).slice(-2);
-        return `${mm}/${yy}`;
+        return `${dd}${mm}${yy}`;
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
 
         let extraUpdates = {};
-        // Only update batch_no from delivery date if it's NOT a split order
         if (name === 'delivery_date') {
-            const isSplit = formData.parent_id || formData.order_id?.includes('-P') || formData.order_id?.includes('SPLIT-');
-            if (!isSplit) {
-                extraUpdates = { batch_no: generateBatchNoFromDate(value) };
-            }
+            extraUpdates = { batch_no: generateBatchNoFromDate(value) };
         }
 
         setFormData(prev => ({ ...prev, [name]: value, ...extraUpdates }));
