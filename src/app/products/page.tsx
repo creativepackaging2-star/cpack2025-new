@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database } from 'lucide-react';
+import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo } from '@/components/FileLogos';
 
@@ -123,6 +123,11 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                     <Link href={`/products/${product.id}/edit`}>
                         <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Edit">
                             <Edit2 className="h-4 w-4" />
+                        </button>
+                    </Link>
+                    <Link href={`/products/new?copy_id=${product.id}`}>
+                        <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Copy Product">
+                            <Copy className="h-4 w-4" />
                         </button>
                     </Link>
                     <Link href={`/products/${product.id}`}>
