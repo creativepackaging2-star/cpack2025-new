@@ -181,17 +181,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             setProduct(prod);
             // Auto-fill category and recalculate batch
             const categoryName = cat.data?.name || '';
-            const datePart = generateBatchNoFromDate(formData.delivery_date);
-            const namePart = (prod.product_name || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
-            const catPart = (categoryName || 'X').substring(0, 1).toUpperCase();
-            const newBatchNo = datePart ? `${namePart}${datePart}${catPart}` : '';
-
             setFormData(prev => ({
                 ...prev,
                 product_id: prod.id,
                 product_name: prod.product_name || '',
                 category_name: categoryName,
-                batch_no: newBatchNo,
+                batch_no: calculateBatchNo(prod.product_name, categoryName, prev.delivery_date!),
                 specs: prod.specs || null,
                 dimension: prod.dimension || null,
                 gsm_value: gsm.data?.name || null,
@@ -228,11 +223,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }
     }
 
-    const generateBatchNo = (prod: any) => {
-        if (!prod) return '';
-        const name = (prod.product_name || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
-        const cat = (prod.category?.name || 'X').substring(0, 1).toUpperCase();
-        return `${name}${cat}`;
+    const calculateBatchNo = (pName: string, cName: string, dDate: string) => {
+        const datePart = generateBatchNoFromDate(dDate);
+        if (!datePart) return '';
+        const namePart = (pName || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
+        const catPart = (cName || 'X').substring(0, 1).toUpperCase();
+        return `${namePart}${datePart}${catPart}`;
     };
 
     // --- Manufacturing Formulas ---
@@ -276,17 +272,15 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
 
-        let extraUpdates = {};
         if (name === 'delivery_date') {
-            const datePart = generateBatchNoFromDate(value);
-            if (datePart) {
-                const namePart = (formData.product_name || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
-                const catPart = (formData.category_name || product?.category?.name || 'X').substring(0, 1).toUpperCase();
-                extraUpdates = { batch_no: `${namePart}${datePart}${catPart}` };
-            }
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                batch_no: calculateBatchNo(prev.product_name || '', prev.category_name || '', value)
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
-
-        setFormData(prev => ({ ...prev, [name]: value, ...extraUpdates }));
     };
 
     const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
