@@ -181,7 +181,10 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             setProduct(prod);
             // Auto-fill category and recalculate batch
             const categoryName = cat.data?.name || '';
-            const newBatchNo = generateBatchNoFromDate(formData.delivery_date);
+            const datePart = generateBatchNoFromDate(formData.delivery_date);
+            const namePart = (prod.product_name || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();
+            const catPart = (categoryName || 'X').substring(0, 1).toUpperCase();
+            const newBatchNo = datePart ? `${namePart}${datePart}${catPart}` : '';
 
             setFormData(prev => ({
                 ...prev,
