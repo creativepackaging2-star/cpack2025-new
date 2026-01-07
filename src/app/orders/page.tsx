@@ -222,7 +222,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
-                            {(order.parent_id || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
+                            {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                                 <span className="text-[9px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
                                     <Split className="w-2 h-2" />
                                     Split Lot
@@ -332,7 +332,7 @@ Plate No   : ${order.plate_no || '-'}`;
                         <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
-                        {(order.parent_id || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
+                        {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                             <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1 shadow-sm">
                                 <Split className="w-2.5 h-2.5" />
                                 Split Order Lot
@@ -812,8 +812,16 @@ export default function OrdersPage() {
         list.sort((a, b) => {
             const aBase = a.parent_id || a.id;
             const bBase = b.parent_id || b.id;
-            if (aBase !== bBase) return bBase - aBase; // Group by base ID, newest first
-            return a.id - b.id; // Within group, parent (smaller ID) first
+
+            if (aBase !== bBase) return bBase - aBase; // Sort clusters by base ID descending (newest first)
+
+            // Same cluster grouping: Parent first, then children by ID
+            const isAParent = !a.parent_id || a.parent_id === a.id;
+            const isBParent = !b.parent_id || b.parent_id === b.id;
+
+            if (isAParent) return -1;
+            if (isBParent) return 1;
+            return a.id - b.id;
         });
         return list;
     }, [orders]);
