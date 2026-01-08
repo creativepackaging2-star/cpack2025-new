@@ -179,43 +179,41 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             ]);
 
             setProduct(prod);
-            // Auto-fill category and recalculate batch
-            const categoryName = cat.data?.name || '';
-            setFormData(prev => {
-                const computedBatch = calculateBatchNo(prod.product_name || '', categoryName, prev.delivery_date || '');
-                return {
-                    ...prev,
-                    product_id: prod.id,
-                    product_name: prod.product_name || '',
-                    category_name: categoryName,
-                    batch_no: computedBatch || prev.batch_no || '',
-                    specs: prod.specs || null,
-                    dimension: prod.dimension || null,
-                    gsm_value: gsm.data?.name || null,
-                    paper_type_name: paper.data?.name || null,
-                    // Assuming these fields exist in 'prod' or can be derived
-                    // paperwala_mobile: prod.paperwala_mobile || null, // Not directly from product
-                    // printer_mobile: prod.supervisor_mobile || null, // Not directly from product
-                    // printer_name: prod.printer_name || null, // Not directly from product
-                    paper_order_size: sz.data?.name || null,
-                    ink: prod.ink || null,
-                    plate_no: prod.plate_no || null,
-                    artwork_code: prod.artwork_code || prod.sku || null, // Use artwork_code from product, fallback to sku
-                    // Snapshot values from linked lookups
-                    customer_name: cust.data?.name || '',
-                    print_size: sz.data?.name || '',
-                    paper_order_size_id: prod.size_id || null, // Auto-select same size for paper
-                    coating: prod.coating || '',
-                    special_effects: prod.special_effects || '',
-                    pasting_type: past.data?.name || '',
-                    construction_type: cons.data?.name || '',
-                    specification: spec.data?.name || '',
-                    delivery_address: addr.data?.address || '',
-                    artwork_pdf: prod.artwork_pdf || '',
-                    artwork_cdr: prod.artwork_cdr || '',
-                    ups: prod.ups || null,
-                };
-            });
+
+            // Only auto-fill formData if we are NOT editing an existing order (i.e., new order)
+            if (!initialData) {
+                const categoryName = cat.data?.name || '';
+                setFormData(prev => {
+                    const computedBatch = calculateBatchNo(prod.product_name || '', categoryName, prev.delivery_date || '');
+                    return {
+                        ...prev,
+                        product_id: prod.id,
+                        product_name: prod.product_name || '',
+                        category_name: categoryName,
+                        batch_no: computedBatch || prev.batch_no || '',
+                        specs: prod.specs || null,
+                        dimension: prod.dimension || null,
+                        gsm_value: gsm.data?.name || null,
+                        paper_type_name: paper.data?.name || null,
+                        paper_order_size: sz.data?.name || null,
+                        ink: prod.ink || null,
+                        plate_no: prod.plate_no || null,
+                        artwork_code: prod.artwork_code || prod.sku || null,
+                        customer_name: cust.data?.name || '',
+                        print_size: sz.data?.name || '',
+                        paper_order_size_id: prod.size_id || null,
+                        coating: prod.coating || '',
+                        special_effects: prod.special_effects || '',
+                        pasting_type: past.data?.name || '',
+                        construction_type: cons.data?.name || '',
+                        specification: spec.data?.name || '',
+                        delivery_address: addr.data?.address || '',
+                        artwork_pdf: prod.artwork_pdf || '',
+                        artwork_cdr: prod.artwork_cdr || '',
+                        ups: prod.ups || null,
+                    };
+                });
+            }
 
             console.log('Successfully auto-filled from product details');
         } catch (err: any) {

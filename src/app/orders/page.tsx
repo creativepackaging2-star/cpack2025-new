@@ -351,22 +351,22 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 w-1/4">
-                    <div className="text-[12px] font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                    <div className="text-[10px] font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[8px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
                         {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
-                            <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1 shadow-sm">
-                                <Split className="w-2.5 h-2.5" />
-                                Split Order Lot
+                            <span className="text-[8px] font-black text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-0.5 shadow-sm">
+                                <Split className="w-2 h-2" />
+                                Lot
                             </span>
                         )}
                     </div>
                 </td>
 
-                <td className="px-3 py-2 text-center w-[80px]">
-                    <div className="text-[12px] font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                <td className="px-3 py-2 text-center w-[60px]">
+                    <div className="text-[10px] font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
                 <td className="px-3 py-2 text-center">
@@ -395,54 +395,83 @@ Plate No   : ${order.plate_no || '-'}`;
                     ) : (
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleQuickEdit(order); }}
-                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)} hover:opacity-80 transition-opacity`}
+                            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)} hover:opacity-80 transition-opacity`}
                         >
                             {order.progress || 'Pending'}
-                            <ChevronDown className="ml-1 h-3 w-3 opacity-40" />
+                            <ChevronDown className="ml-0.5 h-2.5 w-2.5 opacity-40" />
                         </button>
                     )}
                 </td>
 
-                <td className="px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                        {order.artwork_pdf && (
-                            <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
-                                <PdfLogo className="w-6 h-6" />
-                            </a>
-                        )}
-                        {order.artwork_cdr && (
-                            <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
-                                <CdrLogo className="w-6 h-6" />
-                            </a>
-                        )}
-                        <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
-                            <WhatsAppLogo className="w-6 h-6" />
-                        </button>
+                <td className="px-3 py-1 text-center">
+                    <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
+                        <div className="flex items-center justify-center gap-2">
+                            {order.artwork_pdf && (
+                                <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
+                                    <PdfLogo className="w-5 h-5" />
+                                </a>
+                            )}
+                            {order.artwork_cdr && (
+                                <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
+                                    <CdrLogo className="w-5 h-5" />
+                                </a>
+                            )}
+                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
+                                <WhatsAppLogo className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 border-t border-slate-100 pt-1.5 w-full">
+                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
+                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
+                                disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
+                                title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
+                                className={`p-0.5 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
+                            >
+                                {isUpdating === order.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" /> : <Database className={`w-3.5 h-3.5 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
+                            </button>
+                            <Link
+                                href={`/orders/${order.id}/coa`}
+                                target="_blank"
+                                title="Generate COA"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <FileText className="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-600" />
+                            </Link>
+                            <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label">
+                                <Truck className="w-3.5 h-3.5 text-amber-400 hover:text-amber-600" />
+                            </button>
+                            <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card">
+                                <Palette className="w-3.5 h-3.5 text-rose-400 hover:text-rose-600" />
+                            </button>
+                        </div>
                     </div>
                 </td>
 
                 <td className="px-3 py-2 text-right">
-                    <div className="flex items-center justify-end gap-3" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-0.5" onClick={e => e.stopPropagation()}>
                         {(!order.status || order.status !== 'Complete') && (
                             <button
                                 onClick={onCompleteClick}
                                 disabled={isUpdating}
-                                className={`p-1.5 rounded-full transition-all border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100 hover:bg-emerald-50'} ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                className={`p-1 rounded-full transition-all border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100 hover:bg-emerald-50'} ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                 title={confirming ? 'Click again to confirm complete' : 'Mark as Complete'}
                             >
-                                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
                             </button>
                         )}
                         <button
                             onClick={handleSplit}
                             disabled={isUpdating}
-                            className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-full transition-colors border border-amber-100"
+                            className="p-1 text-amber-500 hover:bg-amber-50 rounded-full transition-colors border border-amber-100"
                             title="Split for Partial Delivery"
                         >
-                            <Split className="w-4 h-4" />
+                            <Split className="w-3 h-3" />
                         </button>
-                        <Link href={`/orders/${order.id}`} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
-                            <Edit className="w-4 h-4" />
+                        <Link href={`/orders/${order.id}`} className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
+                            <Edit className="w-3 h-3" />
                         </Link>
                     </div>
                 </td>
