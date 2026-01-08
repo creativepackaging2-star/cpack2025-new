@@ -18,12 +18,12 @@ DocBadge.displayName = 'DocBadge';
 
 const DetailGroup = memo(({ title, items }: { title: string, items: { label: string, value: any }[] }) => (
     <div className="space-y-4">
-        <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{title}</h4>
+        <h4 className="text-sm font-black text-slate-500 uppercase tracking-widest border-l-2 border-slate-300 pl-2">{title}</h4>
         <div className="space-y-2.5">
             {items.map((it, i) => (
-                <div key={i} className="flex justify-between text-sm border-b border-slate-100 pb-1.5">
-                    <span className="text-slate-500">{it.label}</span>
-                    <span className="font-semibold text-slate-900">{it.value || '-'}</span>
+                <div key={i} className="flex justify-between text-base border-b border-slate-100 pb-1.5">
+                    <span className="text-sm font-bold text-slate-500">{it.label}</span>
+                    <span className="font-bold text-slate-900">{it.value || '-'}</span>
                 </div>
             ))}
         </div>
@@ -508,25 +508,25 @@ Plate No   : ${order.plate_no || '-'}`;
                             </div>
                             <div className="md:col-span-6">
                                 <div className="space-y-5">
-                                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Technical Specs</h4>
-                                    <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm text-sm">
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Ink Group:</span> <span className="font-semibold">{order.ink || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Coating:</span> <span className="font-semibold">{order.coating || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Pasting:</span> <span className="font-semibold">{order.pasting_type || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Construction:</span> <span className="font-semibold">{order.construction_type || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Specification:</span> <span className="font-semibold">{order.specification || '-'}</span></div>
-                                        <div className="flex justify-between pb-1.5"><span className="text-slate-500">Dim:</span> <span className="font-mono font-bold text-indigo-600 text-base">{order.dimension || '-'}</span></div>
+                                    <h4 className="text-sm font-black text-slate-500 uppercase tracking-widest border-l-2 border-slate-300 pl-2">Technical Specs</h4>
+                                    <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3.5 shadow-sm">
+                                        <div className="flex justify-between border-b pb-2 text-base"><span className="text-sm font-bold text-slate-500">Plate No:</span> <span className="font-bold text-red-600 font-black">{order.plate_no || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-2 text-base"><span className="text-sm font-bold text-slate-500">Ink Group:</span> <span className="font-bold text-slate-900">{order.ink || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-2 text-base"><span className="text-sm font-bold text-slate-500">Coating:</span> <span className="font-bold text-slate-900">{order.coating || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-2 text-base"><span className="text-sm font-bold text-slate-500">Pasting:</span> <span className="font-bold text-slate-900">{order.pasting_type || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-2 text-base"><span className="text-sm font-bold text-slate-500">Construction:</span> <span className="font-bold text-slate-900">{order.construction_type || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-2 text-base"><span className="text-sm font-bold text-slate-500">Specification:</span> <span className="font-bold text-slate-900">{order.specification || '-'}</span></div>
+                                        <div className="flex justify-between pb-1 text-base"><span className="text-sm font-bold text-slate-500">Dim:</span> <span className="font-mono font-black text-indigo-700 text-lg border-b-2 border-indigo-100">{order.dimension || '-'}</span></div>
                                     </div>
                                     {order.specs && (
-                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 mt-2">
-                                            <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5">Full Specs</div>
-                                            <div className="text-sm text-slate-700 font-mono leading-relaxed">{order.specs}</div>
+                                        <div className="bg-indigo-50 p-5 rounded-xl border border-indigo-200 mt-2">
+                                            <div className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-2 underline decoration-indigo-200 underline-offset-4">Full Specifications Detail</div>
+                                            <div className="text-base text-slate-700 font-mono leading-relaxed font-semibold">{order.specs}</div>
                                         </div>
                                     )}
-                                    <div className="flex flex-wrap gap-3 pt-2">
-                                        {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF" className="hover:scale-110 transition-transform"><PdfLogo className="w-10 h-10" /></a>}
-                                        {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR" className="hover:scale-110 transition-transform"><CdrLogo className="w-10 h-10" /></a>}
+                                    <div className="flex flex-wrap gap-4 pt-3">
+                                        {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF" className="hover:scale-110 transition-all filter drop-shadow-md"><PdfLogo className="w-12 h-12" /></a>}
+                                        {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR" className="hover:scale-110 transition-all filter drop-shadow-md"><CdrLogo className="w-12 h-12" /></a>}
                                     </div>
                                 </div>
                             </div>
