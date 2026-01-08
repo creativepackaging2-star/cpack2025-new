@@ -404,8 +404,14 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-1 text-center">
-                    <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
+                    <div className="flex flex-col items-center gap-1.5 min-w-[140px]">
                         <div className="flex items-center justify-center gap-2">
+                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
+                                <WhatsAppLogo className="w-5 h-5" />
+                            </button>
+                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
+                                <PaperwalaWhatsAppLogo className="w-5 h-5" />
+                            </button>
                             {order.artwork_pdf && (
                                 <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
                                     <PdfLogo className="w-5 h-5" />
@@ -416,21 +422,15 @@ Plate No   : ${order.plate_no || '-'}`;
                                     <CdrLogo className="w-5 h-5" />
                                 </a>
                             )}
-                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
-                                <WhatsAppLogo className="w-5 h-5" />
-                            </button>
                         </div>
                         <div className="flex items-center justify-center gap-2 border-t border-slate-100 pt-1.5 w-full">
-                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
-                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
-                            </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
                                 disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
                                 title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
                                 className={`p-0.5 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
                             >
-                                {isUpdating === order.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" /> : <Database className={`w-3.5 h-3.5 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
+                                {isUpdating === order.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" /> : <Database className={`w-4 h-4 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
                             </button>
                             <Link
                                 href={`/orders/${order.id}/coa`}
@@ -438,13 +438,13 @@ Plate No   : ${order.plate_no || '-'}`;
                                 title="Generate COA"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <FileText className="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-600" />
+                                <FileText className="w-4 h-4 text-indigo-400 hover:text-indigo-600" />
                             </Link>
                             <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label">
-                                <Truck className="w-3.5 h-3.5 text-amber-400 hover:text-amber-600" />
+                                <Truck className="w-4 h-4 text-amber-400 hover:text-amber-600" />
                             </button>
                             <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card">
-                                <Palette className="w-3.5 h-3.5 text-rose-400 hover:text-rose-600" />
+                                <Palette className="w-4 h-4 text-rose-400 hover:text-rose-600" />
                             </button>
                         </div>
                     </div>
@@ -479,47 +479,55 @@ Plate No   : ${order.plate_no || '-'}`;
             {isExpanded && (
                 <tr className="bg-slate-50/50">
                     <td colSpan={7} className="px-12 py-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-in fade-in slide-in-from-top-2">
-                            <DetailGroup title="Logistics" items={[
-                                { label: 'Printer', value: order.printer_name },
-                                { label: 'Printer Mob', value: order.printer_mobile },
-                                { label: 'Del. Date', value: order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : '-' },
-                                { label: 'Invoice', value: order.invoice_no },
-                            ]} />
-                            <DetailGroup title="Paper Details" items={[
-                                { label: 'Paper Wala', value: order.paperwala_name },
-                                { label: 'Paper Size', value: order.paper_order_size },
-                                { label: 'Paper Required', value: order.paper_required },
-                                { label: 'GSM / Type', value: `${order.gsm_value || '-'} / ${order.paper_type_name || '-'}` },
-                            ]} />
-                            <DetailGroup title="Production" items={[
-                                { label: 'Gross Print', value: order.gross_print_qty },
-                                { label: 'Total Print', value: order.total_print_qty },
-                                { label: 'Qty Delivered', value: order.qty_delivered },
-                                { label: 'Batch No', value: order.batch_no },
-                                { label: 'Packing', value: order.packing_detail },
-                                { label: 'Remarks', value: order.remarks },
-                            ]} />
-                            <div className="space-y-4">
-                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
-                                <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2 shadow-sm text-xs">
-                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
-                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Ink Group:</span> <span className="font-semibold">{order.ink || '-'}</span></div>
-                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Coating:</span> <span className="font-semibold">{order.coating || '-'}</span></div>
-                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Pasting:</span> <span className="font-semibold">{order.pasting_type || '-'}</span></div>
-                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Construction:</span> <span className="font-semibold">{order.construction_type || '-'}</span></div>
-                                    <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Specification:</span> <span className="font-semibold">{order.specification || '-'}</span></div>
-                                    <div className="flex justify-between pb-1"><span className="text-slate-500">Dim:</span> <span className="font-mono font-bold text-indigo-600">{order.dimension || '-'}</span></div>
-                                </div>
-                                {order.specs && (
-                                    <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-200 mt-2">
-                                        <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mb-1">Full Specs</div>
-                                        <div className="text-xs text-slate-700 font-mono leading-relaxed">{order.specs}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in slide-in-from-top-2">
+                            <div className="md:col-span-3">
+                                <DetailGroup title="Logistics" items={[
+                                    { label: 'Printer', value: order.printer_name },
+                                    { label: 'Printer Mob', value: order.printer_mobile },
+                                    { label: 'Del. Date', value: order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : '-' },
+                                    { label: 'Invoice', value: order.invoice_no },
+                                ]} />
+                            </div>
+                            <div className="md:col-span-3">
+                                <DetailGroup title="Paper Details" items={[
+                                    { label: 'Paper Wala', value: order.paperwala_name },
+                                    { label: 'Paper Size', value: order.paper_order_size },
+                                    { label: 'Paper Required', value: order.paper_required },
+                                    { label: 'GSM / Type', value: `${order.gsm_value || '-'} / ${order.paper_type_name || '-'}` },
+                                ]} />
+                            </div>
+                            <div className="md:col-span-3">
+                                <DetailGroup title="Production" items={[
+                                    { label: 'Gross Print', value: order.gross_print_qty },
+                                    { label: 'Total Print', value: order.total_print_qty },
+                                    { label: 'Qty Delivered', value: order.qty_delivered },
+                                    { label: 'Batch No', value: order.batch_no },
+                                    { label: 'Packing', value: order.packing_detail },
+                                    { label: 'Remarks', value: order.remarks },
+                                ]} />
+                            </div>
+                            <div className="md:col-span-3">
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
+                                    <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2.5 shadow-sm text-xs">
+                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Ink Group:</span> <span className="font-semibold">{order.ink || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Coating:</span> <span className="font-semibold">{order.coating || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Pasting:</span> <span className="font-semibold">{order.pasting_type || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Construction:</span> <span className="font-semibold">{order.construction_type || '-'}</span></div>
+                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Specification:</span> <span className="font-semibold">{order.specification || '-'}</span></div>
+                                        <div className="flex justify-between pb-1.5"><span className="text-slate-500">Dim:</span> <span className="font-mono font-bold text-indigo-600">{order.dimension || '-'}</span></div>
                                     </div>
-                                )}
-                                <div className="flex flex-wrap gap-2 pt-2">
-                                    {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF"><PdfLogo className="w-8 h-8" /></a>}
-                                    {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR"><CdrLogo className="w-8 h-8" /></a>}
+                                    {order.specs && (
+                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 mt-2">
+                                            <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mb-1">Full Specs</div>
+                                            <div className="text-xs text-slate-700 font-mono leading-relaxed">{order.specs}</div>
+                                        </div>
+                                    )}
+                                    <div className="flex wrap gap-2 pt-2">
+                                        {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF"><PdfLogo className="w-8 h-8" /></a>}
+                                        {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR"><CdrLogo className="w-8 h-8" /></a>}
+                                    </div>
                                 </div>
                             </div>
                         </div>
