@@ -65,8 +65,8 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">U</th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Specs</th>
                             <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Process</th>
-                            <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">Files</th>
-                            <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Action</th>
+                            <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
+                            <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300 bg-white">
@@ -278,22 +278,6 @@ Plate No   : ${order.plate_no || '-'}`;
                                 {order.automation === 'PAPER_ENTRY_DONE' ? 'Recorded' : 'Paper Entry'}
                             </button>
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
-                            <Link
-                                href={`/orders/${order.id}/coa`}
-                                target="_blank"
-                                className="p-1.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100 hover:bg-indigo-100 transition-colors"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <FileText className="w-3.5 h-3.5" />
-                            </Link>
-                            <button onClick={() => generateDoc('Delivery Label', order.id)} className="p-1.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100">
-                                <Truck className="w-3.5 h-3.5" />
-                            </button>
-                            <button onClick={() => generateDoc('Shade Card', order.id)} className="p-1.5 bg-rose-50 text-rose-700 rounded-md border border-rose-100">
-                                <Palette className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -366,8 +350,8 @@ Plate No   : ${order.plate_no || '-'}`;
                     </button>
                 </td>
 
-                <td className="px-3 py-2">
-                    <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
+                <td className="px-3 py-2 w-1/4">
+                    <div className="text-[12px] font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
@@ -381,16 +365,16 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-2 text-center">
-                    <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                <td className="px-3 py-2 text-center w-[80px]">
+                    <div className="text-[12px] font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
                 <td className="px-3 py-2 text-center">
                     <div className="text-xs font-bold text-slate-600">{order.products?.actual_gsm_used || '-'}</div>
                 </td>
 
-                <td className="px-3 py-2 max-w-[300px]">
-                    <div className="text-xs text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
+                <td className="px-3 py-2 flex-1 min-w-[300px]">
+                    <div className="text-[10px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>
@@ -420,57 +404,20 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 text-center">
-                    <div className="flex flex-col items-center gap-2 py-1">
-                        {/* 1st Line: Actions & Artwork */}
-                        <div className="flex items-center gap-2">
-                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-1 hover:bg-emerald-50 rounded-full transition-colors">
-                                <PaperwalaWhatsAppLogo className="w-5 h-5" />
-                            </button>
-                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-1 hover:bg-blue-50 rounded-full transition-colors">
-                                <WhatsAppLogo className="w-5 h-5" />
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
-                                disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
-                                title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
-                                className={`p-1 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
-                            >
-                                {isUpdating === order.id ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> : <Database className={`w-4 h-4 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : 'text-amber-600'}`} />}
-                            </button>
-                            <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
-                            {order.artwork_pdf && (
-                                <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
-                                    <PdfLogo className="w-6 h-6" />
-                                </a>
-                            )}
-                            {order.artwork_cdr && (
-                                <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
-                                    <CdrLogo className="w-6 h-6" />
-                                </a>
-                            )}
-                        </div>
-
-                        {/* 2nd Line: Document Generation */}
-                        <div className="flex items-center gap-4 border-t border-slate-100 pt-1.5 px-2">
-                            <Link
-                                href={`/orders/${order.id}/coa`}
-                                target="_blank"
-                                title="Generate COA"
-                                className="flex items-center gap-1 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                                <span className="text-[9px] font-bold text-indigo-600 uppercase">COA</span>
-                            </Link>
-                            <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label" className="flex items-center gap-1 hover:bg-amber-50 px-1.5 py-0.5 rounded transition-colors">
-                                <Truck className="w-3.5 h-3.5 text-amber-400" />
-                                <span className="text-[9px] font-bold text-amber-600 uppercase">DEL</span>
-                            </button>
-                            <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card" className="flex items-center gap-1 hover:bg-rose-50 px-1.5 py-0.5 rounded transition-colors">
-                                <Palette className="w-3.5 h-3.5 text-rose-400" />
-                                <span className="text-[9px] font-bold text-rose-600 uppercase">Shade</span>
-                            </button>
-                        </div>
+                    <div className="flex items-center justify-center gap-1.5">
+                        {order.artwork_pdf && (
+                            <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
+                                <PdfLogo className="w-6 h-6" />
+                            </a>
+                        )}
+                        {order.artwork_cdr && (
+                            <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
+                                <CdrLogo className="w-6 h-6" />
+                            </a>
+                        )}
+                        <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
+                            <WhatsAppLogo className="w-6 h-6" />
+                        </button>
                     </div>
                 </td>
 
@@ -977,7 +924,16 @@ export default function OrdersPage() {
                             className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-md transition-all"
                         >
                             <Truck className="w-3.5 h-3.5" />
-                            <span>Paper Order</span>
+                            <span>Paper</span>
+                        </Link>
+                        <div className="w-[1px] h-4 bg-slate-200"></div>
+                        <Link
+                            href="/orders/summary/punching"
+                            title="Punching Summary"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-rose-600 rounded-md transition-all"
+                        >
+                            <Palette className="w-3.5 h-3.5" />
+                            <span>Punching</span>
                         </Link>
                     </div>
 
@@ -1083,7 +1039,14 @@ export default function OrdersPage() {
                                             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
                                         >
                                             <Truck className="w-4 h-4" />
-                                            Paper Summary
+                                            Paper
+                                        </Link>
+                                        <Link
+                                            href={`/orders/summary/punching?ids=${selectedIds.join(',')}`}
+                                            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                                        >
+                                            <Palette className="w-4 h-4" />
+                                            Punching
                                         </Link>
                                     </div>
                                 </div>
