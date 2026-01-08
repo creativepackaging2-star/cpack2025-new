@@ -480,7 +480,7 @@ Plate No   : ${order.plate_no || '-'}`;
                 <tr className="bg-slate-50/50">
                     <td colSpan={7} className="px-12 py-8">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in slide-in-from-top-2">
-                            <div className="md:col-span-3">
+                            <div className="md:col-span-2">
                                 <DetailGroup title="Logistics" items={[
                                     { label: 'Printer', value: order.printer_name },
                                     { label: 'Printer Mob', value: order.printer_mobile },
@@ -488,7 +488,7 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'Invoice', value: order.invoice_no },
                                 ]} />
                             </div>
-                            <div className="md:col-span-3">
+                            <div className="md:col-span-2">
                                 <DetailGroup title="Paper Details" items={[
                                     { label: 'Paper Wala', value: order.paperwala_name },
                                     { label: 'Paper Size', value: order.paper_order_size },
@@ -496,7 +496,7 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'GSM / Type', value: `${order.gsm_value || '-'} / ${order.paper_type_name || '-'}` },
                                 ]} />
                             </div>
-                            <div className="md:col-span-3">
+                            <div className="md:col-span-2">
                                 <DetailGroup title="Production" items={[
                                     { label: 'Gross Print', value: order.gross_print_qty },
                                     { label: 'Total Print', value: order.total_print_qty },
@@ -506,27 +506,29 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'Remarks', value: order.remarks },
                                 ]} />
                             </div>
-                            <div className="md:col-span-3">
+                            <div className="md:col-span-6">
                                 <div className="space-y-4">
-                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
-                                    <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2.5 shadow-sm text-xs">
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Ink Group:</span> <span className="font-semibold">{order.ink || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Coating:</span> <span className="font-semibold">{order.coating || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Pasting:</span> <span className="font-semibold">{order.pasting_type || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Construction:</span> <span className="font-semibold">{order.construction_type || '-'}</span></div>
-                                        <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Specification:</span> <span className="font-semibold">{order.specification || '-'}</span></div>
-                                        <div className="flex justify-between pb-1.5"><span className="text-slate-500">Dim:</span> <span className="font-mono font-bold text-indigo-600">{order.dimension || '-'}</span></div>
+                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center md:text-left">Technical Specs</h4>
+                                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-xs">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                                            <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Ink Group:</span> <span className="font-semibold">{order.ink || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Coating:</span> <span className="font-semibold">{order.coating || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Pasting:</span> <span className="font-semibold">{order.pasting_type || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Construction:</span> <span className="font-semibold">{order.construction_type || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1.5"><span className="text-slate-500">Specification:</span> <span className="font-semibold">{order.specification || '-'}</span></div>
+                                            <div className="flex justify-between md:border-b pb-1.5"><span className="text-slate-500">Dim:</span> <span className="font-mono font-bold text-indigo-600">{order.dimension || '-'}</span></div>
+                                        </div>
                                     </div>
                                     {order.specs && (
-                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 mt-2">
-                                            <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mb-1">Full Specs</div>
+                                        <div className="bg-indigo-50 p-5 rounded-xl border border-indigo-200 mt-2">
+                                            <div className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mb-2">Full Specifications & Material Detail</div>
                                             <div className="text-xs text-slate-700 font-mono leading-relaxed">{order.specs}</div>
                                         </div>
                                     )}
-                                    <div className="flex wrap gap-2 pt-2">
-                                        {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF"><PdfLogo className="w-8 h-8" /></a>}
-                                        {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR"><CdrLogo className="w-8 h-8" /></a>}
+                                    <div className="flex wrap gap-4 pt-2 justify-center md:justify-start">
+                                        {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF" className="hover:scale-110 transition-transform"><PdfLogo className="w-10 h-10" /></a>}
+                                        {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR" className="hover:scale-110 transition-transform"><CdrLogo className="w-10 h-10" /></a>}
                                     </div>
                                 </div>
                             </div>
