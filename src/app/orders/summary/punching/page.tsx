@@ -14,11 +14,25 @@ function PunchingSummaryContent() {
     const [printers, setPrinters] = useState<any[]>([]);
     const [selectedPrinter, setSelectedPrinter] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isSendingText, setIsSendingText] = useState(false);
 
     useEffect(() => {
         fetchOrders();
         fetchPrinters();
     }, [idsString]);
+
+    // Auto-select the first printer that has jobs in the list
+    useEffect(() => {
+        if (orders.length > 0 && printers.length > 0 && !selectedPrinter) {
+            const firstJob = orders[0];
+            const p = printers.find(pr =>
+                (firstJob.printer_id && pr.id === firstJob.printer_id) ||
+                (firstJob.printer_name && pr.name === firstJob.printer_name)
+            );
+            if (p) setSelectedPrinter(p);
+        }
+    }, [orders, printers, selectedPrinter]);
 
     async function fetchOrders() {
         setLoading(true);
@@ -59,6 +73,14 @@ function PunchingSummaryContent() {
         if (data) setPrinters(data);
     }
 
+    // Only show printers that have orders in the current selected set
+    const activePrinters = useMemo(() => {
+        if (orders.length === 0) return [];
+        const activeIds = new Set(orders.map(o => o.printer_id).filter(Boolean));
+        const activeNames = new Set(orders.map(o => o.printer_name).filter(Boolean));
+        return printers.filter(p => activeIds.has(p.id) || activeNames.has(p.name));
+    }, [orders, printers]);
+
     const filteredOrders = useMemo(() => {
         if (!selectedPrinter) return orders;
         return orders.filter(o =>
@@ -92,54 +114,57 @@ function PunchingSummaryContent() {
             return;
         }
 
-        const tableElement = document.getElementById('punching-summary-table');
-        if (!tableElement) {
-            alert('Table not found.');
-            return;
-        }
+        setIsGenerating(true);
+        // Small delay to allow 'Generating...' UI state to render (Fixes INP issue)
+        await new Promise(r => setTimeout(r, 100));
 
         try {
+            const tableElement = document.getElementById('punching-summary-table');
+            if (!tableElement) throw new Error('Table not found.');
+
             const canvas = await html2canvas(tableElement, {
                 scale: 2,
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                logging: false
             });
 
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    alert('Failed to generate image.');
-                    return;
-                }
+            // Trigger the clipboard copy
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('Failed to generate image.');
 
-                let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
-                if (!phone) {
-                    alert('This printer does not have a valid phone number.');
-                    return;
-                }
-                if (phone.length === 10) phone = '91' + phone;
+            let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
+            if (!phone) {
+                alert('This printer does not have a valid phone number.');
+                setIsGenerating(false);
+                return;
+            }
+            if (phone.length === 10) phone = '91' + phone;
 
-                // Since we can't directly send blobs through wa.me text, 
-                // we provide instructions and a primary text message
-                const text = `*PUNCHING SUMMARY FOR ${selectedPrinter.name}*\n\nI am sending the table image now. Please check above/below.`;
-                const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+            const text = `*PUNCHING SUMMARY FOR ${selectedPrinter.name}*\n\nI am sending the table image now. Please check above/below.`;
+            const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 
-                // Copy image to clipboard so user can just paste in WhatsApp
+            // Create Clipboard Item and copy
+            if (typeof ClipboardItem !== 'undefined') {
                 try {
                     const item = new ClipboardItem({ "image/png": blob });
                     await navigator.clipboard.write([item]);
-                    alert('✅ Table image copied to clipboard!\n\nWhatsApp will open now. Just PASTE (Ctrl+V) the image in the chat.');
-                } catch (err) {
-                    console.error('Clipboard error:', err);
-                    alert('Could not copy image automatically. Please use the "Print Summary" button to save as PDF and send manually.');
+                    alert('✅ Table image COPIED to clipboard!\n\nWhatsApp will open now. Just PASTE (Ctrl+V) the image in the chat to send it.');
+                } catch (clipboardErr) {
+                    console.error('Clipboard write failed:', clipboardErr);
+                    alert('Image was generated but could not be copied automatically. I will open WhatsApp for you to send the text instead.');
                 }
+            } else {
+                alert('Your browser does not support automatic copying. I will open WhatsApp with the text summary.');
+            }
 
-                window.open(waUrl, '_blank');
-            }, 'image/png');
-
+            window.open(waUrl, '_blank');
         } catch (error) {
-            console.error('Error generating image:', error);
-            alert('Error generating image. Sending text version instead.');
+            console.error('WhatsApp Image Error:', error);
+            alert('Technical error generating image. Opening text version...');
             sendWhatsAppText();
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -154,31 +179,42 @@ function PunchingSummaryContent() {
             return;
         }
 
-        let message = `*PUNCHING SUMMARY*\n`;
-        message += `*To:* ${selectedPrinter.name}\n`;
-        message += `--------------------------\n\n`;
+        setIsSendingText(true);
 
-        filteredOrders.forEach((o, i) => {
-            const product = o.products?.product_name || o.product_name;
-            const code = o.products?.artwork_code || o.artwork_code || '-';
-            const maxQty = calculateMaxQty(o.quantity);
-            message += `${i + 1}. *${product}* (${code})\n`;
-            message += `   Size: ${o.print_size || '-'}\n`;
-            message += `   Print Qty: ${(o.total_print_qty || 0).toLocaleString()}\n`;
-            message += `   Emboss: ${checkEffect(o, 'Embossing')}\n`;
-            message += `   Pasting: ${o.pasting_type || '-'}\n`;
-            message += `   *Max Del Qty: ${maxQty.toLocaleString()}*\n\n`;
-        });
+        setTimeout(() => {
+            let message = `*PUNCHING SUMMARY*\n`;
+            message += `*To:* ${selectedPrinter.name}\n`;
+            message += `--------------------------\n\n`;
 
-        let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
-        if (!phone) {
-            alert('This printer does not have a valid phone number.');
-            return;
-        }
-        if (phone.length === 10) phone = '91' + phone;
+            filteredOrders.forEach((o, i) => {
+                const product = o.products?.product_name || o.product_name;
+                const code = o.products?.artwork_code || o.artwork_code || '-';
+                const maxQty = calculateMaxQty(o.quantity);
+                message += `${i + 1}. *${product}* (${code})\n`;
+                message += `   Size: ${o.print_size || '-'}\n`;
+                message += `   Print Qty: ${(o.total_print_qty || 0).toLocaleString()}\n`;
+                message += `   Emboss: ${checkEffect(o, 'Embossing')}\n`;
+                message += `   Pasting: ${o.pasting_type || '-'}\n`;
+                message += `   *Max Del Qty: ${maxQty.toLocaleString()}*\n\n`;
+            });
 
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
+            let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
+            if (phone) {
+                if (phone.length === 10) phone = '91' + phone;
+                const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+            } else {
+                alert('Valid phone number not found.');
+            }
+            setIsSendingText(false);
+        }, 100);
+    };
+
+    const handlePrint = () => {
+        // Yield to browser before printing (Fixes INP issue)
+        setTimeout(() => {
+            window.print();
+        }, 100);
     };
 
     if (loading) return (
@@ -212,8 +248,8 @@ function PunchingSummaryContent() {
                             }}
                             defaultValue=""
                         >
-                            <option value="">All Printers</option>
-                            {printers.map(p => (
+                            <option value="">{activePrinters.length === 0 ? 'Searching Printers...' : 'All Selected Printers'}</option>
+                            {activePrinters.map(p => (
                                 <option key={p.id} value={p.id}>{p.name} ({p.phone || 'No Phone'})</option>
                             ))}
                         </select>
@@ -221,22 +257,24 @@ function PunchingSummaryContent() {
 
                     <button
                         onClick={sendWhatsAppImage}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
+                        disabled={isGenerating || !selectedPrinter}
+                        className={`px-4 py-2 rounded-lg font-normal text-sm transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat ${isGenerating ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                     >
-                        <Camera className="w-4 h-4" />
-                        Send Table Image
+                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                        {isGenerating ? 'Generating...' : 'Send Table Image'}
                     </button>
 
                     <button
                         onClick={sendWhatsAppText}
-                        className="bg-slate-700 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-slate-800 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
+                        disabled={isSendingText || !selectedPrinter}
+                        className={`px-4 py-2 rounded-lg font-normal text-sm transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat ${isSendingText ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-800'}`}
                     >
-                        <MessageCircle className="w-4 h-4" />
-                        Send Text
+                        {isSendingText ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                        {isSendingText ? 'Sending...' : 'Send Text'}
                     </button>
 
                     <button
-                        onClick={() => window.print()}
+                        onClick={handlePrint}
                         className="bg-rose-600 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-rose-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
                     >
                         <Printer className="w-4 h-4" />
