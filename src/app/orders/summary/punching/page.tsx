@@ -15,7 +15,6 @@ function PunchingSummaryContent() {
     const [selectedPrinter, setSelectedPrinter] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         fetchOrders();
@@ -102,89 +101,8 @@ function PunchingSummaryContent() {
         }
     }, [activePrinters, selectedPrinter]);
 
-
-    const sendWhatsAppImage = async () => {
-        if (!selectedPrinter) {
-            alert('Please select a printer to send the summary.');
-            return;
-        }
-
-        setIsGenerating(true);
-        // Small delay to allow 'Generating...' UI state to render (Fixes INP issue)
-        await new Promise(r => setTimeout(r, 100));
-
-        try {
-            const tableElement = document.getElementById('punching-summary-table');
-            if (!tableElement) throw new Error('Table not found.');
-
-            const canvas = await html2canvas(tableElement, {
-                scale: 1.5, // Reduced scale for faster processing (Fixes INP)
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                ignoreElements: (el) => el.classList.contains('print:hidden')
-            });
-
-            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-            if (!blob) throw new Error('Failed to generate image');
-
-            let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
-            if (!phone) {
-                alert('Printer phone number missing.');
-                setIsGenerating(false);
-                return;
-            }
-            if (phone.length === 10) phone = '91' + phone;
-
-            const text = `*PUNCHING SUMMARY FOR ${selectedPrinter.name}*\n\nI have copied the table image to your clipboard. Just PASTE it in the chat now.`;
-            const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-
-            if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
-                try {
-                    const item = new ClipboardItem({ "image/png": blob });
-                    await navigator.clipboard.write([item]);
-                    // Using prompt/confirm can sometimes help keep user activation alive
-                    console.log('Image copied to clipboard');
-                } catch (err) {
-                    console.error('Clipboard error:', err);
-                }
-            }
-
-            // Attempt to open WhatsApp
-            window.open(waUrl, '_blank');
-        } catch (error) {
-            console.error('WhatsApp Image Error:', error);
-            alert('Image capture failed. Sending text instead.');
-            sendWhatsAppText();
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const sendWhatsAppText = () => {
-        if (!selectedPrinter) {
-            alert('Please select a printer.');
-            return;
-        }
-
-        setIsSending(true);
-        const message = generateMessage();
-        let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
-        if (!phone) {
-            alert('Phone number missing.');
-            setIsSending(false);
-            return;
-        }
-        if (phone.length === 10) phone = '91' + phone;
-
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
-
-        // Small delay just for button feedback
-        setTimeout(() => setIsSending(false), 500);
-    };
-
     const generateMessage = () => {
+        if (!selectedPrinter) return '';
         let message = `*PUNCHING SUMMARY*\n`;
         message += `*To:* ${selectedPrinter.name}\n`;
         message += `--------------------------\n\n`;
@@ -203,25 +121,57 @@ function PunchingSummaryContent() {
         return message;
     };
 
-    const handlePrint = () => {
-        // Yield to browser before printing (Fixes INP issue)
-        setTimeout(() => {
-            window.print();
-        }, 100);
+    const waUrl = useMemo(() => {
+        if (!selectedPrinter || filteredOrders.length === 0) return "#";
+        const message = generateMessage();
+        let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
+        if (!phone) return "#";
+        if (phone.length === 10) phone = '91' + phone;
+        return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    }, [selectedPrinter, filteredOrders]);
+
+    const sendWhatsAppImage = async () => {
+        if (!selectedPrinter) return;
+        setIsGenerating(true);
+        await new Promise(r => setTimeout(r, 100));
+        try {
+            const tableElement = document.getElementById('punching-summary-table');
+            if (!tableElement) throw new Error('Table not found.');
+            const canvas = await html2canvas(tableElement, {
+                scale: 1.5,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                ignoreElements: (el) => el.classList.contains('print:hidden')
+            });
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('Failed to generate image');
+            if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                alert('Table image COPIED to clipboard! Just PASTE it in WhatsApp.');
+            }
+            window.open(waUrl, '_blank');
+        } catch (error) {
+            console.error('Image Error:', error);
+            window.open(waUrl, '_blank');
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-rose-600" />
-            <p className="text-slate-500 font-medium tracking-wide">Generating Punching Summary...</p>
+            <p className="text-slate-500 font-medium tracking-wide">Gathering Orders...</p>
         </div>
     );
 
     return (
         <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4 print:hidden">
+            <div className="flex flex-wrap items-center justify-between mb-8 gap-6 print:hidden">
                 <div className="flex items-center gap-4">
-                    <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 shadow-sm">
+                    <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200">
                         <ChevronLeft className="w-6 h-6 text-slate-600" />
                     </Link>
                     <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 font-montserrat">
@@ -230,89 +180,101 @@ function PunchingSummaryContent() {
                     </h1>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 bg-white p-2 border border-slate-200 rounded-xl shadow-sm">
-                    <div className="flex items-center gap-2 px-3 border-r border-slate-200">
-                        <User className="w-4 h-4 text-slate-400" />
-                        <select
-                            className="text-sm font-bold text-rose-600 outline-none bg-transparent min-w-[200px] font-montserrat cursor-pointer hover:bg-rose-50 rounded px-2 py-1 transition-colors"
-                            value={selectedPrinter?.id || ""}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) {
-                                    setSelectedPrinter(null);
-                                    return;
-                                }
-                                const p = printers.find(p => p.id === parseInt(val));
-                                if (p) setSelectedPrinter(p);
-                            }}
-                        >
-                            <option value="" disabled>Choose Printer...</option>
-                            {activePrinters.map(p => (
-                                <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>
-                            ))}
-                        </select>
+                <div className="flex flex-wrap items-center gap-4 bg-white p-3 border border-slate-200 rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-4 px-3 border-r border-slate-200">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Selected Printer</span>
+                            <select
+                                className="text-sm font-black text-emerald-600 outline-none bg-transparent min-w-[200px] font-montserrat cursor-pointer"
+                                value={selectedPrinter?.id || ""}
+                                onChange={(e) => {
+                                    const p = printers.find(pr => pr.id === parseInt(e.target.value));
+                                    if (p) setSelectedPrinter(p);
+                                }}
+                            >
+                                <option value="">Auto-selecting...</option>
+                                {activePrinters.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col border-l pl-4 border-slate-100">
+                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">WhatsApp Number</span>
+                            <span className="text-sm font-bold text-slate-700 font-mono italic">
+                                {selectedPrinter?.phone || 'No Number Found'}
+                            </span>
+                        </div>
                     </div>
 
-                    <button
-                        onClick={sendWhatsAppImage}
-                        disabled={isGenerating || !selectedPrinter}
-                        className={`px-4 py-2 rounded-lg font-normal text-sm transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat ${isGenerating ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
-                    >
-                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-                        {isGenerating ? 'Generating...' : 'Send Table Image'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={sendWhatsAppImage}
+                            disabled={isGenerating || waUrl === "#"}
+                            className="bg-emerald-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                        >
+                            <Camera className="w-4 h-4" />
+                            {isGenerating ? 'Wait...' : 'SEND IMAGE'}
+                        </button>
 
-                    <button
-                        onClick={sendWhatsAppText}
-                        disabled={isSending || !selectedPrinter}
-                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat ${isSending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
-                    >
-                        {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-                        {isSending ? 'Opening...' : 'Send WhatsApp'}
-                    </button>
+                        <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => {
+                                if (waUrl === "#") {
+                                    e.preventDefault();
+                                    alert("Select a printer with a phone number first.");
+                                }
+                            }}
+                            className={`px-6 py-2.5 rounded-lg font-black text-sm transition-all shadow-lg flex items-center gap-2 active:scale-95 ${waUrl === "#" ? 'bg-slate-100 text-slate-400 pointer-events-none' : 'bg-rose-600 text-white hover:bg-rose-700 shadow-rose-100'}`}
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            SEND WHATSAPP
+                        </a>
 
-                    <button
-                        onClick={handlePrint}
-                        className="bg-rose-600 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-rose-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
-                    >
-                        <Printer className="w-4 h-4" />
-                        Print Summary
-                    </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="bg-slate-700 text-white px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-slate-800 transition-all shadow-md flex items-center gap-2 active:scale-95"
+                        >
+                            <Printer className="w-4 h-4" />
+                            PRINT
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div id="punching-summary-table" className="overflow-x-auto bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden font-montserrat p-1">
-                <table className="w-full border-collapse text-left">
+            <div id="punching-summary-table" className="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-2xl font-montserrat p-1">
+                <table className="w-full border-collapse">
                     <thead>
-                        <tr className="bg-slate-900 text-white">
-                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider w-[55px] text-center">Sr. No.</th>
-                            <th className="px-6 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider min-w-[250px]">Product & Artwork</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Print Size</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Print Qty</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Embossing</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Pasting</th>
-                            <th className="px-6 py-4 text-[12px] font-semibold uppercase tracking-wider text-center bg-rose-950/20">Max Del. Qty</th>
+                        <tr className="bg-slate-900 text-white text-left">
+                            <th className="px-4 py-4 border-r border-slate-700 text-[11px] font-black uppercase text-center w-12">Sr.</th>
+                            <th className="px-6 py-4 border-r border-slate-700 text-[11px] font-black uppercase">Product & Artwork</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[11px] font-black uppercase text-center">Print Size</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[11px] font-black uppercase text-center">Print Qty</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[11px] font-black uppercase text-center">Emboss</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[11px] font-black uppercase text-center">Pasting</th>
+                            <th className="px-6 py-4 text-[11px] font-black uppercase text-center bg-rose-950">Max Del. Qty</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200">
+                    <tbody className="divide-y divide-slate-100">
                         {filteredOrders.map((order, index) => (
-                            <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
-                                <td className="px-4 py-4 border-r border-slate-100 text-sm font-normal text-slate-400 text-center">{index + 1}</td>
-                                <td className="px-6 py-4 border-r border-slate-100">
-                                    <div className="text-base font-semibold text-slate-800 group-hover:text-rose-600 transition-colors uppercase tracking-tight">{order.products?.product_name || order.product_name}</div>
-                                    <div className="text-[12px] text-slate-500 font-normal uppercase tracking-widest mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
+                            <tr key={order.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-4 py-5 border-r border-slate-50 text-xs font-bold text-slate-400 text-center">{index + 1}</td>
+                                <td className="px-6 py-5 border-r border-slate-50">
+                                    <div className="text-sm font-black text-slate-900 uppercase tracking-tight">{order.products?.product_name || order.product_name}</div>
+                                    <div className="text-[10px] text-rose-600 font-bold uppercase tracking-widest mt-1">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                 </td>
-                                <td className="px-4 py-4 border-r border-slate-100 text-[15px] font-normal text-slate-700 text-center">{order.print_size || '-'}</td>
-                                <td className="px-4 py-4 border-r border-slate-100 text-base font-normal text-slate-900 text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
-                                <td className="px-4 py-4 border-r border-slate-100 text-sm font-normal text-center">
-                                    <span className={`px-3 py-1 rounded-full ${checkEffect(order, 'Embossing') === 'YES' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'text-slate-300'}`}>
+                                <td className="px-4 py-5 border-r border-slate-50 text-sm font-bold text-slate-700 text-center">{order.print_size || '-'}</td>
+                                <td className="px-4 py-5 border-r border-slate-50 text-sm font-black text-slate-900 text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
+                                <td className="px-4 py-5 border-r border-slate-50 text-center">
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded ${checkEffect(order, 'Embossing') === 'YES' ? 'bg-orange-100 text-orange-700' : 'text-slate-200'}`}>
                                         {checkEffect(order, 'Embossing')}
                                     </span>
                                 </td>
-                                <td className={`px-4 py-4 border-r border-slate-100 text-base font-normal text-slate-700 text-center transition-colors ${order.pasting_type?.toLowerCase().includes('lock bottom') ? 'bg-yellow-200 font-semibold' : ''}`}>
+                                <td className={`px-4 py-5 border-r border-slate-50 text-sm font-bold text-center ${order.pasting_type?.toLowerCase().includes('lock bottom') ? 'bg-yellow-200' : 'text-slate-600'}`}>
                                     {order.pasting_type || '-'}
                                 </td>
-                                <td className="px-6 py-4 text-lg font-normal text-rose-600 text-center bg-rose-50/30">
+                                <td className="px-6 py-5 text-base font-black text-rose-700 text-center bg-rose-50/50">
                                     {calculateMaxQty(order.quantity).toLocaleString()}
                                 </td>
                             </tr>
@@ -322,24 +284,19 @@ function PunchingSummaryContent() {
             </div>
 
             {orders.length === 0 && (
-                <div className="text-center py-24 bg-white rounded-3xl border-4 border-dashed border-slate-100 mt-8 shadow-inner">
-                    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Palette className="w-10 h-10 text-slate-200" />
-                    </div>
-                    <p className="text-slate-400 font-black text-lg uppercase tracking-tight">No active punching jobs</p>
-                    <p className="text-slate-300 text-sm mt-1 font-medium italic">Requirement list is currently empty.</p>
+                <div className="text-center py-24 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 mt-8">
+                    <p className="text-slate-400 font-black text-lg uppercase tracking-tight">No active jobs found for this selection</p>
                 </div>
             )}
 
             <style jsx global>{`
                 @media print {
-                    @page { margin: 1cm; size: landscape; }
-                    body { background: white; -webkit-print-color-adjust: exact; }
+                    @page { margin: 0.5cm; size: landscape; }
                     .print\\:hidden { display: none !important; }
-                    table { border-collapse: collapse !important; border: 2px solid #000 !important; width: 100% !important; }
-                    th, td { border: 1px solid #000 !important; padding: 8px !important; }
-                    th { background-color: #000 !important; color: #fff !important; }
-                    .bg-rose-50\\/30 { background-color: transparent !important; }
+                    #punching-summary-table { box-shadow: none !important; border: 2px solid #000 !important; }
+                    table { border-collapse: collapse !important; width: 100% !important; }
+                    th, td { border: 1px solid #000 !important; padding: 10px !important; color: black !important; }
+                    th { background-color: #000 !important; color: white !important; }
                 }
             `}</style>
         </div>
@@ -351,7 +308,7 @@ export default function PunchingSummaryPage() {
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-rose-600" />
-                <p className="text-slate-500 font-medium tracking-wide font-black uppercase tracking-widest">Gathering Data...</p>
+                <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Loading Summary...</p>
             </div>
         }>
             <PunchingSummaryContent />
