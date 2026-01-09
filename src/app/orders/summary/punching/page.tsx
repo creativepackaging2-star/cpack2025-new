@@ -123,45 +123,43 @@ function PunchingSummaryContent() {
             if (!tableElement) throw new Error('Table not found.');
 
             const canvas = await html2canvas(tableElement, {
-                scale: 2,
+                scale: 1.5, // Reduced scale for faster processing (Fixes INP)
                 useCORS: true,
                 backgroundColor: '#ffffff',
-                logging: false
+                logging: false,
+                ignoreElements: (el) => el.classList.contains('print:hidden')
             });
 
-            // Trigger the clipboard copy
             const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-            if (!blob) throw new Error('Failed to generate image.');
+            if (!blob) throw new Error('Failed to generate image');
 
             let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
             if (!phone) {
-                alert('This printer does not have a valid phone number.');
+                alert('Printer phone number missing.');
                 setIsGenerating(false);
                 return;
             }
             if (phone.length === 10) phone = '91' + phone;
 
-            const text = `*PUNCHING SUMMARY FOR ${selectedPrinter.name}*\n\nI am sending the table image now. Please check above/below.`;
+            const text = `*PUNCHING SUMMARY FOR ${selectedPrinter.name}*\n\nI have copied the table image to your clipboard. Just PASTE it in the chat now.`;
             const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 
-            // Create Clipboard Item and copy
-            if (typeof ClipboardItem !== 'undefined') {
+            if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
                 try {
                     const item = new ClipboardItem({ "image/png": blob });
                     await navigator.clipboard.write([item]);
-                    alert('✅ Table image COPIED to clipboard!\n\nWhatsApp will open now. Just PASTE (Ctrl+V) the image in the chat to send it.');
-                } catch (clipboardErr) {
-                    console.error('Clipboard write failed:', clipboardErr);
-                    alert('Image was generated but could not be copied automatically. I will open WhatsApp for you to send the text instead.');
+                    // Using prompt/confirm can sometimes help keep user activation alive
+                    console.log('Image copied to clipboard');
+                } catch (err) {
+                    console.error('Clipboard error:', err);
                 }
-            } else {
-                alert('Your browser does not support automatic copying. I will open WhatsApp with the text summary.');
             }
 
+            // Attempt to open WhatsApp
             window.open(waUrl, '_blank');
         } catch (error) {
             console.error('WhatsApp Image Error:', error);
-            alert('Technical error generating image. Opening text version...');
+            alert('Image capture failed. Sending text instead.');
             sendWhatsAppText();
         } finally {
             setIsGenerating(false);
@@ -170,44 +168,41 @@ function PunchingSummaryContent() {
 
     const sendWhatsAppText = () => {
         if (!selectedPrinter) {
-            alert('Please select a printer to send the summary.');
+            alert('Please select a printer.');
             return;
         }
 
-        if (filteredOrders.length === 0) {
-            alert('No orders found for the selected printer.');
+        const message = generateMessage();
+        let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
+        if (!phone) {
+            alert('Phone number missing.');
             return;
         }
+        if (phone.length === 10) phone = '91' + phone;
 
-        setIsSendingText(true);
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
-        setTimeout(() => {
-            let message = `*PUNCHING SUMMARY*\n`;
-            message += `*To:* ${selectedPrinter.name}\n`;
-            message += `--------------------------\n\n`;
+        // CRITICAL: Call window.open synchronously to avoid popup blockers
+        window.open(url, '_blank');
+    };
 
-            filteredOrders.forEach((o, i) => {
-                const product = o.products?.product_name || o.product_name;
-                const code = o.products?.artwork_code || o.artwork_code || '-';
-                const maxQty = calculateMaxQty(o.quantity);
-                message += `${i + 1}. *${product}* (${code})\n`;
-                message += `   Size: ${o.print_size || '-'}\n`;
-                message += `   Print Qty: ${(o.total_print_qty || 0).toLocaleString()}\n`;
-                message += `   Emboss: ${checkEffect(o, 'Embossing')}\n`;
-                message += `   Pasting: ${o.pasting_type || '-'}\n`;
-                message += `   *Max Del Qty: ${maxQty.toLocaleString()}*\n\n`;
-            });
+    const generateMessage = () => {
+        let message = `*PUNCHING SUMMARY*\n`;
+        message += `*To:* ${selectedPrinter.name}\n`;
+        message += `--------------------------\n\n`;
 
-            let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
-            if (phone) {
-                if (phone.length === 10) phone = '91' + phone;
-                const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
-            } else {
-                alert('Valid phone number not found.');
-            }
-            setIsSendingText(false);
-        }, 100);
+        filteredOrders.forEach((o, i) => {
+            const product = o.products?.product_name || o.product_name;
+            const code = o.products?.artwork_code || o.artwork_code || '-';
+            const maxQty = calculateMaxQty(o.quantity);
+            message += `${i + 1}. *${product}* (${code})\n`;
+            message += `   Size: ${o.print_size || '-'}\n`;
+            message += `   Print Qty: ${(o.total_print_qty || 0).toLocaleString()}\n`;
+            message += `   Emboss: ${checkEffect(o, 'Embossing')}\n`;
+            message += `   Pasting: ${o.pasting_type || '-'}\n`;
+            message += `   *Max Del Qty: ${maxQty.toLocaleString()}*\n\n`;
+        });
+        return message;
     };
 
     const handlePrint = () => {
