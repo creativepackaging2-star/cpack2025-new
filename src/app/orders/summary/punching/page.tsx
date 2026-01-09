@@ -15,24 +15,12 @@ function PunchingSummaryContent() {
     const [selectedPrinter, setSelectedPrinter] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [isSendingText, setIsSendingText] = useState(false);
+    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         fetchOrders();
         fetchPrinters();
     }, [idsString]);
-
-    // Auto-select the first printer that has jobs in the list
-    useEffect(() => {
-        if (orders.length > 0 && printers.length > 0 && !selectedPrinter) {
-            const firstJob = orders[0];
-            const p = printers.find(pr =>
-                (firstJob.printer_id && pr.id === firstJob.printer_id) ||
-                (firstJob.printer_name && pr.name === firstJob.printer_name)
-            );
-            if (p) setSelectedPrinter(p);
-        }
-    }, [orders, printers, selectedPrinter]);
 
     async function fetchOrders() {
         setLoading(true);
@@ -73,22 +61,6 @@ function PunchingSummaryContent() {
         if (data) setPrinters(data);
     }
 
-    // Only show printers that have orders in the current selected set
-    const activePrinters = useMemo(() => {
-        if (orders.length === 0) return [];
-        const activeIds = new Set(orders.map(o => o.printer_id).filter(Boolean));
-        const activeNames = new Set(orders.map(o => o.printer_name).filter(Boolean));
-        return printers.filter(p => activeIds.has(p.id) || activeNames.has(p.name));
-    }, [orders, printers]);
-
-    const filteredOrders = useMemo(() => {
-        if (!selectedPrinter) return orders;
-        return orders.filter(o =>
-            (o.printer_id === selectedPrinter.id) ||
-            (o.printer_name === selectedPrinter.name)
-        );
-    }, [orders, selectedPrinter]);
-
     // Formula for Max Delivery Quantity
     const calculateMaxQty = (qty: number) => {
         if (!qty) return 0;
@@ -106,6 +78,29 @@ function PunchingSummaryContent() {
         }
         return '-';
     };
+
+    // Only show printers that have orders in the current selected set
+    const activePrinters = useMemo(() => {
+        if (orders.length === 0) return [];
+        const activeIds = new Set(orders.map(o => o.printer_id).filter(Boolean));
+        const activeNames = new Set(orders.map(o => o.printer_name).filter(Boolean));
+        return printers.filter(p => activeIds.has(p.id) || activeNames.has(p.name));
+    }, [orders, printers]);
+
+    const filteredOrders = useMemo(() => {
+        if (!selectedPrinter) return orders;
+        return orders.filter(o =>
+            (o.printer_id === selectedPrinter.id) ||
+            (o.printer_name === selectedPrinter.name)
+        );
+    }, [orders, selectedPrinter]);
+
+    // Auto-select the first printer that has jobs in the list
+    useEffect(() => {
+        if (activePrinters.length > 0 && !selectedPrinter) {
+            setSelectedPrinter(activePrinters[0]);
+        }
+    }, [activePrinters, selectedPrinter]);
 
 
     const sendWhatsAppImage = async () => {
@@ -172,18 +167,21 @@ function PunchingSummaryContent() {
             return;
         }
 
+        setIsSending(true);
         const message = generateMessage();
         let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
         if (!phone) {
             alert('Phone number missing.');
+            setIsSending(false);
             return;
         }
         if (phone.length === 10) phone = '91' + phone;
 
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-
-        // CRITICAL: Call window.open synchronously to avoid popup blockers
         window.open(url, '_blank');
+
+        // Small delay just for button feedback
+        setTimeout(() => setIsSending(false), 500);
     };
 
     const generateMessage = () => {
@@ -236,16 +234,21 @@ function PunchingSummaryContent() {
                     <div className="flex items-center gap-2 px-3 border-r border-slate-200">
                         <User className="w-4 h-4 text-slate-400" />
                         <select
-                            className="text-sm font-normal text-slate-700 outline-none bg-transparent min-w-[150px] font-montserrat"
+                            className="text-sm font-bold text-rose-600 outline-none bg-transparent min-w-[200px] font-montserrat cursor-pointer hover:bg-rose-50 rounded px-2 py-1 transition-colors"
+                            value={selectedPrinter?.id || ""}
                             onChange={(e) => {
-                                const p = printers.find(p => p.id === parseInt(e.target.value));
-                                setSelectedPrinter(p);
+                                const val = e.target.value;
+                                if (!val) {
+                                    setSelectedPrinter(null);
+                                    return;
+                                }
+                                const p = printers.find(p => p.id === parseInt(val));
+                                if (p) setSelectedPrinter(p);
                             }}
-                            defaultValue=""
                         >
-                            <option value="">{activePrinters.length === 0 ? 'Searching Printers...' : 'All Selected Printers'}</option>
+                            <option value="" disabled>Choose Printer...</option>
                             {activePrinters.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} ({p.phone || 'No Phone'})</option>
+                                <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>
                             ))}
                         </select>
                     </div>
@@ -261,11 +264,11 @@ function PunchingSummaryContent() {
 
                     <button
                         onClick={sendWhatsAppText}
-                        disabled={isSendingText || !selectedPrinter}
-                        className={`px-4 py-2 rounded-lg font-normal text-sm transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat ${isSendingText ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-800'}`}
+                        disabled={isSending || !selectedPrinter}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat ${isSending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
                     >
-                        {isSendingText ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-                        {isSendingText ? 'Sending...' : 'Send Text'}
+                        {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                        {isSending ? 'Opening...' : 'Send WhatsApp'}
                     </button>
 
                     <button
