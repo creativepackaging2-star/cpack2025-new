@@ -112,7 +112,11 @@ function PunchingSummaryContent() {
             message += `   *Max Del Qty: ${maxQty.toLocaleString()}*\n\n`;
         });
 
-        let phone = selectedPrinter.phone.replace(/\D/g, '');
+        let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
+        if (!phone) {
+            alert('This printer does not have a valid phone number.');
+            return;
+        }
         if (phone.length === 10) phone = '91' + phone;
 
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -133,7 +137,7 @@ function PunchingSummaryContent() {
                     <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 shadow-sm">
                         <ChevronLeft className="w-6 h-6 text-slate-600" />
                     </Link>
-                    <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3 font-montserrat">
+                    <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 font-montserrat">
                         <Palette className="w-8 h-8 text-rose-600 bg-rose-50 p-1.5 rounded-lg" />
                         Punching Summary
                     </h1>
@@ -143,7 +147,7 @@ function PunchingSummaryContent() {
                     <div className="flex items-center gap-2 px-3 border-r border-slate-200">
                         <User className="w-4 h-4 text-slate-400" />
                         <select
-                            className="text-xs font-normal text-slate-700 outline-none bg-transparent min-w-[150px] font-montserrat"
+                            className="text-sm font-normal text-slate-700 outline-none bg-transparent min-w-[150px] font-montserrat"
                             onChange={(e) => {
                                 const p = printers.find(p => p.id === parseInt(e.target.value));
                                 setSelectedPrinter(p);
@@ -159,7 +163,7 @@ function PunchingSummaryContent() {
 
                     <button
                         onClick={sendWhatsApp}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-normal text-xs hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
                     >
                         <MessageCircle className="w-4 h-4" />
                         Send WhatsApp
@@ -167,7 +171,7 @@ function PunchingSummaryContent() {
 
                     <button
                         onClick={() => window.print()}
-                        className="bg-rose-600 text-white px-4 py-2 rounded-lg font-normal text-xs hover:bg-rose-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
+                        className="bg-rose-600 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-rose-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
                     >
                         <Printer className="w-4 h-4" />
                         Print Summary
@@ -179,34 +183,34 @@ function PunchingSummaryContent() {
                 <table className="w-full border-collapse text-left">
                     <thead>
                         <tr className="bg-slate-900 text-white">
-                            <th className="px-4 py-4 border-r border-slate-700 text-[10px] font-semibold uppercase tracking-wider w-[55px] text-center">Sr. No.</th>
-                            <th className="px-6 py-4 border-r border-slate-700 text-[10px] font-semibold uppercase tracking-wider min-w-[250px]">Product & Artwork</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[10px] font-semibold uppercase tracking-wider text-center">Print Size</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[10px] font-semibold uppercase tracking-wider text-center">Print Qty</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[10px] font-semibold uppercase tracking-wider text-center">Embossing</th>
-                            <th className="px-4 py-4 border-r border-slate-700 text-[10px] font-semibold uppercase tracking-wider text-center">Pasting</th>
-                            <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-wider text-center bg-rose-950/20">Max Del. Qty</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider w-[55px] text-center">Sr. No.</th>
+                            <th className="px-6 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider min-w-[250px]">Product & Artwork</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Print Size</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Print Qty</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Embossing</th>
+                            <th className="px-4 py-4 border-r border-slate-700 text-[12px] font-semibold uppercase tracking-wider text-center">Pasting</th>
+                            <th className="px-6 py-4 text-[12px] font-semibold uppercase tracking-wider text-center bg-rose-950/20">Max Del. Qty</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                         {filteredOrders.map((order, index) => (
                             <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
-                                <td className="px-4 py-4 border-r border-slate-100 text-xs font-normal text-slate-400 text-center">{index + 1}</td>
+                                <td className="px-4 py-4 border-r border-slate-100 text-sm font-normal text-slate-400 text-center">{index + 1}</td>
                                 <td className="px-6 py-4 border-r border-slate-100">
-                                    <div className="text-sm font-semibold text-slate-800 group-hover:text-rose-600 transition-colors uppercase tracking-tight">{order.products?.product_name || order.product_name}</div>
-                                    <div className="text-[10px] text-slate-500 font-normal uppercase tracking-widest mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
+                                    <div className="text-base font-semibold text-slate-800 group-hover:text-rose-600 transition-colors uppercase tracking-tight">{order.products?.product_name || order.product_name}</div>
+                                    <div className="text-[12px] text-slate-500 font-normal uppercase tracking-widest mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                 </td>
-                                <td className="px-4 py-4 border-r border-slate-100 text-[13px] font-normal text-slate-700 text-center">{order.print_size || '-'}</td>
-                                <td className="px-4 py-4 border-r border-slate-100 text-sm font-normal text-slate-900 text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
+                                <td className="px-4 py-4 border-r border-slate-100 text-[15px] font-normal text-slate-700 text-center">{order.print_size || '-'}</td>
+                                <td className="px-4 py-4 border-r border-slate-100 text-base font-normal text-slate-900 text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
                                 <td className="px-4 py-4 border-r border-slate-100 text-sm font-normal text-center">
                                     <span className={`px-3 py-1 rounded-full ${checkEffect(order, 'Embossing') === 'YES' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'text-slate-300'}`}>
                                         {checkEffect(order, 'Embossing')}
                                     </span>
                                 </td>
-                                <td className={`px-4 py-4 border-r border-slate-100 text-sm font-normal text-slate-700 text-center transition-colors ${order.pasting_type?.toLowerCase().includes('lock bottom') ? 'bg-yellow-200 font-semibold' : ''}`}>
+                                <td className={`px-4 py-4 border-r border-slate-100 text-base font-normal text-slate-700 text-center transition-colors ${order.pasting_type?.toLowerCase().includes('lock bottom') ? 'bg-yellow-200 font-semibold' : ''}`}>
                                     {order.pasting_type || '-'}
                                 </td>
-                                <td className="px-6 py-4 text-base font-normal text-rose-600 text-center bg-rose-50/30">
+                                <td className="px-6 py-4 text-lg font-normal text-rose-600 text-center bg-rose-50/30">
                                     {calculateMaxQty(order.quantity).toLocaleString()}
                                 </td>
                             </tr>

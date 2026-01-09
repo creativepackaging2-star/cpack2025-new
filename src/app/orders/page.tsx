@@ -10,7 +10,7 @@ import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/compone
 // --- Memoized Components for Performance ---
 
 const DocBadge = memo(({ label }: { label: string }) => (
-    <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded text-[10px] font-normal">
+    <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded text-[12px] font-normal">
         {label}
     </span>
 ));
@@ -18,10 +18,10 @@ DocBadge.displayName = 'DocBadge';
 
 const DetailGroup = memo(({ title, items }: { title: string, items: { label: string, value: any }[] }) => (
     <div className="space-y-3">
-        <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{title}</h4>
+        <h4 className="text-[12px] font-semibold text-slate-400 uppercase tracking-widest">{title}</h4>
         <div className="space-y-2">
             {items.map((it, i) => (
-                <div key={i} className="flex justify-between text-[10px] border-b border-slate-100 pb-1">
+                <div key={i} className="flex justify-between text-[12px] border-b border-slate-100 pb-1">
                     <span className="text-slate-500">{it.label}</span>
                     <span className="font-normal text-slate-900">{it.value || '-'}</span>
                 </div>
@@ -37,12 +37,12 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
     return (
         <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm mb-8">
             <div className="bg-slate-50 px-6 py-3 border-b border-slate-300 flex items-center gap-3">
-                <h3 className="text-sm font-semibold text-slate-800">{category}</h3>
+                <h3 className="text-base font-semibold text-slate-800">{category}</h3>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
+                    <span className="text-sm font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
                         {catOrders.length}
                     </span>
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                         ₹{categoryValue.toLocaleString()}
                     </span>
                 </div>
@@ -59,14 +59,13 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                     className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                             </th>
-                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500 w-[40px]"></th>
-                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Product</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Qty</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">U</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Specs</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Process</th>
-                            <th className="px-3 py-3 text-center text-[10px] font-normal uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
-                            <th className="px-3 py-3 text-right text-[10px] font-normal uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
+                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Product</th>
+                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Qty</th>
+                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">U</th>
+                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Specs</th>
+                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Process</th>
+                            <th className="px-3 py-3 text-center text-[12px] font-normal uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
+                            <th className="px-3 py-3 text-right text-[12px] font-normal uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300 bg-white">
@@ -249,29 +248,29 @@ Plate No   : ${order.plate_no || '-'}`;
                         />
                     </div>
                     <div className="flex-1">
-                        <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
+                        <div className="text-base font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                            <span className="text-[11px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
                             {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
-                                <span className="text-[9px] font-normal text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
+                                <span className="text-[11px] font-normal text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
                                     <Split className="w-2 h-2" />
                                     Split Lot
                                 </span>
                             )}
-                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-normal border border-emerald-100 active:bg-emerald-100 transition-colors">
+                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[12px] font-normal border border-emerald-100 active:bg-emerald-100 transition-colors">
                                 <PaperwalaWhatsAppLogo className="w-4 h-4" />
                                 Paper
                             </button>
-                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-normal border border-blue-100 active:bg-blue-100 transition-colors">
+                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[12px] font-normal border border-blue-100 active:bg-blue-100 transition-colors">
                                 <WhatsAppLogo className="w-4 h-4" />
                                 Printer
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
                                 title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
-                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-normal border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-normal border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
                                 disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
                             >
                                 {isUpdating === order.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className={`w-3.5 h-3.5 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : ''}`} />}
@@ -282,8 +281,8 @@ Plate No   : ${order.plate_no || '-'}`;
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
-                    <div className="text-xs text-slate-700 line-clamp-1 flex-1">{order.specs || '-'}</div>
-                    <div className="text-sm font-semibold text-slate-900 ml-2">{(order.quantity || 0).toLocaleString()}</div>
+                    <div className="text-sm text-slate-700 line-clamp-1 flex-1">{order.specs || '-'}</div>
+                    <div className="text-base font-semibold text-slate-900 ml-2">{(order.quantity || 0).toLocaleString()}</div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3">
@@ -320,10 +319,10 @@ Plate No   : ${order.plate_no || '-'}`;
 
                 {isExpanded && (
                     <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 gap-2 animate-in fade-in slide-in-from-top-2">
-                        <div className="text-[10px] font-medium text-slate-500">
+                        <div className="text-[12px] font-medium text-slate-500">
                             {order.specs}
                         </div>
-                        <div className="flex justify-between items-center text-[10px] text-slate-400 pt-2">
+                        <div className="flex justify-between items-center text-[12px] text-slate-400 pt-2">
                             <span>ID: {order.order_id}</span>
                             <span>Date: {order.order_date}</span>
                         </div>
@@ -344,20 +343,14 @@ Plate No   : ${order.plate_no || '-'}`;
                         className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                 </td>
-                <td className="px-3 py-2 text-center">
-                    <button className="p-1 hover:bg-slate-200 rounded-md transition-colors">
-                        {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-600" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-                    </button>
-                </td>
-
                 <td className="px-3 py-2 w-1/4">
-                    <div className="text-[10px] font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="text-[12px] font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[8px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                        <span className="text-[10px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
                         {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
-                            <span className="text-[8px] font-normal text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-0.5 shadow-sm">
+                            <span className="text-[10px] font-normal text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-0.5 shadow-sm">
                                 <Split className="w-2 h-2" />
                                 Lot
                             </span>
@@ -366,15 +359,15 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 text-center w-[60px]">
-                    <div className="text-[10px] font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                    <div className="text-[12px] font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
                 <td className="px-3 py-2 text-center">
-                    <div className="text-xs font-normal text-slate-600">{order.products?.actual_gsm_used || '-'}</div>
+                    <div className="text-sm font-normal text-slate-600">{order.products?.actual_gsm_used || '-'}</div>
                 </td>
 
                 <td className="px-3 py-2 flex-1 min-w-[300px]">
-                    <div className="text-[10px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
+                    <div className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
                         {order.specs || '-'}
                     </div>
                 </td>
@@ -385,7 +378,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             <select
                                 value={editProgress}
                                 onChange={e => setEditProgress(e.target.value)}
-                                className="text-xs font-normal border border-indigo-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="text-sm font-normal border border-indigo-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                 autoFocus
                             >
                                 {PROCESS_OPTIONS.map((s: string) => <option key={s} value={s}>{s}</option>)}
@@ -395,7 +388,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     ) : (
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleQuickEdit(order); }}
-                            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)} hover:opacity-80 transition-opacity`}
+                            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-normal uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)} hover:opacity-80 transition-opacity`}
                         >
                             {order.progress || 'Pending'}
                             <ChevronDown className="ml-0.5 h-2.5 w-2.5 opacity-40" />
@@ -478,7 +471,7 @@ Plate No   : ${order.plate_no || '-'}`;
             </tr>
             {isExpanded && (
                 <tr className="bg-slate-50/50">
-                    <td colSpan={9} className="px-6 py-10">
+                    <td colSpan={8} className="px-6 py-10">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 animate-in fade-in slide-in-from-top-2">
                             <div className="md:col-span-2">
                                 <DetailGroup title="Logistics" items={[
@@ -508,22 +501,22 @@ Plate No   : ${order.plate_no || '-'}`;
                             </div>
                             <div className="md:col-span-6 text-left">
                                 <div className="space-y-4">
-                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
+                                    <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
                                     <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
                                         <div className="space-y-2">
-                                            <div className="flex justify-between border-b pb-1 text-[10px]"><span className="text-slate-500 font-medium">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[10px]"><span className="text-slate-500 font-medium">Ink Group:</span> <span className="font-bold text-slate-900">{order.ink || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[10px]"><span className="text-slate-500 font-medium">Coating:</span> <span className="font-bold text-slate-900">{order.coating || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[10px]"><span className="text-slate-500 font-medium">Pasting:</span> <span className="font-bold text-slate-900">{order.pasting_type || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[10px]"><span className="text-slate-500 font-medium">Construction:</span> <span className="font-bold text-slate-900">{order.construction_type || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[10px]"><span className="text-slate-500 font-medium">Specification:</span> <span className="font-bold text-slate-900">{order.specification || '-'}</span></div>
-                                            <div className="flex justify-between pb-0.5 text-[10px]"><span className="text-slate-500 font-bold uppercase tracking-wider">Dim:</span> <span className="font-mono font-bold text-indigo-700">{order.dimension || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Ink Group:</span> <span className="font-bold text-slate-900">{order.ink || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Coating:</span> <span className="font-bold text-slate-900">{order.coating || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Pasting:</span> <span className="font-bold text-slate-900">{order.pasting_type || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Construction:</span> <span className="font-bold text-slate-900">{order.construction_type || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Specification:</span> <span className="font-bold text-slate-900">{order.specification || '-'}</span></div>
+                                            <div className="flex justify-between pb-0.5 text-[12px]"><span className="text-slate-500 font-bold uppercase tracking-wider">Dim:</span> <span className="font-mono font-bold text-indigo-700">{order.dimension || '-'}</span></div>
                                         </div>
                                     </div>
                                     {order.specs && (
                                         <div className="bg-indigo-50 p-3.5 rounded-xl border border-indigo-200 mt-2">
-                                            <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5 opacity-70">Full Specifications Detail</div>
-                                            <div className="text-[10px] text-slate-700 font-mono leading-relaxed font-semibold">{order.specs}</div>
+                                            <div className="text-[12px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5 opacity-70">Full Specifications Detail</div>
+                                            <div className="text-[12px] text-slate-700 font-mono leading-relaxed font-semibold">{order.specs}</div>
                                         </div>
                                     )}
                                     <div className="flex flex-wrap gap-3 pt-1.5">
@@ -932,11 +925,11 @@ export default function OrdersPage() {
 
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex items-center justify-between lg:justify-start gap-4">
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
                         Orders
                         <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                            <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                            <span className="text-base font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
+                            <span className="text-base font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
                                 ₹{totalValue.toLocaleString()}
                             </span>
                         </div>
@@ -951,7 +944,7 @@ export default function OrdersPage() {
                         <Link
                             href="/orders/summary/printer"
                             title="Printer Summary"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-md transition-all"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-md transition-all"
                         >
                             <Printer className="w-3.5 h-3.5" />
                             <span>Printers</span>
@@ -960,7 +953,7 @@ export default function OrdersPage() {
                         <Link
                             href="/orders/summary/paper"
                             title="Paper Order Summary"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-md transition-all"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-md transition-all"
                         >
                             <Truck className="w-3.5 h-3.5" />
                             <span>Paper</span>
@@ -969,14 +962,14 @@ export default function OrdersPage() {
                         <Link
                             href="/orders/summary/punching"
                             title="Punching Summary"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 hover:text-rose-600 rounded-md transition-all"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-rose-600 rounded-md transition-all"
                         >
                             <Palette className="w-3.5 h-3.5" />
                             <span>Punching</span>
                         </Link>
                     </div>
 
-                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[11px] md:text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
+                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[13px] md:text-base text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
                         <input
                             type="checkbox"
                             checked={showCompleted}
@@ -985,7 +978,7 @@ export default function OrdersPage() {
                         />
                         Completed Only
                     </label>
-                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[11px] md:text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
+                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[13px] md:text-base text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
                         <input
                             type="checkbox"
                             checked={groupByCategory}
@@ -994,7 +987,7 @@ export default function OrdersPage() {
                         />
                         Grouped
                     </label>
-                    <Link href="/orders/new" className="hidden lg:inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
+                    <Link href="/orders/new" className="hidden lg:inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-base font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Order
                     </Link>
@@ -1006,7 +999,7 @@ export default function OrdersPage() {
                 <input
                     type="text"
                     placeholder="Search by Product Name, Order ID, or Printer..."
-                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     value={searchTerm}
                     onChange={handleSearchChange}
                 />

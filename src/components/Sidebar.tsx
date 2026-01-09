@@ -53,8 +53,13 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             "hidden border-r bg-slate-900 md:block transition-all duration-300 ease-in-out text-white h-screen sticky top-0 z-50",
             isCollapsed ? "w-20" : "w-64 lg:w-72"
         )}>
-            <div className="flex h-16 items-center border-b border-slate-800 px-6 justify-between overflow-hidden">
-                {!isCollapsed && <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap">PrintMfg</h1>}
+            <div className="flex h-[80px] items-center border-b border-slate-800 px-6 justify-between overflow-hidden">
+                {!isCollapsed && (
+                    <h1 className="flex flex-col leading-none">
+                        <span className="text-[14px] font-bold text-indigo-400 uppercase tracking-widest">Print</span>
+                        <span className="text-xl font-bold tracking-tight text-white mt-1">Mfg</span>
+                    </h1>
+                )}
                 {isCollapsed && <Package className="h-6 w-6 text-indigo-500 mx-auto" />}
             </div>
 

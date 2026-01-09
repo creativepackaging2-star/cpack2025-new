@@ -27,7 +27,10 @@ export function MobileHeader() {
                     <div className="rounded-lg bg-indigo-600 p-1.5">
                         <Package className="h-5 w-5 text-white" />
                     </div>
-                    <h1 className="text-lg font-bold tracking-tight text-slate-900">PrintMfg</h1>
+                    <h1 className="flex flex-col leading-none">
+                        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">Print</span>
+                        <span className="text-base font-bold tracking-tight text-slate-900">Mfg</span>
+                    </h1>
                 </div>
                 <button
                     onClick={toggleMenu}
@@ -54,7 +57,10 @@ export function MobileHeader() {
                 )}
             >
                 <div className="flex h-16 items-center border-b border-slate-800 px-6">
-                    <h1 className="text-xl font-bold tracking-tight text-white">PrintMfg</h1>
+                    <h1 className="flex flex-col leading-none">
+                        <span className="text-[14px] font-bold text-indigo-400 uppercase tracking-widest">Print</span>
+                        <span className="text-xl font-bold tracking-tight text-white mt-1">Mfg</span>
+                    </h1>
                     <button onClick={closeMenu} className="ml-auto rounded-md p-1 text-slate-400 hover:text-white">
                         <X className="h-5 w-5" />
                     </button>
