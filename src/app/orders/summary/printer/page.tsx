@@ -58,7 +58,7 @@ function PrinterSummaryContent() {
     );
 
     return (
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
+        <div className="p-4 md:p-8 max-w-[1600px] mx-auto font-montserrat">
             <div className="flex items-center justify-between mb-6 print:hidden">
                 <div className="flex items-center gap-4">
                     <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -81,38 +81,38 @@ function PrinterSummaryContent() {
                 <table className="w-full border-collapse text-left">
                     <thead>
                         <tr className="bg-slate-100 border-b border-slate-300">
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700 w-[50px]">Sr. No.</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700 min-w-[200px]">Product</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Printer</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">GSM</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Paper Col</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Print Size</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Print Qty</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Ink</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700 text-center">Plate No.</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Paper ord</th>
-                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-black uppercase text-slate-700">Paper Ord</th>
-                            <th className="px-3 py-3 text-[11px] font-black uppercase text-slate-700 text-center">paper UPS</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700 w-[50px]">Sr. No.</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700 min-w-[200px]">Product</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Printer</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">GSM</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Paper Col</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Print Size</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Print Qty</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Ink</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700 text-center">Plate No.</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Paper ord</th>
+                            <th className="px-3 py-3 border-r border-slate-300 text-[11px] font-semibold uppercase text-slate-700">Paper Ord</th>
+                            <th className="px-3 py-3 text-[11px] font-semibold uppercase text-slate-700 text-center">paper UPS</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300">
                         {orders.map((order, index) => (
                             <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-medium text-slate-500 text-center">{index + 1}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-500 text-center">{index + 1}</td>
                                 <td className="px-3 py-2 border-r border-slate-300">
-                                    <div className="text-xs font-bold text-slate-900">{order.products?.product_name || order.product_name}</div>
-                                    <div className="text-[10px] text-slate-400 font-medium uppercase">{order.products?.artwork_code || order.artwork_code || '-'}</div>
+                                    <div className="text-sm font-semibold text-slate-900 uppercase tracking-tight">{order.products?.product_name || order.product_name}</div>
+                                    <div className="text-[10px] text-slate-400 font-normal uppercase">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                 </td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{order.printer_name || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{order.paper_type_name || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{order.print_size || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-bold text-slate-900">{(order.total_print_qty || 0).toLocaleString()}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{order.ink || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-black text-red-600 text-center">{order.plate_no || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{order.paper_order_size || '-'}</td>
-                                <td className="px-3 py-2 border-r border-slate-300 text-xs text-slate-700">{(order.paper_order_qty || 0).toLocaleString()}</td>
-                                <td className="px-3 py-2 text-xs text-slate-700 text-center font-bold">{order.paper_ups || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{order.printer_name || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{order.paper_type_name || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{order.print_size || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-900">{(order.total_print_qty || 0).toLocaleString()}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{order.ink || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-semibold text-red-600 text-center">{order.plate_no || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{order.paper_order_size || '-'}</td>
+                                <td className="px-3 py-2 border-r border-slate-300 text-xs font-normal text-slate-700">{(order.paper_order_qty || 0).toLocaleString()}</td>
+                                <td className="px-3 py-2 text-xs text-slate-700 text-center font-normal">{order.paper_ups || '-'}</td>
                             </tr>
                         ))}
                     </tbody>

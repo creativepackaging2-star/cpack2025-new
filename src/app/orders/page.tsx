@@ -10,7 +10,7 @@ import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/compone
 // --- Memoized Components for Performance ---
 
 const DocBadge = memo(({ label }: { label: string }) => (
-    <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded text-[10px] font-bold">
+    <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded text-[10px] font-normal">
         {label}
     </span>
 ));
@@ -18,12 +18,12 @@ DocBadge.displayName = 'DocBadge';
 
 const DetailGroup = memo(({ title, items }: { title: string, items: { label: string, value: any }[] }) => (
     <div className="space-y-3">
-        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</h4>
+        <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{title}</h4>
         <div className="space-y-2">
             {items.map((it, i) => (
                 <div key={i} className="flex justify-between text-[10px] border-b border-slate-100 pb-1">
                     <span className="text-slate-500">{it.label}</span>
-                    <span className="font-bold text-slate-900">{it.value || '-'}</span>
+                    <span className="font-normal text-slate-900">{it.value || '-'}</span>
                 </div>
             ))}
         </div>
@@ -42,7 +42,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                     <span className="text-xs font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
                         {catOrders.length}
                     </span>
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                         ₹{categoryValue.toLocaleString()}
                     </span>
                 </div>
@@ -59,14 +59,14 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                     className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                             </th>
-                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[40px]"></th>
-                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Product</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Qty</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">U</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Specs</th>
-                            <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">Process</th>
-                            <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
-                            <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500 w-[40px]"></th>
+                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Product</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Qty</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">U</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Specs</th>
+                            <th className="px-3 py-3 text-left text-[10px] font-normal uppercase tracking-wider text-slate-500">Process</th>
+                            <th className="px-3 py-3 text-center text-[10px] font-normal uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
+                            <th className="px-3 py-3 text-right text-[10px] font-normal uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300 bg-white">
@@ -128,8 +128,8 @@ const PROCESS_OPTIONS = [
 
 const getProgressColor = (progress: string | null) => {
     const s = progress?.toLowerCase() || '';
-    if (s === 'ready') return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20 font-bold';
-    if (s === 'hold') return 'bg-red-100 text-red-800 ring-red-600/20 font-bold';
+    if (s === 'ready') return 'bg-emerald-100 text-emerald-800 ring-emerald-600/20 font-normal';
+    if (s === 'hold') return 'bg-red-100 text-red-800 ring-red-600/20 font-normal';
     if (['paper', 'plate', 'print', 'varnish', 'foil', 'pasting', 'folding'].some(p => s.includes(p))) {
         return 'bg-blue-50 text-blue-700 ring-blue-600/20';
     }
@@ -249,29 +249,29 @@ Plate No   : ${order.plate_no || '-'}`;
                         />
                     </div>
                     <div className="flex-1">
-                        <div className="text-sm font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
+                        <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                            <span className="text-[9px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.products?.artwork_code || order.artwork_code || '-'}
                             </span>
                             {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
-                                <span className="text-[9px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
+                                <span className="text-[9px] font-normal text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
                                     <Split className="w-2 h-2" />
                                     Split Lot
                                 </span>
                             )}
-                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
+                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-normal border border-emerald-100 active:bg-emerald-100 transition-colors">
                                 <PaperwalaWhatsAppLogo className="w-4 h-4" />
                                 Paper
                             </button>
-                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold border border-blue-100 active:bg-blue-100 transition-colors">
+                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-[10px] font-normal border border-blue-100 active:bg-blue-100 transition-colors">
                                 <WhatsAppLogo className="w-4 h-4" />
                                 Printer
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
                                 title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
-                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-normal border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
                                 disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
                             >
                                 {isUpdating === order.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className={`w-3.5 h-3.5 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : ''}`} />}
@@ -351,13 +351,13 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 w-1/4">
-                    <div className="text-[10px] font-bold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="text-[10px] font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[8px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
+                        <span className="text-[8px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
                         </span>
                         {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
-                            <span className="text-[8px] font-black text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-0.5 shadow-sm">
+                            <span className="text-[8px] font-normal text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-0.5 shadow-sm">
                                 <Split className="w-2 h-2" />
                                 Lot
                             </span>
@@ -370,7 +370,7 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 text-center">
-                    <div className="text-xs font-bold text-slate-600">{order.products?.actual_gsm_used || '-'}</div>
+                    <div className="text-xs font-normal text-slate-600">{order.products?.actual_gsm_used || '-'}</div>
                 </td>
 
                 <td className="px-3 py-2 flex-1 min-w-[300px]">
@@ -385,7 +385,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             <select
                                 value={editProgress}
                                 onChange={e => setEditProgress(e.target.value)}
-                                className="text-xs font-semibold border border-indigo-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="text-xs font-normal border border-indigo-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                 autoFocus
                             >
                                 {PROCESS_OPTIONS.map((s: string) => <option key={s} value={s}>{s}</option>)}
@@ -395,7 +395,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     ) : (
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleQuickEdit(order); }}
-                            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)} hover:opacity-80 transition-opacity`}
+                            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-normal uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)} hover:opacity-80 transition-opacity`}
                         >
                             {order.progress || 'Pending'}
                             <ChevronDown className="ml-0.5 h-2.5 w-2.5 opacity-40" />
