@@ -2,9 +2,10 @@
 
 import { useEffect, useState, Suspense, useMemo } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { Loader2, ChevronLeft, Palette, MessageCircle, User, Lock, Unlock, Printer } from 'lucide-react';
+import { Loader2, ChevronLeft, Palette, MessageCircle, User, Printer, Camera } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import html2canvas from 'html2canvas';
 
 function PunchingSummaryContent() {
     const searchParams = useSearchParams();
@@ -85,7 +86,64 @@ function PunchingSummaryContent() {
     };
 
 
-    const sendWhatsApp = () => {
+    const sendWhatsAppImage = async () => {
+        if (!selectedPrinter) {
+            alert('Please select a printer to send the summary.');
+            return;
+        }
+
+        const tableElement = document.getElementById('punching-summary-table');
+        if (!tableElement) {
+            alert('Table not found.');
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(tableElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    alert('Failed to generate image.');
+                    return;
+                }
+
+                let phone = (selectedPrinter.phone || '').replace(/\D/g, '');
+                if (!phone) {
+                    alert('This printer does not have a valid phone number.');
+                    return;
+                }
+                if (phone.length === 10) phone = '91' + phone;
+
+                // Since we can't directly send blobs through wa.me text, 
+                // we provide instructions and a primary text message
+                const text = `*PUNCHING SUMMARY FOR ${selectedPrinter.name}*\n\nI am sending the table image now. Please check above/below.`;
+                const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+
+                // Copy image to clipboard so user can just paste in WhatsApp
+                try {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    await navigator.clipboard.write([item]);
+                    alert('✅ Table image copied to clipboard!\n\nWhatsApp will open now. Just PASTE (Ctrl+V) the image in the chat.');
+                } catch (err) {
+                    console.error('Clipboard error:', err);
+                    alert('Could not copy image automatically. Please use the "Print Summary" button to save as PDF and send manually.');
+                }
+
+                window.open(waUrl, '_blank');
+            }, 'image/png');
+
+        } catch (error) {
+            console.error('Error generating image:', error);
+            alert('Error generating image. Sending text version instead.');
+            sendWhatsAppText();
+        }
+    };
+
+    const sendWhatsAppText = () => {
         if (!selectedPrinter) {
             alert('Please select a printer to send the summary.');
             return;
@@ -162,11 +220,19 @@ function PunchingSummaryContent() {
                     </div>
 
                     <button
-                        onClick={sendWhatsApp}
+                        onClick={sendWhatsAppImage}
                         className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
                     >
+                        <Camera className="w-4 h-4" />
+                        Send Table Image
+                    </button>
+
+                    <button
+                        onClick={sendWhatsAppText}
+                        className="bg-slate-700 text-white px-4 py-2 rounded-lg font-normal text-sm hover:bg-slate-800 transition-all shadow-md flex items-center gap-2 active:scale-95 font-montserrat"
+                    >
                         <MessageCircle className="w-4 h-4" />
-                        Send WhatsApp
+                        Send Text
                     </button>
 
                     <button
@@ -179,7 +245,7 @@ function PunchingSummaryContent() {
                 </div>
             </div>
 
-            <div className="overflow-x-auto bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden font-montserrat">
+            <div id="punching-summary-table" className="overflow-x-auto bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden font-montserrat p-1">
                 <table className="w-full border-collapse text-left">
                     <thead>
                         <tr className="bg-slate-900 text-white">
