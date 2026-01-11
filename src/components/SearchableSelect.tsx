@@ -137,7 +137,7 @@ export default function SearchableSelect({
                                     }`}
                                 onClick={() => handleSelect(option)}
                             >
-                                <span className={`block truncate ${option.id === value ? 'font-medium' : 'font-normal'}`}>
+                                <span className={`block ${option.id === value ? 'font-medium' : 'font-normal'}`}>
                                     {option[displayField]}
                                 </span>
                                 {option.id === value && (
