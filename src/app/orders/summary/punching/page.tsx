@@ -154,13 +154,25 @@ function PunchingSummaryContent() {
             const tableElement = document.getElementById('punching-summary-table');
             if (!tableElement) throw new Error('Table not found.');
 
-            const canvas = await html2canvas(tableElement, {
+            // Clone the table to ensure full width capture on mobile
+            const clone = tableElement.cloneNode(true) as HTMLElement;
+            clone.style.position = 'absolute';
+            clone.style.left = '-9999px';
+            clone.style.top = '0';
+            clone.style.width = '1000px'; // Force wide enough width
+            clone.style.overflow = 'visible';
+            clone.style.height = 'auto';
+            document.body.appendChild(clone);
+
+            const canvas = await html2canvas(clone, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
                 ignoreElements: (el) => el.classList.contains('print:hidden')
             });
+
+            document.body.removeChild(clone);
 
             const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
             if (!blob) throw new Error('Failed to create image.');
