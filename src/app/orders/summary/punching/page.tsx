@@ -283,41 +283,41 @@ function PunchingSummaryContent() {
             <div id="punching-summary-table" style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '4px' }} className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr style={{ backgroundColor: '#0f172a' }} className="text-white text-left">
-                            <th style={{ borderColor: '#334155' }} className="px-4 py-4 border-r text-[11px] font-black uppercase text-center w-12">Sr.</th>
-                            <th style={{ borderColor: '#334155' }} className="px-6 py-4 border-r text-[11px] font-black uppercase tracking-wider">Product & Artwork</th>
-                            <th style={{ borderColor: '#334155' }} className="px-4 py-4 border-r text-[11px] font-black uppercase text-center">Print Size</th>
-                            <th style={{ borderColor: '#334155' }} className="px-4 py-4 border-r text-[11px] font-black uppercase text-center tracking-tighter">Print Qtry</th>
-                            <th style={{ borderColor: '#334155' }} className="px-4 py-4 border-r text-[11px] font-black uppercase text-center">Emboss</th>
-                            <th style={{ borderColor: '#334155' }} className="px-4 py-4 border-r text-[11px] font-black uppercase text-center">Pasting</th>
+                        <tr style={{ backgroundColor: '#0f172a', color: '#ffffff' }} className="text-left">
+                            <th style={{ borderRight: '1px solid #334155', padding: '16px' }} className="text-[11px] font-black uppercase text-center w-12">Sr.</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '16px 24px' }} className="text-[11px] font-black uppercase tracking-wider">Product & Artwork</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '16px' }} className="text-[11px] font-black uppercase text-center">Print Size</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '16px' }} className="text-[11px] font-black uppercase text-center tracking-tighter">Print Qtry</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '16px' }} className="text-[11px] font-black uppercase text-center">Emboss</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '16px' }} className="text-[11px] font-black uppercase text-center">Pasting</th>
                             <th style={{ backgroundColor: '#4c0519' }} className="px-6 py-4 text-[11px] font-black uppercase text-center">Max Del. Qty</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                         {filteredOrders.length > 0 ? filteredOrders.map((order, index) => (
-                            <tr key={String(order.id)} style={{ borderBottom: '1px solid #f1f5f9' }} className="hover:bg-slate-50 transition-colors">
-                                <td style={{ borderColor: '#f8fafc', color: '#94a3b8' }} className="px-4 py-5 border-r text-xs font-bold text-center">{index + 1}</td>
-                                <td style={{ borderColor: '#f8fafc' }} className="px-6 py-5 border-r">
-                                    <div className="text-sm font-black text-slate-900 uppercase tracking-tight">{order.products?.product_name || order.product_name || 'N/A'}</div>
+                            <tr key={String(order.id)} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#94a3b8', padding: '20px 16px' }} className="text-xs font-bold text-center">{index + 1}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', padding: '20px 24px' }} className="text-sm">
+                                    <div style={{ color: '#0f172a', fontWeight: 900 }} className="uppercase tracking-tight">{order.products?.product_name || order.product_name || 'N/A'}</div>
                                     <div style={{ color: '#e11d48' }} className="text-[10px] font-bold uppercase tracking-widest mt-1">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                 </td>
-                                <td style={{ borderColor: '#f8fafc' }} className="px-4 py-5 border-r text-sm font-bold text-slate-700 text-center">{order.print_size || '-'}</td>
-                                <td style={{ borderColor: '#f8fafc' }} className="px-4 py-5 border-r text-sm font-black text-slate-900 text-center">{(Number(order.total_print_qty) || 0).toLocaleString()}</td>
-                                <td style={{ borderColor: '#f8fafc' }} className="px-4 py-5 border-r text-center">
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '20px 16px' }} className="text-sm font-bold text-center">{order.print_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', padding: '20px 16px' }} className="text-sm font-black text-center">{(Number(order.total_print_qty) || 0).toLocaleString()}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', padding: '20px 16px' }} className="text-center">
                                     <span
-                                        style={checkEffect(order, 'Embossing') === 'YES' ? { backgroundColor: '#ffedd5', color: '#c2410c' } : { color: '#e2e8f0' }}
-                                        className="text-[10px] font-black px-2 py-0.5 rounded"
+                                        style={checkEffect(order, 'Embossing') === 'YES' ? { backgroundColor: '#ffedd5', color: '#c2410c', fontWeight: 900 } : { color: '#cbd5e1', fontWeight: 900 }}
+                                        className="text-[10px] px-2 py-0.5 rounded"
                                     >
                                         {checkEffect(order, 'Embossing')}
                                     </span>
                                 </td>
                                 <td
-                                    style={String(order.pasting_type || '').toLowerCase().includes('lock bottom') ? { backgroundColor: '#fef9c3', fontWeight: 900 } : { color: '#475569' }}
-                                    className="px-4 py-5 border-r border-slate-50 text-sm font-bold text-center"
+                                    style={String(order.pasting_type || '').toLowerCase().includes('lock bottom') ? { backgroundColor: '#fef9c3', fontWeight: 900, borderRight: '1px solid #f1f5f9', padding: '20px 16px' } : { color: '#475569', borderRight: '1px solid #f1f5f9', padding: '20px 16px' }}
+                                    className="text-sm font-bold text-center"
                                 >
                                     {order.pasting_type || '-'}
                                 </td>
-                                <td style={{ backgroundColor: 'rgba(255, 241, 242, 0.3)', color: '#be123c' }} className="px-6 py-5 text-base font-black text-center">
+                                <td style={{ backgroundColor: 'rgba(255, 241, 242, 0.4)', color: '#be123c', padding: '20px 24px', fontWeight: 900 }} className="text-base text-center">
                                     {calculateMaxQty(order.quantity || 0).toLocaleString()}
                                 </td>
                             </tr>
