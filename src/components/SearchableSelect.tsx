@@ -19,6 +19,7 @@ interface SearchableSelectProps {
     disabled?: boolean;
     displayField?: string;
     className?: string;
+    required?: boolean;
 }
 
 export default function SearchableSelect({
@@ -30,7 +31,8 @@ export default function SearchableSelect({
     placeholder = "Select...",
     disabled = false,
     displayField = 'name',
-    className = ''
+    className = '',
+    required = false
 }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -118,6 +120,7 @@ export default function SearchableSelect({
                     }}
                     onFocus={() => setIsOpen(true)}
                     disabled={disabled}
+                    required={required}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
                     <ChevronsUpDown className="h-4 w-4" />

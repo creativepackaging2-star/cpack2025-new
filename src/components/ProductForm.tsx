@@ -18,8 +18,15 @@ export default function ProductForm({ initialData }: Props) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    // Hardcoded Coating Options (Enum)
-    const COATING_OPTIONS = ['Varnish', 'Aqua Varnish', 'Gloss Lamination', 'Matt Lamination', 'Drip Off', 'UV'];
+    // Coating Options (Dynamic)
+    const [coatings, setCoatings] = useState<{ id: string; name: string }[]>([
+        { id: 'Varnish', name: 'Varnish' },
+        { id: 'Aqua Varnish', name: 'Aqua Varnish' },
+        { id: 'Gloss Lamination', name: 'Gloss Lamination' },
+        { id: 'Matt Lamination', name: 'Matt Lamination' },
+        { id: 'Drip Off', name: 'Drip Off' },
+        { id: 'UV', name: 'UV' }
+    ]);
 
     // Dropdown Data
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -166,6 +173,15 @@ export default function ProductForm({ initialData }: Props) {
             console.error(`Error adding to ${table}:`, error);
             alert(`Failed to add new item: ${error.message}`);
         }
+    };
+
+    const handleCoatingAdd = async (name: string) => {
+        const newCoating = { id: name, name: name };
+        startTransition(() => {
+            setCoatings((prev) => [...prev, newCoating]);
+            setFormData((prev) => ({ ...prev, coating: name }));
+        });
+        return newCoating;
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'artwork_pdf' | 'artwork_cdr') => {
@@ -436,10 +452,12 @@ export default function ProductForm({ initialData }: Props) {
                         <div>
                             <label className="label">Coating</label>
                             <SearchableSelect
-                                options={[{ id: '', name: 'None' }, ...COATING_OPTIONS.map(opt => ({ id: opt, name: opt }))]}
+                                options={[{ id: '', name: 'None' }, ...coatings]}
                                 value={formData.coating}
                                 onChange={(val) => setFormData(prev => ({ ...prev, coating: val || '' }))}
-                                placeholder="Select Coating"
+                                onAdd={handleCoatingAdd}
+                                placeholder="Select or Add Coating"
+                                required
                             />
                         </div>
                         <div className="md:col-span-3">
@@ -563,7 +581,9 @@ export default function ProductForm({ initialData }: Props) {
                                 options={deliveryAddresses.map(d => ({ ...d, name: d.name || d.address || 'Unknown Address' }))}
                                 value={formData.delivery_address_id}
                                 onChange={(val) => setFormData(prev => ({ ...prev, delivery_address_id: val }))}
-                                placeholder="Search Address"
+                                onAdd={(name) => handleGenericAdd('delivery_addresses', name, setDeliveryAddresses, 'delivery_address_id')}
+                                placeholder="Search or Add Address"
+                                required
                             />
                         </div>
                         <div className="md:col-span-1">
@@ -572,7 +592,9 @@ export default function ProductForm({ initialData }: Props) {
                                 options={specifications.map(s => ({ ...s, name: s.name || s.title || 'Unknown Spec' }))}
                                 value={formData.specification_id}
                                 onChange={(val) => setFormData(prev => ({ ...prev, specification_id: val }))}
-                                placeholder="Search Specification"
+                                onAdd={(name) => handleGenericAdd('specifications', name, setSpecifications, 'specification_id')}
+                                placeholder="Search or Add Specification"
+                                required
                             />
                         </div>
                         <div className="md:col-span-2">
