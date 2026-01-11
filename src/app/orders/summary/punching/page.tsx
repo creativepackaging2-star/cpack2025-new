@@ -272,7 +272,7 @@ function PunchingSummaryContent() {
                 </div>
             </div>
 
-            <div id="punching-summary-table" className="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-2xl p-1">
+            <div id="punching-summary-table" style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '4px' }} className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr style={{ backgroundColor: '#0f172a' }} className="text-white text-left">
@@ -315,7 +315,7 @@ function PunchingSummaryContent() {
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan={7} className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest italic bg-slate-50/50">
+                                <td colSpan={7} style={{ padding: '80px 0', backgroundColor: '#f8fafc', color: '#94a3b8' }} className="text-center font-bold uppercase tracking-widest italic">
                                     No active orders found for this printer.
                                 </td>
                             </tr>
