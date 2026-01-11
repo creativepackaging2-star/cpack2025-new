@@ -104,21 +104,30 @@ function PunchingSummaryContent() {
 
     const generateMessage = useCallback(() => {
         if (!selectedPrinter) return '';
+
+        // Define column widths
+        const w = { sr: 2, prod: 10, pqty: 6, past: 6, mqty: 6 };
+        const pad = (s: string, n: number) => s.slice(0, n).padEnd(n);
+        const border = `+${'-'.repeat(w.sr)}+${'-'.repeat(w.prod)}+${'-'.repeat(w.pqty)}+${'-'.repeat(w.past)}+${'-'.repeat(w.mqty)}+\n`;
+
         let message = `*PUNCHING SUMMARY*\n`;
         message += `*To:* ${selectedPrinter.name || 'Printer'}\n`;
-        message += `--------------------------\n\n`;
+        message += '```\n';
+        message += border;
+        message += `|${pad('Sr', w.sr)}|${pad('Product', w.prod)}|${pad('PQty', w.pqty)}|${pad('Past', w.past)}|${pad('MQty', w.mqty)}|\n`;
+        message += border;
 
         filteredOrders.forEach((o, i) => {
-            const product = o.products?.product_name || o.product_name || 'Unnamed Product';
-            const code = o.products?.artwork_code || o.artwork_code || '-';
-            const maxQty = calculateMaxQty(o.quantity);
-            message += `${i + 1}. *${product}* (${code})\n`;
-            message += `   Size: ${o.print_size || '-'}\n`;
-            message += `   Print Qty: ${(Number(o.total_print_qty) || 0).toLocaleString()}\n`;
-            message += `   Emboss: ${checkEffect(o, 'Embossing')}\n`;
-            message += `   Pasting: ${o.pasting_type || '-'}\n`;
-            message += `   *Max Del Qty: ${maxQty.toLocaleString()}*\n\n`;
+            const product = (o.products?.product_name || o.product_name || 'N/A').toUpperCase();
+            const pqty = (Number(o.total_print_qty) || 0).toLocaleString('en-IN').replace(/,/g, ''); // Compact
+            const mqty = calculateMaxQty(o.quantity).toLocaleString('en-IN').replace(/,/g, ''); // Compact
+            const past = (o.pasting_type || '-').slice(0, w.past);
+
+            message += `|${pad(String(i + 1), w.sr)}|${pad(product, w.prod)}|${pad(pqty, w.pqty)}|${pad(past, w.past)}|${pad(mqty, w.mqty)}|\n`;
         });
+
+        message += border;
+        message += '```';
         return message;
     }, [selectedPrinter, filteredOrders]);
 
@@ -137,23 +146,43 @@ function PunchingSummaryContent() {
         try {
             const tableElement = document.getElementById('punching-summary-table');
             if (!tableElement) throw new Error('Table not found.');
+
             const canvas = await html2canvas(tableElement, {
-                scale: 1.5,
+                scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
                 ignoreElements: (el) => el.classList.contains('print:hidden')
             });
+
             const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-            if (blob && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+            if (!blob) throw new Error('Failed to create image.');
+
+            // 1. Try Native Sharing (Mobile - iOS/Android)
+            const file = new File([blob], `Punching_Summary_${new Date().getTime()}.png`, { type: 'image/png' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Punching Summary',
+                    text: 'Here is the Punching Summary table.'
+                });
+            }
+            // 2. Fallback to Clipboard (Desktop/Web)
+            else if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
                 const item = new ClipboardItem({ "image/png": blob });
                 await navigator.clipboard.write([item]);
-                alert('Table image COPIED to clipboard! Just PASTE it in WhatsApp.');
+                alert('Table image COPIED to clipboard! Now PASTE it in the WhatsApp chat.');
+                window.open(waUrl, '_blank');
+            } else {
+                alert('Sharing not fully supported on this device. Opening WhatsApp text...');
+                window.open(waUrl, '_blank');
             }
-            window.open(waUrl, '_blank');
-        } catch (error) {
-            console.error('Image capture failed:', error);
-            window.open(waUrl, '_blank');
+        } catch (error: any) {
+            console.error('Sharing failed:', error);
+            if (error.name !== 'AbortError') {
+                alert('Error sharing image: ' + error.message);
+                window.open(waUrl, '_blank');
+            }
         } finally {
             setIsGenerating(false);
         }
