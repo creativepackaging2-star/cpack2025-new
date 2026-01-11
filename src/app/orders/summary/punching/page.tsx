@@ -2,17 +2,24 @@
 
 import { useEffect, useState, Suspense, useMemo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { Loader2, ChevronLeft, Palette, MessageCircle, User, Printer, Camera } from 'lucide-react';
+import { Loader2, ChevronLeft, Palette, MessageCircle, Printer, Camera } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import html2canvas from 'html2canvas';
+import { Order, Product } from '@/types';
+
+type PrinterType = {
+    id: number;
+    name: string;
+    phone?: string;
+};
 
 function PunchingSummaryContent() {
     const searchParams = useSearchParams();
     const idsString = searchParams.get('ids');
-    const [orders, setOrders] = useState<any[]>([]);
-    const [printers, setPrinters] = useState<any[]>([]);
-    const [selectedPrinter, setSelectedPrinter] = useState<any>(null);
+    const [orders, setOrders] = useState<(Order & { products: Partial<Product> })[]>([]);
+    const [printers, setPrinters] = useState<PrinterType[]>([]);
+    const [selectedPrinter, setSelectedPrinter] = useState<PrinterType | null>(null);
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -72,7 +79,7 @@ function PunchingSummaryContent() {
     };
 
     // Helper to check for specific special effects
-    const checkEffect = (order: any, term: string) => {
+    const checkEffect = (order: Order & { products?: Partial<Product> | null }, term: string) => {
         const specs = String(order?.specs || order?.products?.specs || '').toLowerCase();
         const effects = String(order?.special_effects || '').toLowerCase();
         const t = term.toLowerCase();
@@ -120,7 +127,7 @@ function PunchingSummaryContent() {
         filteredOrders.forEach((o, i) => {
             const product = (o.products?.product_name || o.product_name || 'N/A').toUpperCase();
             const pqty = (Number(o.total_print_qty) || 0).toLocaleString('en-IN').replace(/,/g, ''); // Compact
-            const mqty = calculateMaxQty(o.quantity).toLocaleString('en-IN').replace(/,/g, ''); // Compact
+            const mqty = calculateMaxQty(o.quantity || 0).toLocaleString('en-IN').replace(/,/g, ''); // Compact
             const past = (o.pasting_type || '-').slice(0, w.past);
 
             message += `|${pad(String(i + 1), w.sr)}|${pad(product, w.prod)}|${pad(pqty, w.pqty)}|${pad(past, w.past)}|${pad(mqty, w.mqty)}|\n`;
@@ -177,10 +184,11 @@ function PunchingSummaryContent() {
                 alert('Sharing not fully supported on this device. Opening WhatsApp text...');
                 window.open(waUrl, '_blank');
             }
-        } catch (error: any) {
-            console.error('Sharing failed:', error);
-            if (error.name !== 'AbortError') {
-                alert('Error sharing image: ' + error.message);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error('Sharing failed:', err);
+            if (err.name !== 'AbortError') {
+                alert('Error sharing image: ' + err.message);
                 window.open(waUrl, '_blank');
             }
         } finally {
@@ -310,7 +318,7 @@ function PunchingSummaryContent() {
                                     {order.pasting_type || '-'}
                                 </td>
                                 <td style={{ backgroundColor: 'rgba(255, 241, 242, 0.3)', color: '#be123c' }} className="px-6 py-5 text-base font-black text-center">
-                                    {calculateMaxQty(order.quantity).toLocaleString()}
+                                    {calculateMaxQty(order.quantity || 0).toLocaleString()}
                                 </td>
                             </tr>
                         )) : (
