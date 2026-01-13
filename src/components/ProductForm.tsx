@@ -457,7 +457,6 @@ export default function ProductForm({ initialData }: Props) {
                                 onChange={(val) => setFormData(prev => ({ ...prev, coating: val || '' }))}
                                 onAdd={handleCoatingAdd}
                                 placeholder="Select or Add Coating"
-                                required
                             />
                         </div>
                         <div className="md:col-span-3">

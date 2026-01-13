@@ -41,7 +41,7 @@ export default function SearchableSelect({
 
     // Initial value syncing
     useEffect(() => {
-        if (value) {
+        if (value !== null && value !== undefined) {
             const selected = options.find(o => o.id === value);
             if (selected) {
                 setSearchTerm(String(selected[displayField] || ''));
