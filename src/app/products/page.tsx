@@ -224,12 +224,14 @@ export default function ProductsPage() {
 
             if (dimMatch && product.dimension) {
                 const [, tL, tB, tH] = dimMatch;
-                const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)];
+                // SORT target dims numerically for order-independent matching
+                const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)].sort((a, b) => a - b);
 
                 const prodDimMatch = product.dimension.toLowerCase().match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
                 if (prodDimMatch) {
                     const [, pL, pB, pH] = prodDimMatch;
-                    const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)];
+                    // SORT product dims numerically
+                    const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)].sort((a, b) => a - b);
 
                     // Tolerance +/- 2
                     const isMatch = targetDims.every((target, idx) => Math.abs(target - prodDims[idx]) <= 2);
