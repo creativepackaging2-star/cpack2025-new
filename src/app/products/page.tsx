@@ -174,42 +174,95 @@ export default function ProductsPage() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [specialEffectsMap, setSpecialEffectsMap] = useState<Record<number, string>>({});
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [pastingsMap, setPastingsMap] = useState<Record<number, string>>({});
 
     useEffect(() => {
         fetchResources();
         fetchProducts();
-    }, [debouncedSearch, showArchived]);
+    }, []);
 
     async function fetchResources() {
-        // Fetch Categories
-        const { data: catData } = await supabase.from('category').select('id, name');
-        if (catData) {
-            const catMap: Record<number, string> = {};
-            catData.forEach((c: any) => { catMap[c.id] = c.name; });
-            setCategories(catMap);
+        const results = await Promise.allSettled([
+            supabase.from('category').select('id, name'),
+            supabase.from('special_effects').select('id, name'),
+            supabase.from('pasting').select('id, name')
+        ]);
+
+        const [catRes, fxRes, pastRes] = results;
+
+        if (catRes.status === 'fulfilled' && catRes.value.data) {
+            const map: Record<number, string> = {};
+            catRes.value.data.forEach((c: any) => { map[c.id] = c.name; });
+            setCategories(map);
         }
 
-        // Fetch Special Effects
-        const { data: fxData } = await supabase.from('special_effects').select('id, name');
-        if (fxData) {
-            const fxMap: Record<number, string> = {};
-            fxData.forEach((fx: any) => { fxMap[fx.id] = fx.name; });
-            setSpecialEffectsMap(fxMap);
+        if (fxRes.status === 'fulfilled' && fxRes.value.data) {
+            const map: Record<number, string> = {};
+            fxRes.value.data.forEach((fx: any) => { map[fx.id] = fx.name; });
+            setSpecialEffectsMap(map);
+        }
+
+        if (pastRes.status === 'fulfilled' && pastRes.value.data) {
+            const map: Record<number, string> = {};
+            pastRes.value.data.forEach((p: any) => { map[p.id] = p.name; });
+            setPastingsMap(map);
         }
     }
+
+    // Client-side filtering
+    const filteredProducts = products.filter(product => {
+        if (!showArchived && product.status === 'archived') return false;
+        if (!searchQuery) return true;
+
+        const term = searchQuery.toLowerCase().trim();
+
+        // 1. Dimension Tolerance Search (e.g. "65x23x55" or "65 x 23 x 55")
+        // Regex to find 3 numbers separated by 'x' or spaces
+        const dimMatch = term.match(/^(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)$/);
+
+        if (dimMatch && product.dimension) {
+            const [, tL, tB, tH] = dimMatch;
+            const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)];
+
+            // Extract product dims
+            const prodDimMatch = product.dimension.toLowerCase().match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
+            if (prodDimMatch) {
+                const [, pL, pB, pH] = prodDimMatch;
+                const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)];
+
+                // Compare with tolerance +/- 2
+                const isMatch = targetDims.every((target, idx) => Math.abs(target - prodDims[idx]) <= 2);
+                if (isMatch) return true;
+            }
+        }
+
+        // 2. Normal Text Search
+        const nameMatch = product.product_name?.toLowerCase().includes(term);
+        const skuMatch = product.sku?.toLowerCase().includes(term);
+        const codeMatch = product.artwork_code?.toLowerCase().includes(term);
+        const dimTextMatch = product.dimension?.toLowerCase().includes(term); // Fallback if not using tolerance format
+        const specsMatch = product.specs?.toLowerCase().includes(term);
+
+        // 3. Lookup Search (Category, Pasting)
+        const catName = product.category_id ? categories[product.category_id]?.toLowerCase() : '';
+        const catMatch = catName.includes(term);
+
+        const pastingName = product.pasting_id ? pastingsMap[product.pasting_id]?.toLowerCase() : '';
+        const pastingMatch = pastingName.includes(term); // This enables "side" or "lock bottom" search
+
+        return nameMatch || skuMatch || codeMatch || dimTextMatch || specsMatch || catMatch || pastingMatch;
+    });
 
     const handleDelete = useCallback(async (id: string, name: string) => {
         setDeletingId(id);
         try {
             const { error } = await supabase.from('products').delete().eq('id', id);
             if (error) throw error;
-            // Optimistic update for hard delete
             setProducts(prev => prev.filter(p => p.id !== id));
         } catch (error: any) {
             console.error('Error deleting:', error);
             const msg = error.message || 'Unknown error';
 
-            // Check for foreign key violation (linked existing orders)
             if (error.code === '23503') {
                 const shouldArchive = window.confirm(
                     `Cannot permanently delete "${name}" because it has existing order history.\n\nDo you want to ARCHIVE it instead?\n\n(This will hide it from the main list but keep the data safe.)`
@@ -224,42 +277,24 @@ export default function ProductsPage() {
 
                         if (archiveError) throw archiveError;
 
-                        // Optimistic update for archive
-                        if (!showArchived) {
-                            setProducts(prev => prev.filter(p => p.id !== id));
-                        } else {
-                            // If showing archived, update the status
-                            setProducts(prev => prev.map(p => p.id === id ? { ...p, status: 'archived' } : p));
-                        }
+                        setProducts(prev => prev.map(p => p.id === id ? { ...p, status: 'archived' } : p));
                         alert(`"${name}" has been archived.`);
                     } catch (archiveError: any) {
                         alert(`Failed to archive product: ${archiveError.message}`);
                     }
                 } else {
-                    // User rejected Archive. Offer Force Delete (Unlink).
                     const shouldForceDelete = window.confirm(
                         `Do you want to FORCE DELETE "${name}"?\n\n⚠️ WARNING: This will UNLINK this product from all associated orders. The orders will remain, but they will no longer be linked to this product card.\n\nAre you sure you want to proceed with permanent deletion?`
                     );
 
                     if (shouldForceDelete) {
                         try {
-                            // 1. Unlink from orders
-                            const { error: unlinkError } = await supabase
-                                .from('orders')
-                                .update({ product_id: null })
-                                .eq('product_id', id);
-
+                            const { error: unlinkError } = await supabase.from('orders').update({ product_id: null }).eq('product_id', id);
                             if (unlinkError) throw unlinkError;
 
-                            // 2. Delete product
-                            const { error: deleteError } = await supabase
-                                .from('products')
-                                .delete()
-                                .eq('id', id);
-
+                            const { error: deleteError } = await supabase.from('products').delete().eq('id', id);
                             if (deleteError) throw deleteError;
 
-                            // Optimistic update
                             setProducts(prev => prev.filter(p => p.id !== id));
                             alert(`"${name}" has been permanently deleted and unlinked from orders.`);
 
@@ -275,43 +310,21 @@ export default function ProductsPage() {
         } finally {
             setDeletingId(null);
         }
-    }, [showArchived]);
+    }, []);
 
     async function fetchProducts() {
         setLoading(true);
         try {
-            let query = supabase
+            // Fetch ALL products for client-side filtering
+            const { data, error } = await supabase
                 .from('products')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (debouncedSearch) {
-                // Enhanced Search: Name, SKU, Dimension, Specs (which covers pasting, paper, etc.)
-                const term = debouncedSearch.trim();
-                query = query.or(`product_name.ilike.%${term}%,sku.ilike.%${term}%,dimension.ilike.%${term}%,specs.ilike.%${term}%`);
-            }
-
-            // NOTE: Server-side filtering (.neq) is removed to prevent crashes if 'status' column is missing.
-            // Client-side filtering is used below.
-
-            const { data, error } = await query;
-
             if (error) {
                 console.error('Error fetching products:', error);
-
-                // If the error is not about the column missing, we should probably still show it? 
-                // But for now, let's just log it. If 'data' is null, UI shows empty.
             } else {
-                let filteredData = data || [];
-
-                // Client-side filtering
-                // If 'status' column is missing, p.status is undefined.
-                // undefined !== 'archived' is true. So all products are shown (Correct behavior).
-                if (!showArchived) {
-                    filteredData = filteredData.filter(p => p.status !== 'archived');
-                }
-
-                setProducts(filteredData);
+                setProducts(data || []);
             }
         } finally {
             setLoading(false);
@@ -392,14 +405,14 @@ export default function ProductsPage() {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : products.length === 0 ? (
+                            ) : filteredProducts.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                        {showArchived ? "No products found." : "No active products found."}
+                                        No products found matching your active filters.
                                     </td>
                                 </tr>
                             ) : (
-                                products.map((product) => (
+                                filteredProducts.map((product) => (
                                     <ProductRow
                                         key={product.id}
                                         product={product}
@@ -420,12 +433,12 @@ export default function ProductsPage() {
                     <div className="flex justify-center items-center py-12">
                         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
                     </div>
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                     <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
-                        {showArchived ? "No products found." : "No active products found."}
+                        No products found matching your active filters.
                     </div>
                 ) : (
-                    products.map((product) => (
+                    filteredProducts.map((product) => (
                         <MobileProductCard
                             key={product.id}
                             product={product}
