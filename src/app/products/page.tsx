@@ -214,43 +214,45 @@ export default function ProductsPage() {
         if (!showArchived && product.status === 'archived') return false;
         if (!searchQuery) return true;
 
-        const term = searchQuery.toLowerCase().trim();
+        // Split by comma to support AND logic (e.g. "carton, side, 65x23x55")
+        // All terms must match for the product to be included.
+        const searchTerms = searchQuery.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
 
-        // 1. Dimension Tolerance Search (e.g. "65x23x55" or "65 x 23 x 55")
-        // Regex to find 3 numbers separated by 'x' or spaces
-        const dimMatch = term.match(/^(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)$/);
+        return searchTerms.every(term => {
+            // 1. Dimension Tolerance Search logic per term
+            const dimMatch = term.match(/^(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)$/);
 
-        if (dimMatch && product.dimension) {
-            const [, tL, tB, tH] = dimMatch;
-            const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)];
+            if (dimMatch && product.dimension) {
+                const [, tL, tB, tH] = dimMatch;
+                const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)];
 
-            // Extract product dims
-            const prodDimMatch = product.dimension.toLowerCase().match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
-            if (prodDimMatch) {
-                const [, pL, pB, pH] = prodDimMatch;
-                const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)];
+                const prodDimMatch = product.dimension.toLowerCase().match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
+                if (prodDimMatch) {
+                    const [, pL, pB, pH] = prodDimMatch;
+                    const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)];
 
-                // Compare with tolerance +/- 2
-                const isMatch = targetDims.every((target, idx) => Math.abs(target - prodDims[idx]) <= 2);
-                if (isMatch) return true;
+                    // Tolerance +/- 2
+                    const isMatch = targetDims.every((target, idx) => Math.abs(target - prodDims[idx]) <= 2);
+                    if (isMatch) return true;
+                }
             }
-        }
 
-        // 2. Normal Text Search
-        const nameMatch = product.product_name?.toLowerCase().includes(term);
-        const skuMatch = product.sku?.toLowerCase().includes(term);
-        const codeMatch = product.artwork_code?.toLowerCase().includes(term);
-        const dimTextMatch = product.dimension?.toLowerCase().includes(term); // Fallback if not using tolerance format
-        const specsMatch = product.specs?.toLowerCase().includes(term);
+            // 2. Normal Text Search
+            const nameMatch = product.product_name?.toLowerCase().includes(term);
+            const skuMatch = product.sku?.toLowerCase().includes(term);
+            const codeMatch = product.artwork_code?.toLowerCase().includes(term);
+            const dimTextMatch = product.dimension?.toLowerCase().includes(term);
+            const specsMatch = product.specs?.toLowerCase().includes(term);
 
-        // 3. Lookup Search (Category, Pasting)
-        const catName = product.category_id ? categories[product.category_id]?.toLowerCase() : '';
-        const catMatch = catName.includes(term);
+            // 3. Lookup Search (Category, Pasting)
+            const catName = product.category_id ? categories[product.category_id]?.toLowerCase() : '';
+            const catMatch = catName.includes(term);
 
-        const pastingName = product.pasting_id ? pastingsMap[product.pasting_id]?.toLowerCase() : '';
-        const pastingMatch = pastingName.includes(term); // This enables "side" or "lock bottom" search
+            const pastingName = product.pasting_id ? pastingsMap[product.pasting_id]?.toLowerCase() : '';
+            const pastingMatch = pastingName.includes(term);
 
-        return nameMatch || skuMatch || codeMatch || dimTextMatch || specsMatch || catMatch || pastingMatch;
+            return nameMatch || skuMatch || codeMatch || dimTextMatch || specsMatch || catMatch || pastingMatch;
+        });
     });
 
     const handleDelete = useCallback(async (id: string, name: string) => {
