@@ -135,7 +135,6 @@ function PrinterSummaryContent() {
             clone.style.left = '-9999px';
             clone.style.top = '0';
             clone.style.width = '650px'; // Reduced width for compact view
-            clone.style.styleFloat = 'none'; // Ensure no float interference
             clone.style.overflow = 'visible';
             clone.style.height = 'auto';
             document.body.appendChild(clone);
