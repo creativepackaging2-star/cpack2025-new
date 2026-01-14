@@ -741,6 +741,16 @@ Plate No   : ${formData.plate_no || '-'}`;
                             <label className="label">Ready/Delivery</label>
                             <input name="ready_delivery" value={formData.ready_delivery || ''} onChange={handleChange} className="input-field" placeholder="Status of readiness" />
                         </div>
+                        <div className="lg:col-span-2">
+                            <label className="label">Delivery Address (From Product)</label>
+                            <textarea
+                                name="delivery_address"
+                                value={formData.delivery_address || ''}
+                                readOnly
+                                className="input-field h-10 min-h-[40px] py-2 bg-slate-50 text-slate-600 font-medium"
+                                placeholder="Address from product master..."
+                            />
+                        </div>
 
                         <SectionHeader icon={Edit3} title="Production & Dispatch Detail" />
                         <div>
@@ -798,117 +808,113 @@ Plate No   : ${formData.plate_no || '-'}`;
 
                         <SectionHeader icon={Zap} title="Automation Sync" />
                         <div className="flex items-center gap-3">
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPaperwala}>
-                                <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                                    <PaperwalaWhatsAppLogo className="w-8 h-8" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">WA Paper</span>
-                                <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">Paperwala</div>
-                            </div>
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPrinter}>
-                                <div className="p-1 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                    <WhatsAppLogo className="w-8 h-8" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">WA Printer</span>
-                                <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">Supervisor</div>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={sendToPrinter}
+                                disabled={!formData.printer_mobile}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-xs font-bold transition-all disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                <WhatsAppLogo className="w-4 h-4" />
+                                Printer
+                            </button>
+                            <button
+                                type="button"
+                                onClick={sendToPaperwala}
+                                disabled={!formData.paperwala_mobile}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition-all disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                                Paper
+                            </button>
+                        </div>
+                    </div>
 
-                            {initialData?.id ? (
-                                <Link
-                                    href={`/orders/${initialData.id}/coa`}
-                                    target="_blank"
-                                    className="flex flex-col items-center gap-1 group cursor-pointer"
+                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                        <SectionHeader icon={FileText} title="Documents" />
+                        <div className="grid grid-cols-1 gap-2">
+                            {['COA', 'Delivery Label', 'Shade Card'].map(doc => (
+                                <button
+                                    key={doc}
+                                    type="button"
+                                    onClick={() => generateDoc(doc)}
+                                    className="w-full border border-slate-200 hover:bg-slate-50 text-slate-600 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2"
                                 >
-                                    <div className="p-1 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                        <FileText className="w-8 h-8 text-indigo-600" />
+                                    <FileText className="w-3.5 h-3.5" />
+                                    {doc}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <SectionHeader icon={Settings} title="Artwork" />
+                        <div className="grid grid-cols-2 gap-3">
+                            {formData.artwork_pdf ? (
+                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 border border-slate-100 rounded-xl hover:bg-red-50 hover:border-red-100 transition-all group">
+                                    <div className="w-8 h-8 mb-2 flex items-center justify-center bg-red-100 rounded-lg group-hover:scale-110 transition-transform">
+                                        <PdfLogo className="w-5 h-5" />
                                     </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
-                                    <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">Auto-Gen</div>
-                                </Link>
+                                    <span className="text-[10px] font-bold text-slate-500 group-hover:text-red-600">VIEW PDF</span>
+                                </a>
                             ) : (
-                                <div className="flex flex-col items-center gap-1 opacity-40 cursor-not-allowed" title="Save order first">
-                                    <div className="p-1 bg-slate-50 rounded-lg">
-                                        <FileText className="w-8 h-8 text-slate-400" />
-                                    </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
-                                    <div className="text-[7px] bg-slate-50 text-slate-400 px-1 rounded font-bold border border-slate-100 italic">Save First</div>
+                                <div className="flex flex-col items-center justify-center p-3 border border-slate-100 rounded-xl bg-slate-50 opacity-50">
+                                    <div className="w-8 h-8 mb-2 flex items-center justify-center bg-slate-200 rounded-lg"><PdfLogo className="w-5 h-5 grayscale" /></div>
+                                    <span className="text-[10px] font-bold text-slate-400">NO PDF</span>
                                 </div>
                             )}
 
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Delivery Label')}>
-                                <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
-                                    <Truck className="w-8 h-8 text-amber-600" />
+                            {formData.artwork_cdr ? (
+                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 border border-slate-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-100 transition-all group">
+                                    <div className="w-8 h-8 mb-2 flex items-center justify-center bg-emerald-100 rounded-lg group-hover:scale-110 transition-transform">
+                                        <CdrLogo className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">VIEW CDR</span>
+                                </a>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-3 border border-slate-100 rounded-xl bg-slate-50 opacity-50">
+                                    <div className="w-8 h-8 mb-2 flex items-center justify-center bg-slate-200 rounded-lg"><CdrLogo className="w-5 h-5 grayscale" /></div>
+                                    <span className="text-[10px] font-bold text-slate-400">NO CDR</span>
                                 </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN Label</span>
-                                <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Auto-Gen</div>
-                            </div>
+                            )}
+                        </div>
+                    </div>
 
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Shade Card')}>
-                                <div className="p-1 bg-rose-50 rounded-lg group-hover:bg-rose-100 transition-colors">
-                                    <Palette className="w-8 h-8 text-rose-600" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN Shade</span>
-                                <div className="text-[7px] bg-rose-50 text-rose-600 px-1 rounded font-bold border border-rose-100 italic">Auto-Gen</div>
-                            </div>
+                    <div className="bg-indigo-900 rounded-xl p-5 text-white shadow-xl">
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Final Actions
+                        </h3>
+                        <div className="space-y-3">
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-lg font-bold shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                {initialData ? 'UPDATE ORDER' : 'CREATE ORDER'}
+                            </button>
 
                             {initialData?.id && (
-                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleSplitOrder}>
-                                    <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
-                                        <Split className="w-8 h-8 text-amber-600" />
-                                    </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase">Split Lot</span>
-                                    <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Partial</div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleSplitOrder}
+                                    className="w-full bg-indigo-800 hover:bg-indigo-700 text-indigo-100 py-3 rounded-lg font-bold border border-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Split className="w-4 h-4" />
+                                    SPLIT DELIVERY
+                                </button>
                             )}
-                        </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {formData.artwork_pdf && (
-                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-colors">
-                                    <PdfLogo className="w-6 h-6" />
-                                    PDF
-                                </a>
-                            )}
-                            {formData.artwork_cdr && (
-                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-bold border border-orange-100 hover:bg-orange-100 transition-colors">
-                                    <CdrLogo className="w-6 h-6" />
-                                    CDR
-                                </a>
-                            )}
+                            <Link
+                                href="/orders"
+                                className="block text-center w-full bg-indigo-950/50 hover:bg-indigo-950 text-indigo-200 py-3 rounded-lg font-bold border border-indigo-800 active:scale-95 transition-all"
+                            >
+                                CANCEL
+                            </Link>
                         </div>
-
-                        {product?.product_image && (
-                            <div className="mt-6 rounded-lg overflow-hidden bg-white border border-slate-100 p-1">
-                                <img
-                                    src={product.product_image.startsWith('http') ? product.product_image : `/uploads/${product.product_image}`}
-                                    alt="Ref"
-                                    className="w-full h-32 object-contain"
-                                />
-                                <div className="text-[8px] text-center text-slate-300 font-bold uppercase mt-1">Ref Image</div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
-
-            {/* --- FOOTER --- */}
-            <div className="flex flex-col md:flex-row justify-end items-center gap-4 pt-8 border-t border-slate-100 mb-6">
-                <Link href="/orders" className="w-full md:w-auto text-center text-sm font-bold text-slate-400 hover:text-slate-600 px-4 py-2 border border-transparent md:border-none">Cancel</Link>
-                <button
-                    type="submit"
-                    disabled={saving}
-                    className="w-full md:w-auto bg-indigo-600 text-white px-10 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
-                >
-                    {saving ? <><Loader2 className="animate-spin h-4 w-4" /> Saving...</> : <><CheckCircle className="h-4 w-4" /> {initialData ? 'Update Order' : 'Save Order'}</>}
-                </button>
-            </div>
-
-            <style jsx>{`
-                .label { font-size: 0.65rem; font-weight: 800; color: #64748b; display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
-                .input-field { display: block; width: 100%; border-radius: 0.75rem; border: 1.5px solid #f1f5f9; padding: 0.625rem 0.875rem; font-size: 0.875rem; background-color: #f8fafc; transition: all 0.2s; color: #1e293b; min-height: 42px; }
-                .appearance-auto { appearance: auto !important; }
-                .input-field:focus { border-color: #6366f1; background-color: #fff; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
-            `}</style>
         </form>
     );
 }
