@@ -175,12 +175,15 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 prod.construction_id ? supabase.from('constructions').select('name').eq('id', prod.construction_id).single() : Promise.resolve({ data: null }),
                 prod.specification_id ? supabase.from('specifications').select('name').eq('id', prod.specification_id).single() : Promise.resolve({ data: null }),
                 prod.pasting_id ? supabase.from('pasting').select('name').eq('id', prod.pasting_id).single() : Promise.resolve({ data: null }),
-                prod.delivery_address_id ? supabase.from('delivery_addresses').select('address').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
+                prod.delivery_address_id ? supabase.from('delivery_addresses').select('name, address').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
             ]);
 
             setProduct(prod);
 
-            // Only auto-fill formData if we are NOT editing an existing order (i.e., new order)
+            const fetchedAddress = addr.data?.name || addr.data?.address || '';
+
+            // Update delivery_address even if initialData exists, 
+            // but only if it's currently blank or if we are auto-filling a new order
             if (!initialData) {
                 const categoryName = cat.data?.name || '';
                 setFormData(prev => {
@@ -207,12 +210,19 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         pasting_type: past.data?.name || '',
                         construction_type: cons.data?.name || '',
                         specification: spec.data?.name || '',
-                        delivery_address: addr.data?.address || '',
+                        delivery_address: fetchedAddress,
                         artwork_pdf: prod.artwork_pdf || '',
                         artwork_cdr: prod.artwork_cdr || '',
                         ups: prod.ups || null,
                     };
                 });
+            } else {
+                // For existing orders, if the snapshot address is blank, 
+                // pull the current address from the product.
+                setFormData(prev => ({
+                    ...prev,
+                    delivery_address: prev.delivery_address || fetchedAddress
+                }));
             }
 
             console.log('Successfully auto-filled from product details');
