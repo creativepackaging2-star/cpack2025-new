@@ -260,35 +260,35 @@ function PaperSummaryContent() {
                 </div>
             </div>
 
-            <div id="paper-summary-table" className="overflow-x-auto bg-white rounded-xl border border-slate-300 shadow-sm p-1">
-                <table className="w-full border-collapse text-left">
+            <div id="paper-summary-table" style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '4px' }} className="overflow-x-auto">
+                <table className="w-full border-collapse">
                     <thead>
-                        <tr className="bg-slate-50 border-b border-slate-300">
-                            <th className="px-4 py-3 border-r border-slate-300 text-[11px] font-normal uppercase text-slate-700 w-[50px] text-center">Sr.</th>
-                            <th className="px-4 py-3 border-r border-slate-300 text-[11px] font-normal uppercase text-slate-700 w-[80px] text-center">GSM</th>
-                            <th className="px-4 py-3 border-r border-slate-300 text-[11px] font-normal uppercase text-slate-700">Paper</th>
-                            <th className="px-4 py-3 border-r border-slate-300 text-[11px] font-normal uppercase text-slate-700 text-center">Paper ord</th>
-                            <th className="px-4 py-3 border-r border-slate-300 text-[11px] font-normal uppercase text-slate-700 text-center">Paper Ord</th>
-                            <th className="px-4 py-3 border-r border-slate-300 text-[11px] font-normal uppercase text-slate-700">Del. At (Printer)</th>
-                            <th className="px-4 py-3 text-[11px] font-normal uppercase text-slate-700 text-center">Ref</th>
+                        <tr style={{ backgroundColor: '#0f172a', color: '#ffffff' }} className="text-left">
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center w-8">Sr.</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center w-[80px]">GSM</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 8px' }} className="text-[10px] font-normal">Paper</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Paper Ord Size</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Paper Ord Qty</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal">Del. At (Printer)</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Ref</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-300">
+                    <tbody>
                         {filteredOrders.length > 0 ? filteredOrders.map((order, index) => (
-                            <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-4 py-3 border-r border-slate-300 text-xs font-normal text-slate-500 text-center">{index + 1}</td>
-                                <td className="px-4 py-3 border-r border-slate-300 text-xs font-normal text-slate-700 text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
-                                <td className="px-4 py-3 border-r border-slate-300 text-xs font-bold text-slate-900">{order.paper_type_name || '-'}</td>
-                                <td className="px-4 py-3 border-r border-slate-300 text-xs font-normal text-slate-700 text-center">{order.paper_order_size || '-'}</td>
-                                <td className="px-4 py-3 border-r border-slate-300 text-xs font-black text-emerald-600 text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
-                                <td className="px-4 py-3 border-r border-slate-100 text-xs font-normal text-slate-700">{order.printer_name || 'Stock'}</td>
-                                <td className="px-4 py-3 text-xs font-semibold text-indigo-600 text-center uppercase tracking-widest whitespace-nowrap">
+                            <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '8px 4px' }} className="text-[10px] text-center">{index + 1}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', fontWeight: 700, padding: '8px 8px' }} className="text-[11px]">{order.paper_type_name || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.paper_order_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#059669', fontWeight: 900, padding: '8px 4px' }} className="text-[11px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px]">{order.printer_name || 'Stock'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#4f46e5', fontWeight: 600, padding: '8px 4px' }} className="text-[10px] text-center uppercase tracking-widest whitespace-nowrap">
                                     {(order.products?.product_name || order.product_name || '').substring(0, 3)}
                                 </td>
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan={7} className="text-center py-20 text-slate-400 font-medium italic">
+                                <td colSpan={7} style={{ padding: '80px 0', backgroundColor: '#f8fafc', color: '#94a3b8' }} className="text-center font-bold uppercase tracking-widest italic">
                                     No pending paper requirements found for this supplier.
                                 </td>
                             </tr>
@@ -299,12 +299,13 @@ function PaperSummaryContent() {
 
             <style jsx global>{`
                 @media print {
-                    @page { margin: 1cm; }
+                    @page { margin: 0.5cm; size: landscape; }
                     body { background: white; }
                     .print\\:hidden { display: none !important; }
-                    table { border-collapse: collapse !important; border: 2px solid #000 !important; width: 100% !important; }
+                    #paper-summary-table { box-shadow: none !important; border: 1.5px solid #000 !important; }
+                    table { border-collapse: collapse !important; width: 100% !important; }
                     th, td { border: 1px solid #000 !important; padding: 6px !important; color: black !important; }
-                    th { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; font-weight: bold !important; }
+                    th { background-color: #000 !important; color: white !important; -webkit-print-color-adjust: exact; }
                 }
             `}</style>
         </div>
