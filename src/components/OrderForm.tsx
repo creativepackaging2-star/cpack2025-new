@@ -175,12 +175,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 prod.construction_id ? supabase.from('constructions').select('name').eq('id', prod.construction_id).single() : Promise.resolve({ data: null }),
                 prod.specification_id ? supabase.from('specifications').select('name').eq('id', prod.specification_id).single() : Promise.resolve({ data: null }),
                 prod.pasting_id ? supabase.from('pasting').select('name').eq('id', prod.pasting_id).single() : Promise.resolve({ data: null }),
-                prod.delivery_address_id ? supabase.from('delivery_addresses').select('name, address').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
+                prod.delivery_address_id ? supabase.from('delivery_addresses').select('name').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
             ]);
 
             setProduct(prod);
 
-            const fetchedAddress = addr.data?.name || addr.data?.address || '';
+            const fetchedAddress = addr.data?.name || '';
 
             // Update delivery_address even if initialData exists, 
             // but only if it's currently blank or if we are auto-filling a new order
