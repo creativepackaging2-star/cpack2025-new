@@ -134,7 +134,8 @@ function PrinterSummaryContent() {
             clone.style.position = 'absolute';
             clone.style.left = '-9999px';
             clone.style.top = '0';
-            clone.style.width = '800px'; // Wide enough for printer columns
+            clone.style.width = '650px'; // Reduced width for compact view
+            clone.style.styleFloat = 'none'; // Ensure no float interference
             clone.style.overflow = 'visible';
             clone.style.height = 'auto';
             document.body.appendChild(clone);
@@ -268,36 +269,36 @@ function PrinterSummaryContent() {
                 <table className="w-full border-collapse">
                     <thead>
                         <tr style={{ backgroundColor: '#0f172a', color: '#ffffff' }} className="text-left">
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center w-8">Sr.</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 8px' }} className="text-[10px] font-normal min-w-[200px]">Product</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">GSM</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal">Paper Type</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Size</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Print Qty</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal">Ink</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Plate</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Paper Ord</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Paper Qty</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">UPS</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center w-6">Sr.</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 4px' }} className="text-[9px] font-normal min-w-[150px]">Product</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">GSM</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal">Paper Type</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">Size</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">Print Qty</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal">Ink</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">Plate</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">P. Ord</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">P. Qty</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">UPS</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredOrders.length > 0 ? filteredOrders.map((order, index) => (
                             <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '8px 4px' }} className="text-[10px] text-center">{index + 1}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', padding: '8px 8px' }} className="text-sm">
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '4px 2px' }} className="text-[9px] text-center">{index + 1}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', padding: '4px 4px' }} className="text-xs">
                                     <div style={{ color: '#0f172a', fontWeight: 700 }} className="leading-tight">{order.products?.product_name || order.product_name}</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '10px' }} className="uppercase mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '9px' }} className="uppercase mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                 </td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px]">{order.paper_type_name || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#1e293b', fontWeight: 700, padding: '8px 4px' }} className="text-[11px] text-center">{order.print_size || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#047857', fontWeight: 900, padding: '8px 4px' }} className="text-[11px] text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#475569', padding: '8px 4px' }} className="text-[10px] leading-tight max-w-[150px]">{order.ink || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#dc2626', fontWeight: 700, padding: '8px 4px' }} className="text-[11px] text-center whitespace-nowrap">{order.plate_no || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.paper_order_size || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.paper_ups || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px]">{order.paper_type_name || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#1e293b', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center">{order.print_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#047857', fontWeight: 900, padding: '4px 2px' }} className="text-[10px] text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#475569', padding: '4px 2px' }} className="text-[9px] leading-tight max-w-[150px]">{order.ink || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#dc2626', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center whitespace-nowrap">{order.plate_no || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.paper_order_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.paper_ups || '-'}</td>
                             </tr>
                         )) : (
                             <tr>

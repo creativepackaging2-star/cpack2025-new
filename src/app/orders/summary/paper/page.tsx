@@ -131,7 +131,7 @@ function PaperSummaryContent() {
             clone.style.position = 'absolute';
             clone.style.left = '-9999px';
             clone.style.top = '0';
-            clone.style.width = '700px';
+            clone.style.width = '600px'; // Reduced width for compact view
             clone.style.overflow = 'visible';
             clone.style.height = 'auto';
             document.body.appendChild(clone);
@@ -264,25 +264,25 @@ function PaperSummaryContent() {
                 <table className="w-full border-collapse">
                     <thead>
                         <tr style={{ backgroundColor: '#0f172a', color: '#ffffff' }} className="text-left">
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center w-8">Sr.</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center w-[80px]">GSM</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 8px' }} className="text-[10px] font-normal">Paper</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Paper Ord Size</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Paper Ord Qty</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal">Del. At (Printer)</th>
-                            <th style={{ borderRight: '1px solid #334155', padding: '8px 4px' }} className="text-[10px] font-normal text-center">Ref</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center w-6">Sr.</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 4px' }} className="text-[9px] font-normal text-center w-[60px]">GSM</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 4px' }} className="text-[9px] font-normal">Paper</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">Ord Size</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">Ord Qty</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 4px' }} className="text-[9px] font-normal">Del. At</th>
+                            <th style={{ borderRight: '1px solid #334155', padding: '6px 2px' }} className="text-[9px] font-normal text-center">Ref</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredOrders.length > 0 ? filteredOrders.map((order, index) => (
                             <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '8px 4px' }} className="text-[10px] text-center">{index + 1}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', fontWeight: 700, padding: '8px 8px' }} className="text-[11px]">{order.paper_type_name || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.paper_order_size || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#059669', fontWeight: 900, padding: '8px 4px' }} className="text-[11px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px]">{order.printer_name || 'Stock'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#4f46e5', fontWeight: 600, padding: '8px 4px' }} className="text-[10px] text-center uppercase tracking-widest whitespace-nowrap">
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '4px 2px' }} className="text-[9px] text-center">{index + 1}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', fontWeight: 700, padding: '4px 4px' }} className="text-[10px]">{order.paper_type_name || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.paper_order_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#059669', fontWeight: 900, padding: '4px 2px' }} className="text-[10px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 4px' }} className="text-[10px]">{order.printer_name || 'Stock'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#4f46e5', fontWeight: 600, padding: '4px 2px' }} className="text-[9px] text-center uppercase tracking-widest whitespace-nowrap">
                                     {(order.products?.product_name || order.product_name || '').substring(0, 3)}
                                 </td>
                             </tr>
