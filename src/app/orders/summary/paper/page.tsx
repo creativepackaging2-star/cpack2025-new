@@ -102,7 +102,8 @@ function PaperSummaryContent() {
         message += `--------------------------------\n`;
 
         filteredOrders.forEach((o, i) => {
-            message += `${i + 1}. *${o.paper_type_name || 'Paper'}* | ${o.gsm_value || '-'} GSM\n`;
+            const gsmDisplay = o.products?.actual_gsm_used || o.gsm_value || '-';
+            message += `${i + 1}. *${o.paper_type_name || 'Paper'}* | ${gsmDisplay} GSM\n`;
             message += `   Size: ${o.paper_order_size || '-'} | Qty: *${(o.paper_order_qty || 0).toLocaleString()}*\n`;
             message += `   Del. at: ${o.printer_name || 'Stock'}\n`;
             message += `--------------------------------\n`;

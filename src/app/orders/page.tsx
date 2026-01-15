@@ -205,12 +205,14 @@ Delivery At : ${order.printer_name || '-'}`;
             return;
         }
 
+        const gsmDisplay = order.products?.actual_gsm_used || order.gsm_value || '-';
+
         const msg = `*PRINTING ORDER*
 Product    : ${order.products?.product_name || order.product_name || '-'}
 Print Size : ${order.print_size || '-'}
 Print Qty  : ${order.total_print_qty || '-'}
 Paper      : ${order.paper_type_name || '-'}
-GSM        : ${order.gsm_value || '-'}
+GSM        : ${gsmDisplay}
 Code       : ${order.products?.artwork_code || order.artwork_code || '-'}
 Ink        : ${order.ink || '-'}
 Plate No   : ${order.plate_no || '-'}`;
@@ -400,19 +402,19 @@ Plate No   : ${order.plate_no || '-'}`;
                     <div className="flex flex-col items-center gap-1.5 min-w-[140px]">
                         <div className="flex items-center justify-center gap-2">
                             <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
-                                <WhatsAppLogo className="w-5 h-5" />
+                                <WhatsAppLogo className="w-4 h-4" />
                             </button>
                             <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
-                                <PaperwalaWhatsAppLogo className="w-5 h-5" />
+                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
                             </button>
                             {order.artwork_pdf && (
                                 <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
-                                    <PdfLogo className="w-5 h-5" />
+                                    <PdfLogo className="w-4 h-4" />
                                 </a>
                             )}
                             {order.artwork_cdr && (
                                 <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
-                                    <CdrLogo className="w-5 h-5" />
+                                    <CdrLogo className="w-4 h-4" />
                                 </a>
                             )}
                         </div>

@@ -103,9 +103,10 @@ function PrinterSummaryContent() {
         message += `--------------------------------\n`;
 
         filteredOrders.forEach((o, i) => {
+            const gsmDisplay = o.products?.actual_gsm_used || o.gsm_value || '-';
             message += `${i + 1}. *${o.products?.product_name || o.product_name}*\n`;
             message += `   Size: ${o.print_size || '-'} | Qty: *${(o.total_print_qty || 0).toLocaleString()}*\n`;
-            message += `   Paper: ${o.paper_type_name || '-'} (${o.gsm_value || '-'} GSM)\n`;
+            message += `   Paper: ${o.paper_type_name || '-'} (${gsmDisplay} GSM)\n`;
             message += `   Plate: ${o.plate_no || '-'} | Ink: ${o.ink || '-'}\n`;
             message += `--------------------------------\n`;
         });
