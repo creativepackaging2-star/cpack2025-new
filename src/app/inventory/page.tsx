@@ -114,10 +114,13 @@ export default function InventoryPage() {
             });
 
             // Calculate Net Stock and convert to array
-            const finalStock = Object.values(grouping).map(item => ({
-                ...item,
-                net_stock: item.total_in - item.total_out
-            })).sort((a, b) => b.net_stock - a.net_stock);
+            const finalStock = Object.values(grouping)
+                .map(item => ({
+                    ...item,
+                    net_stock: item.total_in - item.total_out
+                }))
+                .filter(item => item.net_stock !== 0) // Hide items with zero stock
+                .sort((a, b) => b.net_stock - a.net_stock);
 
             setStock(finalStock);
         } catch (err: any) {

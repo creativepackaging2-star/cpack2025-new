@@ -46,8 +46,12 @@ interface SidebarProps {
     setIsCollapsed: (val: boolean) => void;
 }
 
+import { useAuth } from './AuthProvider';
+import { LogOut } from 'lucide-react';
+
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     const pathname = usePathname();
+    const { user, signOut } = useAuth();
 
     return (
         <div className={twMerge(
@@ -88,13 +92,25 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 "absolute bottom-6 left-0 right-0 px-3 transition-opacity duration-300",
                 isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
             )}>
-                <div className="flex items-center gap-3 rounded-2xl bg-slate-800/30 p-4 border border-slate-700/50">
-                    <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-inner">
-                        <User className="h-5 w-5 text-indigo-100" />
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3 rounded-2xl bg-slate-800/30 p-3 border border-slate-700/50">
+                        <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-inner shrink-0">
+                            <User className="h-4 w-4 text-indigo-100" />
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-[11px] font-black text-white truncate uppercase tracking-tighter">
+                                {user?.email?.split('@')[0] || 'Admin'}
+                            </p>
+                            <p className="text-[9px] text-slate-500 font-bold truncate"> Authorized </p>
+                        </div>
                     </div>
-                    <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-white truncate">Admin User</p>
-                    </div>
+                    <button
+                        onClick={() => signOut()}
+                        className="flex items-center gap-3 w-full p-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Sign Out</span>
+                    </button>
                 </div>
             </div>
 

@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AuthProvider } from "../components/AuthProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +32,9 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} font-sans antialiased`}
       >
-        <LayoutClient>{children}</LayoutClient>
+        <AuthProvider>
+          <LayoutClient>{children}</LayoutClient>
+        </AuthProvider>
       </body>
     </html>
   );
