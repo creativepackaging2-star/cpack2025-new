@@ -43,7 +43,14 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
     }
 
     if (!user) {
-        return null; // Will redirect via useEffect
+        return (
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+                <div className="relative bg-slate-900 border border-slate-800 p-8 rounded-3xl flex flex-col items-center gap-4 shadow-2xl">
+                    <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+                    <p className="text-white font-black uppercase tracking-widest text-xs">Redirecting to Login...</p>
+                </div>
+            </div>
+        );
     }
 
     return <AppLayout>{children}</AppLayout>;

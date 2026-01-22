@@ -101,7 +101,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                             <p className="text-[11px] font-black text-white truncate uppercase tracking-tighter">
                                 {user?.email?.split('@')[0] || 'Admin'}
                             </p>
-                            <p className="text-[9px] text-slate-500 font-bold truncate"> Authorized </p>
+                            <p className="text-[8px] text-slate-500 font-normal truncate uppercase tracking-widest"> Authorized </p>
                         </div>
                     </div>
                     <button

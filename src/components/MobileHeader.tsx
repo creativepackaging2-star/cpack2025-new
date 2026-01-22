@@ -5,6 +5,7 @@ import { Menu, X, LayoutDashboard, Package, ShoppingCart, ClipboardList } from '
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
+import { useAuth } from './AuthProvider';
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const navigation = [
 export function MobileHeader() {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
+    const { user } = useAuth();
 
     const toggleMenu = () => setIsOpen(!isOpen);
     const closeMenu = () => setIsOpen(false);
@@ -97,7 +99,10 @@ export function MobileHeader() {
                             <span className="text-xs font-medium">U</span>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-white">Admin User</p>
+                            <p className="text-[11px] font-black text-white uppercase tracking-tight">
+                                {user?.email?.split('@')[0] || 'Admin User'}
+                            </p>
+                            <p className="text-[8px] text-slate-500 font-normal uppercase tracking-widest">Authorized</p>
                         </div>
                     </div>
                 </div>

@@ -38,7 +38,7 @@ export default function LoginPage() {
                 <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-600 rounded-full blur-[120px]"></div>
             </div>
 
-            <div className="w-full max-w-md relative animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-full max-w-md relative">
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
                     <div className="p-8 pb-4 text-center">
                         <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-600/20 mb-6 group transition-transform hover:scale-105 active:scale-95">
