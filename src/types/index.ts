@@ -101,6 +101,7 @@ export type Order = {
     specs: string | null
     ups: number | null
     parent_id?: number | null
+    die_rate?: number | null
     created_at: string
     updated_at: string
 }

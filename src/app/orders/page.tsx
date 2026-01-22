@@ -251,10 +251,14 @@ Plate No   : ${order.plate_no || '-'}`;
                         />
                     </div>
                     <div className="flex-1">
-                        <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
-                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
-                                {order.products?.artwork_code || order.artwork_code || '-'}
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            {order.products?.artwork_code || order.artwork_code || '-'}
+                        </div>
+                        <div className="text-sm font-semibold text-slate-900 line-clamp-2">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
+
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase">
+                                {order.specs || order.dimension || '-'}
                             </span>
                             {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                                 <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
@@ -262,29 +266,41 @@ Plate No   : ${order.plate_no || '-'}`;
                                     Split
                                 </span>
                             )}
-                            <button onClick={sendToPaperwala} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[11px] font-bold border border-emerald-100 active:bg-emerald-100 transition-colors">
-                                <PaperwalaWhatsAppLogo className="w-3.5 h-3.5" />
-                                Paper
-                            </button>
-                            <button onClick={sendToPrinter} className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-[11px] font-bold border border-blue-100 active:bg-blue-100 transition-colors">
-                                <WhatsAppLogo className="w-3.5 h-3.5" />
-                                Print
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
-                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
-                                disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
-                            >
-                                {isUpdating === order.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Database className={`w-3 h-3 ${order.automation === 'PAPER_ENTRY_DONE' ? 'text-slate-300' : ''}`} />}
-                                {order.automation === 'PAPER_ENTRY_DONE' ? 'Entry' : 'Entry'}
-                            </button>
                         </div>
+                    </div>
+                    <div className="text-right ml-4">
+                        <div className="text-sm font-black text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Qty</div>
                     </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between">
-                    <div className="text-sm text-slate-700 line-clamp-1 flex-1">{order.specs || '-'}</div>
-                    <div className="text-base font-semibold text-slate-900 ml-2">{(order.quantity || 0).toLocaleString()}</div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button onClick={sendToPaperwala} className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold border border-emerald-100 active:scale-95 transition-all">
+                        <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                        PAPER
+                    </button>
+                    <button onClick={sendToPrinter} className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-bold border border-blue-100 active:scale-95 transition-all">
+                        <WhatsAppLogo className="w-4 h-4" />
+                        PRINT
+                    </button>
+                </div>
+
+                <div className="flex items-center justify-between mt-3 text-[11px] font-medium text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-indigo-600">{order.progress || 'Pending'}</span>
+                        <span className="opacity-20 text-slate-400">|</span>
+                        <span>INR {(order.value || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
+                            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
+                            disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
+                        >
+                            {order.automation === 'PAPER_ENTRY_DONE' ? <CheckCircle className="w-3 h-3" /> : <Database className="w-3 h-3" />}
+                            {order.automation === 'PAPER_ENTRY_DONE' ? 'Entry Done' : 'Log Paper'}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3">
@@ -484,6 +500,14 @@ Plate No   : ${order.plate_no || '-'}`;
                                 ]} />
                             </div>
                             <div className="md:col-span-2">
+                                <DetailGroup title="Rates & Costing" items={[
+                                    { label: 'Basic Rate', value: `₹${order.rate || 0}` },
+                                    { label: 'Die Rate', value: `₹${order.die_rate || 0}` },
+                                    { label: 'Total Qty', value: order.quantity },
+                                    { label: 'Total Value', value: `₹${(order.value || 0).toLocaleString()}` },
+                                ]} />
+                            </div>
+                            <div className="md:col-span-2">
                                 <DetailGroup title="Paper Details" items={[
                                     { label: 'Paper Wala', value: order.paperwala_name },
                                     { label: 'Paper Size', value: order.paper_order_size },
@@ -497,8 +521,6 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'Total Print', value: order.total_print_qty },
                                     { label: 'Qty Delivered', value: order.qty_delivered },
                                     { label: 'Batch No', value: order.batch_no },
-                                    { label: 'Packing', value: order.packing_detail },
-                                    { label: 'Remarks', value: order.remarks },
                                 ]} />
                             </div>
                             <div className="md:col-span-6 text-left">
