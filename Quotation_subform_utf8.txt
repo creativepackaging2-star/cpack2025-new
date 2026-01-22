@@ -1,0 +1,486 @@
+﻿Version =21
+VersionRequired =20
+PublishOption =1
+Checksum =550857828
+Begin Form
+    AutoCenter = NotDefault
+    DividingLines = NotDefault
+    AllowDesignChanges = NotDefault
+    DefaultView =2
+    PictureAlignment =2
+    DatasheetGridlinesBehavior =3
+    GridY =10
+    Width =12302
+    DatasheetFontHeight =11
+    ItemSuffix =119
+    Left =420
+    Top =1905
+    Right =13560
+    Bottom =6735
+    DatasheetGridlinesColor =15132391
+    RecSrcDt = Begin
+        0x095a331d7835e540
+    End
+    GUID = Begin
+        0x85e8f76522e1b44095ac0e083500bf66
+    End
+    NameMap = Begin
+        0x0acc0e55000000004cb755883ab55743a3dd5b81d70b268d000000003bf0e163 ,
+        0xb038e5400000000000000000510075006f0074006100740069006f006e000000 ,
+        0x00000000113a8c46012fc14196a6ca226641e652070000004cb755883ab55743 ,
+        0xa3dd5b81d70b268d510074007900000000000000cd44ba18c704dd4cb17c5c71 ,
+        0x62b18755070000004cb755883ab55743a3dd5b81d70b268d4400610074006500 ,
+        0x000000000000abceb3ce3eff0a4dbbb53ffc0afa8331070000004cb755883ab5 ,
+        0x5743a3dd5b81d70b268d74006100740061006c00200041006d00740000000000 ,
+        0x00006c917d322a72ae47b9389a4ba6554166070000004cb755883ab55743a3dd ,
+        0x5b81d70b268d720061007400650020002d007000630073000000000000005c04 ,
+        0x6158cbbc0b4bbcfeb73f7b445fb1070000004cb755883ab55743a3dd5b81d70b ,
+        0x268d63007500730074006f006d0065007200000000000000d26c301aaa0df742 ,
+        0x9984b4aee4e6c05b00000000ca4aba60b038e540000000000000000043006f00 ,
+        0x6e007400610063007400730000000000000043feca7b17f03b47bc0d623bc0d3 ,
+        0xd39907000000d26c301aaa0df7429984b4aee4e6c05b43006f006d0070006100 ,
+        0x6e007900000000000000e6d024ab476d2e4d9157142f79a22d8e070000004cb7 ,
+        0x55883ab55743a3dd5b81d70b268d630061007400650067006f00720079000000 ,
+        0x0000000035a51d402941884cbfd9aafc789236b5000000003e9b2e61b038e540 ,
+        0x0000000000000000430061007400720067006f0072007900000000000000ffeb ,
+        0xd65d4514414db74a005226f8df310700000035a51d402941884cbfd9aafc7892 ,
+        0x36b5630061007400650067006f007200790000000000000019b2f2c0bc9aee4d ,
+        0xa6ad97d4b269231a070000004cb755883ab55743a3dd5b81d70b268d50007200 ,
+        0x6f006400750063007400000000000000dbc7a5b21060674b82f51707531799db ,
+        0x000000000cffd563b038e5400000000000000000500072006f00640075006300 ,
+        0x740000000000000011ff7888dda90a40a0e71fcd581da26d07000000dbc7a5b2 ,
+        0x1060674b82f51707531799db500072006f006400750063007400000000000000 ,
+        0x000000000000000000000000000000000c000000050000000000000000000000 ,
+        0x000000000000
+    End
+    RecordSource ="Quotation"
+    Caption ="Quotation subform"
+    DatasheetFontName ="Calibri"
+    FilterOnLoad =0
+    ShowPageMargins =0
+    DisplayOnSharePointSite =1
+    DatasheetAlternateBackColor =15921906
+    DatasheetGridlinesColor12 =0
+    FitToScreen =1
+    DatasheetBackThemeColorIndex =1
+    BorderThemeColorIndex =3
+    ThemeFontIndex =1
+    ForeThemeColorIndex =0
+    AlternateBackThemeColorIndex =1
+    AlternateBackShade =95.0
+    NoSaveCTIWhenDisabled =1
+    Begin
+        Begin Label
+            BackStyle =0
+            FontSize =11
+            FontName ="Calibri"
+            ThemeFontIndex =1
+            BackThemeColorIndex =1
+            BorderThemeColorIndex =0
+            BorderTint =50.0
+            ForeThemeColorIndex =0
+            ForeTint =50.0
+            GridlineThemeColorIndex =1
+            GridlineShade =65.0
+        End
+        Begin TextBox
+            AddColon = NotDefault
+            FELineBreak = NotDefault
+            BorderLineStyle =0
+            Width =1701
+            LabelX =-1701
+            FontSize =11
+            FontName ="Calibri"
+            AsianLineBreak =1
+            BackThemeColorIndex =1
+            BorderThemeColorIndex =1
+            BorderShade =65.0
+            ThemeFontIndex =1
+            ForeThemeColorIndex =0
+            ForeTint =75.0
+            GridlineThemeColorIndex =1
+            GridlineShade =65.0
+        End
+        Begin ListBox
+            BorderLineStyle =0
+            Width =1701
+            Height =1417
+            LabelX =-1701
+            FontSize =11
+            FontName ="Calibri"
+            AllowValueListEdits =1
+            InheritValueList =1
+            ThemeFontIndex =1
+            BackThemeColorIndex =1
+            BorderThemeColorIndex =1
+            BorderShade =65.0
+            ForeThemeColorIndex =0
+            ForeTint =75.0
+            GridlineThemeColorIndex =1
+            GridlineShade =65.0
+        End
+        Begin FormHeader
+            Height =0
+            BackColor =15064278
+            Name ="FormHeader"
+            GUID = Begin
+                0x200f3df8fad0234a8719e8f1fc990ade
+            End
+            AutoHeight =1
+            AlternateBackThemeColorIndex =1
+            AlternateBackShade =95.0
+            BackThemeColorIndex =2
+            BackTint =20.0
+        End
+        Begin Section
+            Height =8709
+            Name ="Detail"
+            GUID = Begin
+                0xbbc920d18d49824eb8d1d897a822e1be
+            End
+            AutoHeight =1
+            AlternateBackColor =15921906
+            AlternateBackThemeColorIndex =1
+            AlternateBackShade =95.0
+            BackThemeColorIndex =1
+            Begin
+                Begin TextBox
+                    DecimalPlaces =2
+                    OverlapFlags =85
+                    IMESentenceMode =3
+                    Left =1629
+                    Top =7581
+                    Width =1734
+                    Height =330
+                    ColumnWidth =1980
+                    ColumnOrder =3
+                    BorderColor =10921638
+                    ForeColor =4210752
+                    Name ="Qty"
+                    ControlSource ="Qty"
+                    Format ="Standard"
+                    GUID = Begin
+                        0x77d7a2a4f7a1b04594e1849cef30c953
+                    End
+                    GridlineColor =10921638
+
+                    LayoutCachedLeft =1629
+                    LayoutCachedTop =7581
+                    LayoutCachedWidth =3363
+                    LayoutCachedHeight =7911
+                    Begin
+                        Begin Label
+                            OverlapFlags =85
+                            Left =342
+                            Top =7581
+                            Width =1197
+                            Height =330
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="Qty_Label"
+                            Caption ="Qty"
+                            GUID = Begin
+                                0x7e1bfe6cfe51b34196de3cb8ed6d6184
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =342
+                            LayoutCachedTop =7581
+                            LayoutCachedWidth =1539
+                            LayoutCachedHeight =7911
+                        End
+                    End
+                End
+                Begin TextBox
+                    OverlapFlags =85
+                    IMESentenceMode =3
+                    Left =1629
+                    Top =7980
+                    Width =1620
+                    Height =330
+                    ColumnWidth =1620
+                    ColumnOrder =0
+                    TabIndex =1
+                    BorderColor =10921638
+                    ForeColor =4210752
+                    Name ="Date"
+                    ControlSource ="Date"
+                    GUID = Begin
+                        0x9f2a0bda97585046bba09cc608fe8dd4
+                    End
+                    GridlineColor =10921638
+
+                    LayoutCachedLeft =1629
+                    LayoutCachedTop =7980
+                    LayoutCachedWidth =3249
+                    LayoutCachedHeight =8310
+                    Begin
+                        Begin Label
+                            OverlapFlags =85
+                            Left =342
+                            Top =7980
+                            Width =1197
+                            Height =330
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="Date_Label"
+                            Caption ="Date"
+                            GUID = Begin
+                                0x886835e423f11b4c9604617991d1118e
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =342
+                            LayoutCachedTop =7980
+                            LayoutCachedWidth =1539
+                            LayoutCachedHeight =8310
+                        End
+                    End
+                End
+                Begin TextBox
+                    DecimalPlaces =2
+                    OverlapFlags =85
+                    IMESentenceMode =3
+                    Left =8031
+                    Top =5928
+                    Width =1734
+                    Height =330
+                    ColumnWidth =1980
+                    ColumnOrder =5
+                    TabIndex =2
+                    BorderColor =10921638
+                    ForeColor =4210752
+                    Name ="tatal Amt"
+                    ControlSource ="tatal Amt"
+                    Format ="Standard"
+                    EventProcPrefix ="tatal_Amt"
+                    GUID = Begin
+                        0x3e0917a56ce51240a4707ab399617b1f
+                    End
+                    GridlineColor =10921638
+
+                    LayoutCachedLeft =8031
+                    LayoutCachedTop =5928
+                    LayoutCachedWidth =9765
+                    LayoutCachedHeight =6258
+                    Begin
+                        Begin Label
+                            OverlapFlags =85
+                            Left =6744
+                            Top =5928
+                            Width =1197
+                            Height =330
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="tatal Amt_Label"
+                            Caption ="tatal Amt"
+                            EventProcPrefix ="tatal_Amt_Label"
+                            GUID = Begin
+                                0xa870e0e3b932884fbef50b4169abb7d2
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =6744
+                            LayoutCachedTop =5928
+                            LayoutCachedWidth =7941
+                            LayoutCachedHeight =6258
+                        End
+                    End
+                End
+                Begin TextBox
+                    DecimalPlaces =2
+                    OverlapFlags =85
+                    IMESentenceMode =3
+                    Left =8031
+                    Top =6327
+                    Width =1734
+                    Height =330
+                    ColumnWidth =1980
+                    ColumnOrder =6
+                    TabIndex =3
+                    BorderColor =10921638
+                    ForeColor =4210752
+                    Name ="rate -pcs"
+                    ControlSource ="rate -pcs"
+                    Format ="Standard"
+                    EventProcPrefix ="rate__pcs"
+                    GUID = Begin
+                        0x9686f0dd937d9543b332aa0ebca9dc1f
+                    End
+                    GridlineColor =10921638
+
+                    LayoutCachedLeft =8031
+                    LayoutCachedTop =6327
+                    LayoutCachedWidth =9765
+                    LayoutCachedHeight =6657
+                    Begin
+                        Begin Label
+                            OverlapFlags =85
+                            Left =6744
+                            Top =6327
+                            Width =1197
+                            Height =330
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="rate -pcs_Label"
+                            Caption ="rate -pcs"
+                            EventProcPrefix ="rate__pcs_Label"
+                            GUID = Begin
+                                0x0318cb96d7d8354cb3436ffb376d22de
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =6744
+                            LayoutCachedTop =6327
+                            LayoutCachedWidth =7941
+                            LayoutCachedHeight =6657
+                        End
+                    End
+                End
+                Begin ListBox
+                    OverlapFlags =223
+                    IMESentenceMode =3
+                    ColumnCount =2
+                    Left =7596
+                    Top =1474
+                    ColumnOrder =1
+                    TabIndex =4
+                    ForeColor =4210752
+                    BorderColor =10921638
+                    Name ="customer"
+                    ControlSource ="customer"
+                    RowSourceType ="Table/Query"
+                    RowSource ="SELECT Contacts.Company, Contacts.Company FROM Contacts ORDER BY Contacts.Compan"
+                        "y; "
+                    ColumnWidths ="0;1440"
+                    GUID = Begin
+                        0x95b0f4648da7044a91f178b70fb21ae3
+                    End
+                    GridlineColor =10921638
+                    AllowValueListEdits =0
+
+                    LayoutCachedLeft =7596
+                    LayoutCachedTop =1474
+                    LayoutCachedWidth =9297
+                    LayoutCachedHeight =2891
+                    Begin
+                        Begin Label
+                            OverlapFlags =93
+                            Left =5895
+                            Top =1474
+                            Width =1005
+                            Height =315
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="Label116"
+                            Caption ="customer:"
+                            GUID = Begin
+                                0x25da16842f59164aa0e9a76a0a302c94
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =5895
+                            LayoutCachedTop =1474
+                            LayoutCachedWidth =6900
+                            LayoutCachedHeight =1789
+                        End
+                    End
+                End
+                Begin ListBox
+                    OverlapFlags =85
+                    IMESentenceMode =3
+                    Left =10601
+                    Top =1757
+                    ColumnOrder =4
+                    TabIndex =5
+                    ForeColor =4210752
+                    BorderColor =10921638
+                    Name ="category"
+                    ControlSource ="category"
+                    RowSourceType ="Table/Query"
+                    RowSource ="SELECT Catrgory.category FROM Catrgory ORDER BY Catrgory.category; "
+                    GUID = Begin
+                        0x7c2d2d02ce2f9847b0415dd4b728a5dc
+                    End
+                    GridlineColor =10921638
+
+                    LayoutCachedLeft =10601
+                    LayoutCachedTop =1757
+                    LayoutCachedWidth =12302
+                    LayoutCachedHeight =3174
+                    Begin
+                        Begin Label
+                            OverlapFlags =93
+                            Left =8900
+                            Top =1757
+                            Width =930
+                            Height =315
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="Label117"
+                            Caption ="category:"
+                            GUID = Begin
+                                0x294cf37006005f4d8238d65851902d87
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =8900
+                            LayoutCachedTop =1757
+                            LayoutCachedWidth =9830
+                            LayoutCachedHeight =2072
+                        End
+                    End
+                End
+                Begin ListBox
+                    OverlapFlags =247
+                    IMESentenceMode =3
+                    Left =6292
+                    Top =1757
+                    ColumnOrder =2
+                    TabIndex =6
+                    ForeColor =4210752
+                    BorderColor =10921638
+                    Name ="Product"
+                    ControlSource ="Product"
+                    RowSourceType ="Table/Query"
+                    RowSource ="SELECT Product.Product FROM Product ORDER BY Product.Product; "
+                    GUID = Begin
+                        0xa72ccb65c26a2a46aad2f77a30b5166b
+                    End
+                    GridlineColor =10921638
+
+                    LayoutCachedLeft =6292
+                    LayoutCachedTop =1757
+                    LayoutCachedWidth =7993
+                    LayoutCachedHeight =3174
+                    Begin
+                        Begin Label
+                            OverlapFlags =85
+                            Left =4591
+                            Top =1757
+                            Width =855
+                            Height =315
+                            BorderColor =8355711
+                            ForeColor =8355711
+                            Name ="Label118"
+                            Caption ="Product:"
+                            GUID = Begin
+                                0x2ae83c074900504eb725903a958d6d1f
+                            End
+                            GridlineColor =10921638
+                            LayoutCachedLeft =4591
+                            LayoutCachedTop =1757
+                            LayoutCachedWidth =5446
+                            LayoutCachedHeight =2072
+                        End
+                    End
+                End
+            End
+        End
+        Begin FormFooter
+            Height =0
+            Name ="FormFooter"
+            GUID = Begin
+                0x4aa98bd1378cb0449f1aeed103702c61
+            End
+            AutoHeight =1
+            AlternateBackThemeColorIndex =1
+            AlternateBackShade =95.0
+            BackThemeColorIndex =1
+        End
+    End
+End

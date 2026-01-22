@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database, Copy } from 'lucide-react';
+import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database, Copy, Package } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo } from '@/components/FileLogos';
+import PageHeader from '@/components/PageHeader';
 
 // Memoized Product Row Component to prevent unnecessary re-renders
 const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
@@ -336,19 +337,20 @@ export default function ProductsPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                    Product Catalog
-                </h1>
-                <Link
-                    href="/products/new"
-                    className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 transition-colors"
-                >
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Product
-                </Link>
-            </div>
+        <div className="space-y-6 font-montserrat">
+            <PageHeader
+                title="Product Catalog"
+                icon={<Package className="w-6 h-6" />}
+                actions={
+                    <Link
+                        href="/products/new"
+                        className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 transition-colors"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Product
+                    </Link>
+                }
+            />
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -379,22 +381,22 @@ export default function ProductsPage() {
                     <table className="min-w-full divide-y divide-slate-300">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                                     Product Info
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                                     Category
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                                     U
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                                     Specs
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-500">
                                     CDR/PDF
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500">
                                     Action
                                 </th>
                             </tr>

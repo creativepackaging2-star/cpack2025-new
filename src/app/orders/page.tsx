@@ -3,9 +3,10 @@
 import { useEffect, useState, useMemo, Fragment, useTransition, useDeferredValue, memo, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/components/FileLogos';
+import PageHeader from '@/components/PageHeader';
 
 // --- Memoized Components for Performance ---
 
@@ -36,7 +37,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
 
     return (
         <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm mb-8">
-            <div className="bg-slate-50 px-6 py-3 border-b border-slate-300 flex items-center gap-3">
+            <div className="bg-slate-50 px-6 py-2 border-b border-slate-400 flex items-center gap-3">
                 <h3 className="text-base font-semibold text-slate-800">{category}</h3>
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
@@ -59,13 +60,13 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                     className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                             </th>
-                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Product</th>
-                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Qty</th>
-                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">U</th>
-                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Specs</th>
-                            <th className="px-3 py-3 text-left text-[12px] font-normal uppercase tracking-wider text-slate-500">Process</th>
-                            <th className="px-3 py-3 text-center text-[12px] font-normal uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
-                            <th className="px-3 py-3 text-right text-[12px] font-normal uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
+                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Product</th>
+                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Qty</th>
+                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">U</th>
+                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Specs</th>
+                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Process</th>
+                            <th className="px-3 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
+                            <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300 bg-white">
@@ -94,7 +95,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
             </div>
 
             {/* Mobile View - Cards */}
-            <div className="md:hidden divide-y divide-slate-100">
+            <div className="md:hidden divide-y divide-slate-300">
                 {catOrders.map((order: any) => (
                     <OrderRow
                         key={order.id}
@@ -250,7 +251,7 @@ Plate No   : ${order.plate_no || '-'}`;
                         />
                     </div>
                     <div className="flex-1">
-                        <div className="text-base font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
+                        <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-[11px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                                 {order.products?.artwork_code || order.artwork_code || '-'}
@@ -291,7 +292,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     <div className="flex items-center gap-2">
                         <button
                             onClick={(e) => { e.stopPropagation(); toggleQuickEdit(order); }}
-                            className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)}`}
+                            className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)}`}
                         >
                             {order.progress || 'Pending'}
                         </button>
@@ -346,7 +347,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     />
                 </td>
                 <td className="px-3 py-2 w-1/4">
-                    <div className="text-[12px] font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
                             {order.products?.artwork_code || order.artwork_code || '-'}
@@ -361,7 +362,7 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 text-center w-[60px]">
-                    <div className="text-[12px] font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                    <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
                 </td>
 
                 <td className="px-3 py-2 text-center">
@@ -925,76 +926,70 @@ export default function OrdersPage() {
                 </div>
             )}
 
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex items-center justify-between lg:justify-start gap-4">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
-                        Orders
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-base font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded-full">{filteredOrders.length}</span>
-                            <span className="text-base font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+            <PageHeader
+                title="Orders"
+                icon={<ShoppingCart className="w-6 h-6" />}
+                actions={
+                    <>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-normal text-slate-300 bg-slate-800 px-2 py-1 rounded-full">{filteredOrders.length}</span>
+                            <span className="text-sm font-bold text-emerald-300 bg-emerald-900 px-3 py-1 rounded-full border border-emerald-700">
                                 ₹{totalValue.toLocaleString()}
                             </span>
                         </div>
-                    </h2>
-                    <Link href="/orders/new" className="lg:hidden inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-sm">
-                        <Plus className="mr-1 h-4 w-4" />
-                        New
-                    </Link>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1.5 shadow-sm gap-1">
-                        <Link
-                            href="/orders/summary/printer"
-                            title="Printer Summary"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-md transition-all"
-                        >
-                            <Printer className="w-3.5 h-3.5" />
-                            <span>Printers</span>
+                        <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-1.5 shadow-sm gap-1">
+                            <Link
+                                href="/orders/summary/printer"
+                                title="Printer Summary"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-300 hover:bg-slate-700 hover:text-indigo-400 rounded-md transition-all"
+                            >
+                                <Printer className="w-3.5 h-3.5" />
+                                <span>Printers</span>
+                            </Link>
+                            <div className="w-[1px] h-4 bg-slate-700"></div>
+                            <Link
+                                href="/orders/summary/paper"
+                                title="Paper Order Summary"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-300 hover:bg-slate-700 hover:text-emerald-400 rounded-md transition-all"
+                            >
+                                <Truck className="w-3.5 h-3.5" />
+                                <span>Paper</span>
+                            </Link>
+                            <div className="w-[1px] h-4 bg-slate-700"></div>
+                            <Link
+                                href="/orders/summary/punching"
+                                title="Punching Summary"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-300 hover:bg-slate-700 hover:text-rose-400 rounded-md transition-all"
+                            >
+                                <Palette className="w-3.5 h-3.5" />
+                                <span>Punching</span>
+                            </Link>
+                        </div>
+                        <label className="flex items-center gap-2 text-[13px] text-slate-300 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 select-none">
+                            <input
+                                type="checkbox"
+                                checked={showCompleted}
+                                onChange={e => handleToggleCompleted(e.target.checked)}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                            />
+                            Completed
+                        </label>
+                        <label className="flex items-center gap-2 text-[13px] text-slate-300 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 select-none">
+                            <input
+                                type="checkbox"
+                                checked={groupByCategory}
+                                onChange={e => handleToggleGrouping(e.target.checked)}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                            />
+                            Grouped
+                        </label>
+                        <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors shadow-sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Order
                         </Link>
-                        <div className="w-[1px] h-4 bg-slate-200"></div>
-                        <Link
-                            href="/orders/summary/paper"
-                            title="Paper Order Summary"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-md transition-all"
-                        >
-                            <Truck className="w-3.5 h-3.5" />
-                            <span>Paper</span>
-                        </Link>
-                        <div className="w-[1px] h-4 bg-slate-200"></div>
-                        <Link
-                            href="/orders/summary/punching"
-                            title="Punching Summary"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-rose-600 rounded-md transition-all"
-                        >
-                            <Palette className="w-3.5 h-3.5" />
-                            <span>Punching</span>
-                        </Link>
-                    </div>
-
-                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[13px] md:text-base text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
-                        <input
-                            type="checkbox"
-                            checked={showCompleted}
-                            onChange={e => handleToggleCompleted(e.target.checked)}
-                            className="rounded text-indigo-600 focus:ring-indigo-500"
-                        />
-                        Completed Only
-                    </label>
-                    <label className="flex flex-1 sm:flex-none items-center gap-2 text-[13px] md:text-base text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 select-none">
-                        <input
-                            type="checkbox"
-                            checked={groupByCategory}
-                            onChange={e => handleToggleGrouping(e.target.checked)}
-                            className="rounded text-indigo-600 focus:ring-indigo-500"
-                        />
-                        Grouped
-                    </label>
-                    <Link href="/orders/new" className="hidden lg:inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-base font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Order
-                    </Link>
-                </div>
-            </div>
+                    </>
+                }
+            />
 
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

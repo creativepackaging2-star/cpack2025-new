@@ -1,0 +1,551 @@
+﻿--- Access Queries Extraction ---
+Query: ContactsExtended
+Query: Copy Of order Query
+Query: order c
+Query: order carton
+Query: Order Hold
+Query: order inserts
+Query: order labels
+Query: order others
+Query: order Query
+Query: STOCK Query
+Procedure (Query): ~sq_cCOA 2~sq_cProduct IDFD
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cCOA~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_cCOA~sq_cCombo36
+  SQL: SELECT [Product].[Product]
+FROM Product;
+
+Procedure (Query): ~sq_cCOA~sq_cconstraction
+  SQL: SELECT constraction.Constraction
+FROM constraction;
+
+Procedure (Query): ~sq_cCOA~sq_ccontacts IDFD
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cCOA~sq_cGSM
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_cCOA~sq_cProduct IDFD
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cCOA~sq_cspecification
+  SQL: SELECT specification.specification
+FROM specification;
+
+Procedure (Query): ~sq_cCopy Of COA~sq_ccontacts IDFD
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cCoatings
+  SQL: SELECT coatings.coatings
+FROM coatings
+ORDER BY coatings.coatings;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_ccontacts IDFD
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cGSM
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cP Order Size
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cPaper
+  SQL: SELECT Paper.paper
+FROM Paper
+ORDER BY Paper.paper;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cPrint Size_Product
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cProduct IDFD
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cCopy Of order list new 2~sq_cSp Eff
+  SQL: SELECT [Special Eff].[special Eff]
+FROM [Special Eff]
+ORDER BY [Special Eff].[special Eff];
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cCoatings
+  SQL: SELECT coatings.coatings
+FROM coatings
+ORDER BY coatings.coatings;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_ccontacts IDFD
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cGSM
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cList369
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cP Order Size
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cPaper
+  SQL: SELECT Paper.paper
+FROM Paper
+ORDER BY Paper.paper;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cPrint Size_Product
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cProduct IDFD
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cCopy Of order list new~sq_cSp Eff
+  SQL: SELECT [Special Eff].[special Eff]
+FROM [Special Eff]
+ORDER BY [Special Eff].[special Eff];
+
+Procedure (Query): ~sq_centerprise 1~sq_cINVOICE DETAILS1
+  SQL: PARAMETERS [__Order ID] Value;
+SELECT DISTINCTROW *
+FROM [INVOICE DETAILS] AS [enterprise 1]
+WHERE ([__Order ID] = [letter ID]);
+
+Procedure (Query): ~sq_cINVOICE~sq_cCustomer ID
+  SQL: SELECT Contacts.Company
+FROM Contacts;
+
+Procedure (Query): ~sq_cINVOICE~sq_cname of the company
+  SQL: SELECT Table1.Field1
+FROM Table1;
+
+Procedure (Query): ~sq_corder subform~sq_cContacts
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_corder subform1~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_corder subform1~sq_cCoatings
+  SQL: SELECT coatings.coatings
+FROM coatings
+ORDER BY coatings.coatings;
+
+Procedure (Query): ~sq_corder subform1~sq_ccontacts IDFD
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_corder subform1~sq_cGSM
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_corder subform1~sq_cP Order Size
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_corder subform1~sq_cPaper
+  SQL: SELECT Paper.paper
+FROM Paper
+ORDER BY Paper.paper;
+
+Procedure (Query): ~sq_corder subform1~sq_cPrint Size_Product
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_corder subform1~sq_cProduct IDFD
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_corder subform1~sq_cSp Eff
+  SQL: SELECT [Special Eff].[special Eff]
+FROM [Special Eff]
+ORDER BY [Special Eff].[special Eff];
+
+Procedure (Query): ~sq_cpack~sq_cINVOICE DETAILS1
+  SQL: PARAMETERS [__Order ID] Value;
+SELECT DISTINCTROW *
+FROM [INVOICE DETAILS] AS pack
+WHERE ([__Order ID] = [letter ID]);
+
+Procedure (Query): ~sq_cprinters~sq_cINVOICE DETAILS1
+  SQL: PARAMETERS [__Order ID] Value;
+SELECT DISTINCTROW *
+FROM [INVOICE DETAILS] AS printers
+WHERE ([__Order ID] = [letter ID]);
+
+Procedure (Query): ~sq_cProduct lIST~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cCoatings
+  SQL: SELECT coatings.coatings
+FROM coatings
+ORDER BY coatings.coatings;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cconstraction
+  SQL: SELECT constraction.Constraction
+FROM constraction;
+
+Procedure (Query): ~sq_cProduct lIST~sq_ccontacts
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cGSM
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cPaper
+  SQL: SELECT Paper.paper
+FROM Paper
+ORDER BY Paper.paper;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cPasting
+  SQL: SELECT Pasting.pasting
+FROM Pasting
+ORDER BY Pasting.pasting;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cPrint Size
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_cProduct lIST~sq_cSp Eff
+  SQL: SELECT [Special Eff].[special Eff]
+FROM [Special Eff]
+ORDER BY [Special Eff].[special Eff];
+
+Procedure (Query): ~sq_cProduct lIST~sq_cspecification
+  SQL: SELECT specification.specification
+FROM specification;
+
+Procedure (Query): ~sq_cProduct~sq_cAddress
+  SQL: SELECT address.address
+FROM address;
+
+Procedure (Query): ~sq_cProduct~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_cProduct~sq_cCoatings
+  SQL: SELECT coatings.coatings
+FROM coatings
+ORDER BY coatings.coatings;
+
+Procedure (Query): ~sq_cProduct~sq_cconstraction
+  SQL: SELECT constraction.Constraction
+FROM constraction;
+
+Procedure (Query): ~sq_cProduct~sq_ccontacts
+  SQL: SELECT Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cProduct~sq_cCopy Of order list new
+  SQL: PARAMETERS __Product Value;
+SELECT DISTINCTROW *
+FROM (SELECT order.*, Product.GSM, Product.[Print Size] AS [Print Size_Product], Product.ups AS ups_Product, Product.Attachments, Product.Paper, Product.[Print Size] AS [Print Size_Product1], Product.ups AS ups_Product1, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Pasting_Product, Product.category, Product.[contacts IDFD] FROM Product INNER JOIN [order] ON Product.Product = order.[Product IDFD])  AS Product
+WHERE ([__Product] = [Product IDFD]);
+
+Procedure (Query): ~sq_cProduct~sq_cGSM
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_cProduct~sq_corder Query
+  SQL: PARAMETERS __Product Value;
+SELECT DISTINCTROW *
+FROM [order Query] AS Product
+WHERE ([__Product] = [Product IDFD]);
+
+Procedure (Query): ~sq_cProduct~sq_cPaper
+  SQL: SELECT Paper.paper
+FROM Paper
+ORDER BY Paper.paper;
+
+Procedure (Query): ~sq_cProduct~sq_cPasting
+  SQL: SELECT Pasting.pasting
+FROM Pasting
+ORDER BY Pasting.pasting;
+
+Procedure (Query): ~sq_cProduct~sq_cPrint Size
+  SQL: SELECT size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_cProduct~sq_cQuotation subform
+  SQL: PARAMETERS __Product Value;
+SELECT DISTINCTROW *
+FROM Quotation AS Product
+WHERE ([__Product] = Product);
+
+Procedure (Query): ~sq_cProduct~sq_cSp Eff
+  SQL: SELECT [Special Eff].[special Eff]
+FROM [Special Eff]
+ORDER BY [Special Eff].[special Eff];
+
+Procedure (Query): ~sq_cProduct~sq_cspecification
+  SQL: SELECT specification.specification
+FROM specification;
+
+Procedure (Query): ~sq_cQuotation subform~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_cQuotation subform~sq_ccustomer
+  SQL: SELECT Contacts.Company, Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cQuotation subform~sq_cProduct
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cQuotation~sq_ccategory
+  SQL: SELECT Catrgory.category
+FROM Catrgory
+ORDER BY Catrgory.category;
+
+Procedure (Query): ~sq_cQuotation~sq_ccboGoToProduct
+  SQL: SELECT Quotation.ID, Product.Product
+FROM Product INNER JOIN Quotation ON Product.Product = Quotation.Product
+WHERE (((Quotation.ID)<>Nz(Form!ID,0)) And ((Product.Product)<>Nz(Form!ID,0)));
+
+Procedure (Query): ~sq_cQuotation~sq_ccustomer
+  SQL: SELECT Contacts.Company, Contacts.Company
+FROM Contacts
+ORDER BY Contacts.Company;
+
+Procedure (Query): ~sq_cQuotation~sq_cProduct
+  SQL: SELECT Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cStock list~sq_cgsm
+  SQL: SELECT GSM.GSM
+FROM GSM
+ORDER BY GSM.GSM;
+
+Procedure (Query): ~sq_cStock list~sq_cPAPER
+  SQL: SELECT paper.[PAper ID], paper.paper
+FROM paper
+ORDER BY paper.paper;
+
+Procedure (Query): ~sq_cStock list~sq_cPlace
+  SQL: SELECT place.Place
+FROM place
+ORDER BY place.Place;
+
+Procedure (Query): ~sq_cStock list~sq_cproduct
+  SQL: SELECT Product.ID, Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_cStock list~sq_cSIZE
+  SQL: SELECT size.[Size ID], size.size
+FROM [size]
+ORDER BY size.size;
+
+Procedure (Query): ~sq_dpaper stock details~sq_dGroup Of PAPER
+  SQL: SELECT paper.[PAper ID], paper.paper
+FROM paper
+ORDER BY paper.paper;
+
+Procedure (Query): ~sq_dpaper stock details~sq_dproduct
+  SQL: SELECT Product.ID, Product.Product
+FROM Product
+ORDER BY Product.Product;
+
+Procedure (Query): ~sq_dpaper stock details~sq_dSIZE
+  SQL: SELECT size.[Size ID], size.size
+FROM [size];
+
+Procedure (Query): ~sq_faddress
+  SQL: SELECT DISTINCTROW *
+FROM address;
+
+Procedure (Query): ~sq_fCatrgory
+  SQL: SELECT DISTINCTROW *
+FROM Catrgory;
+
+Procedure (Query): ~sq_fCOA
+  SQL: SELECT [Copy of COA].*, Product.category, Product.GSM, Product.constraction, Product.specification, Product.[Artwork code], Product.[contacts IDFD], Product.Address AS Address_Product
+FROM Product INNER JOIN [Copy of COA] ON Product.Product = [Copy of COA].[Product IDFD];
+
+Procedure (Query): ~sq_fCOA 2
+  SQL: SELECT [Copy of COA].*, Product.category, Product.GSM, Product.constraction, Product.specification, Product.[Artwork code], Product.[contacts IDFD], Product.Address AS Address_Product, Product.[S H], Product.[S W], Product.[S D]
+FROM Product INNER JOIN [Copy of COA] ON Product.Product = [Copy of COA].[Product IDFD];
+
+Procedure (Query): ~sq_fCopy Of Navigation Form 2
+  SQL: SELECT DISTINCTROW *
+FROM [Copy of COA];
+
+Procedure (Query): ~sq_fCopy Of Navigation Form1
+  SQL: SELECT DISTINCTROW *
+FROM [Copy of COA];
+
+Procedure (Query): ~sq_fCopy Of order list new
+  SQL: SELECT order.*, Product.GSM, Product.[Print Size] AS [Print Size_Product], Product.ups AS ups_Product, Product.Attachments, Product.Paper, Product.[Print Size] AS [Print Size_Product1], Product.ups AS ups_Product1, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Pasting_Product, Product.category, Product.[contacts IDFD]
+FROM Product INNER JOIN [order] ON Product.Product = order.[Product IDFD];
+
+Procedure (Query): ~sq_fCopy Of PRINTERS COA
+  SQL: SELECT [Copy of COA].*, Product.category, Product.GSM, Product.constraction, Product.specification, Product.Shade AS Shade_Product, Product.[Artwork code], Product.[contacts IDFD], Product.Address AS Address_Product
+FROM Product INNER JOIN [Copy of COA] ON Product.Product = [Copy of COA].[Product IDFD];
+
+Procedure (Query): ~sq_fCREATIVE
+  SQL: SELECT DISTINCTROW *
+FROM [Copy of COA];
+
+Procedure (Query): ~sq_fINVOICE
+  SQL: SELECT DISTINCTROW *
+FROM INVOICE;
+
+Procedure (Query): ~sq_fINVOICE DETAILS
+  SQL: SELECT DISTINCTROW *
+FROM [INVOICE DETAILS];
+
+Procedure (Query): ~sq_fINVOICE DETAILS subform
+  SQL: SELECT DISTINCTROW *
+FROM [INVOICE DETAILS];
+
+Procedure (Query): ~sq_forder subform1
+  SQL: SELECT Product.GSM, Product.[Print Size] AS [Print Size_Product], Product.ups AS ups_Product, Product.Attachments, order.*, Product.Paper, Product.Coatings, Product.[Sp Eff], Product.Pasting AS Pasting_Product, Product.discription, Product.[contacts IDFD], Product.category
+FROM Product INNER JOIN [order] ON Product.Product = order.[Product IDFD];
+
+Procedure (Query): ~sq_fPaper1
+  SQL: SELECT DISTINCTROW *
+FROM Paper;
+
+Procedure (Query): ~sq_fplace1
+  SQL: SELECT DISTINCTROW *
+FROM place;
+
+Procedure (Query): ~sq_fProduct
+  SQL: SELECT DISTINCTROW *
+FROM Product;
+
+Procedure (Query): ~sq_fProduct lIST
+  SQL: SELECT DISTINCTROW *
+FROM Product;
+
+Procedure (Query): ~sq_fQuotation
+  SQL: SELECT DISTINCTROW *
+FROM QUOTATION;
+
+Procedure (Query): ~sq_fQuotation List
+  SQL: SELECT DISTINCTROW *
+FROM Quotation;
+
+Procedure (Query): ~sq_fQuotation subform
+  SQL: SELECT DISTINCTROW *
+FROM Quotation;
+
+Procedure (Query): ~sq_fStock list
+  SQL: SELECT DISTINCTROW *
+FROM STOCK;
+
+Procedure (Query): ~sq_rpaper stock details
+  SQL: SELECT DISTINCTROW *
+FROM STOCK;
+
+View (Query): ContactsExtended
+  SQL: SELECT Contacts.*, [LastName] & " " & [FirstName] & " " & [Company] & " " & [EmailAddress] & " " & [JobTitle] & " " & [BusinessPhone] & " " & [MobilePhone] & " " & [FaxNumber] & " " & [Address] & " " & [City] & " " & [StateProvince] & " " & [ZIPPostal] & " " & [CountryRegion] & " " & [ZIPPostal] & " " & [WebPage] & " " & [Notes] & " " & [ContactName] & " " & [FileAs] AS Searchable
+FROM Contacts
+ORDER BY Contacts.ContactName;
+
+View (Query): Copy Of order Query
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], order.[Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], order.[print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD];
+
+View (Query): order c
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+WHERE (((order.Status)='C'));
+
+View (Query): order carton
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+WHERE (((order.Status)='in pro') AND ((Product.category)='carton'));
+
+View (Query): Order Hold
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+WHERE (((order.Status)='Hold'));
+
+View (Query): order inserts
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+WHERE (((order.Status)='in pro') AND ((Product.category)='inserts'));
+
+View (Query): order labels
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+WHERE (((order.Status)='in pro') AND ((Product.category)='label'));
+
+View (Query): order others
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+WHERE (((order.Status)='in pro') AND ((Product.category)='others'));
+
+View (Query): order Query
+  SQL: SELECT order.ID, order.Date, order.[Product IDFD], order.Qty, order.Status, order.[PO No], order.RT, order.AMT, order.vendor, order.[P Order Size], Product.[contacts IDFD], Product.category, Product.Paper, Product.GSM, Product.[Print Size] AS [Product_Print Size], Product.ups, Product.[S H], Product.[S W], Product.[S D], Product.Coatings, Product.[Sp Eff], Product.Pasting AS Product_Pasting, Product.TYPE, Product.constraction, Product.Shade, Product.specification, Product.[ACTUAL GSM USED], Product.[Artwork code], Product.Address, Product.Field1, order.[paper Ups], ([order.Qty]/[Product.ups]+[order.Extra])/[order.paper Ups] AS [Paper Order qty], order.Extra, order.[Print Size] AS [order_Print Size], ([order.Qty]/[Product.ups]+[order.Extra]) AS [print Qty], order.[Paper Order], order.[Paper Recd], order.plate, order.Print, order.coat, order.foil, order.punch, order.punching, order.pasting AS order_pasting, order.pack, order.[delivery 1 qty], order.[delivery 1 date], order.[delivery 2 qty], order.[delivery 2 date], order.[delivery 3 qty], order.[delivery 3 date], order.[t del], order.[given to]
+FROM Product INNER JOIN [order] ON Product.[Product] = order.[Product IDFD]
+ORDER BY order.ID;
+
+View (Query): STOCK Query
+  SQL: SELECT DISTINCTROW STOCK.PAPER, Sum(STOCK.balance) AS SumOfbalance, STOCK.SIZE, STOCK.gsm
+FROM STOCK
+GROUP BY STOCK.PAPER, STOCK.SIZE, STOCK.gsm
+HAVING (((Sum(STOCK.balance))<>0))
+ORDER BY STOCK.gsm;
+
+Success

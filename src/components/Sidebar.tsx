@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -12,6 +12,7 @@ const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
+    { name: 'Quotations', href: '/quotations', icon: FileText },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },
 ];
 
@@ -51,7 +52,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     return (
         <div className={twMerge(
             "hidden border-r bg-slate-900 md:block transition-all duration-300 ease-in-out text-white h-screen sticky top-0 z-50",
-            isCollapsed ? "w-20" : "w-64 lg:w-72"
+            isCollapsed ? "w-20" : "w-36 lg:w-40"
         )}>
             <div className="flex h-[80px] items-center border-b border-slate-800 px-6 justify-between overflow-hidden">
                 {!isCollapsed && (

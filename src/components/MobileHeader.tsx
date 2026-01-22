@@ -22,19 +22,16 @@ export function MobileHeader() {
 
     return (
         <>
-            <header className="md:hidden sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm">
+            <header className="md:hidden sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900 px-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-indigo-600 p-1.5">
-                        <Package className="h-5 w-5 text-white" />
-                    </div>
                     <h1 className="flex flex-col leading-none">
-                        <span className="text-[12px] font-bold text-slate-500 uppercase tracking-widest">Print</span>
-                        <span className="text-base font-bold tracking-tight text-slate-900">Mfg</span>
+                        <span className="text-[12px] font-bold text-indigo-400 uppercase tracking-widest">Print</span>
+                        <span className="text-base font-bold tracking-tight text-white">Mfg</span>
                     </h1>
                 </div>
                 <button
                     onClick={toggleMenu}
-                    className="rounded-md p-2 text-slate-600 hover:bg-slate-100 active:scale-95 transition-all"
+                    className="rounded-md p-2 text-slate-400 hover:bg-slate-800 active:scale-95 transition-all hover:text-white"
                 >
                     {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>

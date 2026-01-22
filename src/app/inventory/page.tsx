@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo, useDeferredValue } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { Loader2, Box, ArrowUpRight, ArrowDownLeft, Database, Search, Filter } from 'lucide-react';
+import { Loader2, Box, ArrowUpRight, ArrowDownLeft, Database, Search, Filter, X } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 
 interface StockItem {
     gsm_id: number;
@@ -118,88 +119,87 @@ export default function InventoryPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-[1400px] mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Box className="w-8 h-8 text-indigo-600" />
-                        Paper Stock Summary
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">Real-time inventory levels across all warehouses</p>
-                </div>
+        <div className="font-montserrat">
+            <PageHeader
+                title="Paper Stock Summary"
+                icon={<Database className="w-6 h-6" />}
+                actions={
+                    <div className="relative w-64 md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search GSM, Type, Size..."
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all shadow-sm text-sm text-white placeholder:text-slate-500 font-bold"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                }
+            />
 
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search GSM, Type, Size or Printer..."
-                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow shadow-sm text-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-            </div>
+            <div className="space-y-6">
+                {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-bold flex items-center gap-2 animate-pulse">
+                        <X className="w-5 h-5" />
+                        <span>Error: {error}</span>
+                    </div>
+                )}
 
-            {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                    <strong>Error:</strong> {error}
-                </div>
-            )}
-
-            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50 border-b border-slate-300">
-                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Warehouse</th>
-                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Paper Type</th>
-                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">GSM</th>
-                                <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Size</th>
-                                <th className="px-4 py-4 text-right text-[10px] font-bold font-sans uppercase tracking-widest text-indigo-600 bg-indigo-50/50">Current Stock</th>
-                                <th className="px-2 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">IN</th>
-                                <th className="px-2 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-300">OUT</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-300">
-                            {filteredStock.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">No inventory records found matching your search.</td>
+                <div className="bg-white rounded-2xl border border-slate-300 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Warehouse</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Paper Type</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">GSM</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Size</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500 bg-indigo-50/30">Stock</th>
+                                    <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">IN</th>
+                                    <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">OUT</th>
                                 </tr>
-                            ) : (
-                                filteredStock.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-4 py-3">
-                                            <span className="text-sm font-semibold text-slate-900 uppercase tracking-tight">{item.warehouse_name}</span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-slate-600 font-medium">
-                                            {item.paper_type_name}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm font-medium text-slate-600">
-                                            {item.gsm_name}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-slate-600 tracking-tight">
-                                            {item.size_name}
-                                        </td>
-                                        <td className="px-4 py-3 text-right bg-indigo-50/20">
-                                            <span className={`text-lg font-bold font-sans tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
-                                                {item.net_stock.toLocaleString()}
-                                            </span>
-                                        </td>
-                                        <td className="px-2 py-3 text-right border-l border-slate-50 opacity-40 group-hover:opacity-100 transition-opacity">
-                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-bold text-[10px]">
-                                                {item.total_in.toLocaleString()}
-                                            </div>
-                                        </td>
-                                        <td className="px-2 py-3 text-right opacity-40 group-hover:opacity-100 transition-opacity">
-                                            <div className="flex items-center justify-end gap-1 text-slate-500 font-bold text-[10px]">
-                                                {item.total_out.toLocaleString()}
-                                            </div>
-                                        </td>
+                            </thead>
+                            <tbody className="divide-y divide-slate-300">
+                                {filteredStock.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic font-medium">No inventory records found matching your search.</td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    filteredStock.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50 transition-colors group cursor-default border-b border-slate-200 last:border-0">
+                                            <td className="px-6 py-2">
+                                                <span className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.warehouse_name}</span>
+                                            </td>
+                                            <td className="px-6 py-2 text-sm text-slate-600 font-medium">
+                                                {item.paper_type_name}
+                                            </td>
+                                            <td className="px-6 py-2 text-sm font-semibold text-slate-700">
+                                                {item.gsm_name}
+                                            </td>
+                                            <td className="px-6 py-2 text-sm text-slate-500 tracking-tight font-medium">
+                                                {item.size_name}
+                                            </td>
+                                            <td className="px-6 py-2 text-right bg-indigo-50/10 font-mono">
+                                                <span className={`text-sm font-semibold tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
+                                                    {item.net_stock.toLocaleString()}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right border-l border-slate-100 font-mono">
+                                                <div className="text-slate-500 font-medium text-[11px]">
+                                                    {item.total_in.toLocaleString()}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-2 text-right font-mono">
+                                                <div className="text-slate-400 font-medium text-[11px]">
+                                                    {item.total_out.toLocaleString()}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

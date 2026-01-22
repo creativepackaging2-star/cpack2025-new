@@ -503,432 +503,439 @@ Plate No   : ${formData.plate_no || '-'}`;
     if (loading) return <div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-indigo-600" /><span className="text-slate-500 font-medium">Fetching Product Details...</span></div>;
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-4 bg-white p-3 md:p-6 rounded-2xl border border-slate-200 shadow-lg">
+        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-4 bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
             {/* --- HEADER SECTION --- */}
-            <div className="flex justify-between items-center border-b border-slate-100 pb-4 md:pb-6">
-                <div className="space-y-1">
-                    <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase">
-                        {initialData ? 'Update Order' : 'New Order Entry'}
-                    </h1>
-                    <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest flex flex-wrap items-center gap-2 md:gap-4">
-                        <span>v0.2.0-stable | {product?.product_name || 'Select Product'}</span>
-                        <span className={`px-2 py-0.5 rounded border ${printers.length > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                            P({printers.length}) W({paperwalas.length}) S({sizes.length})
-                        </span>
-                        {((formData.parent_id && formData.parent_id !== (initialData as any)?.id) || formData.order_id?.endsWith('-P') || formData.order_id?.includes('SPLIT-')) && (
-                            <span className="px-2 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-100 flex items-center gap-1 animate-pulse">
-                                <Split className="w-2.5 h-2.5" />
-                                SPLIT ORDER LOT
+            <div className="bg-slate-900 px-3 md:px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                <div className="flex items-center gap-4">
+                    <div className="space-y-0.5">
+                        <h1 className="text-xl md:text-2xl font-black text-white uppercase">
+                            {initialData ? 'Update Order' : 'New Order Entry'}
+                        </h1>
+                        <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest flex flex-wrap items-center gap-2 md:gap-4">
+                            <span>v0.2.0-stable | {product?.product_name || 'Select Product'}</span>
+                            <span className={`px-2 py-0.5 rounded border ${printers.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                                P({printers.length}) W({paperwalas.length}) S({sizes.length})
                             </span>
-                        )}
-                    </p>
-                </div>
-                <Link href="/orders" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X className="w-6 h-6" /></Link>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                {/* --- MAIN FORM --- */}
-                <div className="lg:col-span-8 space-y-6">
-
-                    {/* SECTION 1: PRODUCT & LOGISTICS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <SectionHeader icon={Search} title="Product Selection" />
-                        <div className="lg:col-span-2 relative">
-                            <label className="label">Product</label>
-                            <input
-                                type="text"
-                                className="input-field border-indigo-100 bg-indigo-50/10 font-bold"
-                                placeholder="Search Product..."
-                                value={productSearch || (product?.product_name || '')}
-                                onChange={(e) => {
-                                    setProductSearch(e.target.value);
-                                    setShowProductDropdown(true);
-                                }}
-                                onFocus={() => setShowProductDropdown(true)}
-                                readOnly={!!initialData}
-                            />
-                            {!initialData && showProductDropdown && filteredProducts.length > 0 && (
-                                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                                    {filteredProducts.map(p => (
-                                        <div
-                                            key={p.id}
-                                            className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-slate-50 last:border-0"
-                                            onClick={() => {
-                                                setProductSearch(p.product_name);
-                                                setShowProductDropdown(false);
-                                                fetchProduct(p.id);
-                                            }}
-                                        >
-                                            <div className="text-sm font-bold text-slate-800">{p.product_name}</div>
-                                            <div className="text-[10px] text-slate-400">SKU: {p.sku} | Code: {p.artwork_code}</div>
-                                        </div>
-                                    ))}
-                                </div>
+                            {((formData.parent_id && formData.parent_id !== (initialData as any)?.id) || formData.order_id?.endsWith('-P') || formData.order_id?.includes('SPLIT-')) && (
+                                <span className="px-2 py-0.5 rounded border bg-amber-500/10 text-amber-400 border-amber-500/20 flex items-center gap-1 animate-pulse">
+                                    <Split className="w-2.5 h-2.5" />
+                                    SPLIT ORDER LOT
+                                </span>
                             )}
-                        </div>
-
-                        <SectionHeader icon={Layers} title="Core Details" />
-                        <input type="hidden" name="order_id" value={formData.order_id || ''} />
-                        <div>
-                            <label className="label">order date</label>
-                            <input type="date" name="order_date" value={formData.order_date || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">progress</label>
-                            <select name="progress" value={formData.progress || ''} onChange={handleChange} className="input-field font-bold">
-                                {['Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'].map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="label">Status</label>
-                            <select name="status" value={formData.status || ''} onChange={handleChange} className="input-field font-black text-slate-900 bg-white">
-                                <option value="In Production">In Production</option>
-                                <option value="Complete">Complete</option>
-                                <option value="Hold">Hold</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Category</label>
-                            <input
-                                type="text"
-                                name="category_name"
-                                value={formData.category_name || ''}
-                                onChange={handleChange}
-                                className="input-field bg-slate-50 font-medium"
-                                placeholder="Auto-filled..."
-                                readOnly
-                            />
-                        </div>
-                        <div>
-                            <label className="label">Invoicing & Delivery</label>
-                            <select name="from_our_company" value={formData.from_our_company || ''} onChange={handleChange} className="input-field">
-                                <option value="">Select...</option>
-                                <option value="Printers">Printers</option>
-                                <option value="Packaging">Packaging</option>
-                                <option value="Enterprise">Enterprise</option>
-                            </select>
-                        </div>
-
-                        <SectionHeader icon={Truck} title="Partners" />
-                        <div>
-                            <label className="label">printer</label>
-                            <select
-                                name="printer_id"
-                                value={formData.printer_id || ''}
-                                onChange={(e) => {
-                                    const id = parseInt(e.target.value);
-                                    const matched = printers.find(p => p.id === id);
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        printer_id: id || null,
-                                        printer_name: matched?.name || '',
-                                        printer_mobile: matched?.phone || prev.printer_mobile
-                                    }));
-                                }}
-                                className="input-field appearance-auto"
-                            >
-                                <option value="">{printers.length === 0 ? 'Loading Printers...' : 'Select Printer...'}</option>
-                                {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">printer mobile</label>
-                            <input name="printer_mobile" value={formData.printer_mobile || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono" />
-                        </div>
-                        <div>
-                            <label className="label">paperwala</label>
-                            <select
-                                name="paperwala_id"
-                                value={formData.paperwala_id || ''}
-                                onChange={(e) => {
-                                    const id = parseInt(e.target.value);
-                                    const matched = paperwalas.find(p => p.id === id);
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        paperwala_id: id || null,
-                                        paperwala_name: matched?.name || '',
-                                        paperwala_mobile: matched?.phone || prev.paperwala_mobile
-                                    }));
-                                }}
-                                className="input-field appearance-auto"
-                            >
-                                <option value="">{paperwalas.length === 0 ? 'Loading...' : 'Select Paperwala...'}</option>
-                                {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">paperwala mobile</label>
-                            <input name="paperwala_mobile" value={formData.paperwala_mobile || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono" />
-                        </div>
-                        <div className="lg:col-span-1"></div>
-
-                        <SectionHeader icon={DollarSign} title="Numbers & Calculations" />
-                        <div>
-                            <label className="label font-black text-indigo-600">QTY</label>
-                            <input type="number" name="quantity" value={formData.quantity || ''} onChange={handleNumberChange} className="input-field border-indigo-200 bg-indigo-50/50" required />
-                        </div>
-                        <div>
-                            <label className="label">Rate</label>
-                            <input type="number" step="0.01" name="rate" value={formData.rate || ''} onChange={handleNumberChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Value (QTY X RATE)</label>
-                            <input type="number" value={formData.value || 0} readOnly className="input-field bg-slate-50 font-black text-emerald-600" />
-                        </div>
-
-                        <div>
-                            <label className="label">Gross Print Qty</label>
-                            <input type="number" value={formData.gross_print_qty || 0} readOnly className="input-field bg-slate-50" />
-                        </div>
-                        <div>
-                            <label className="label">Extra</label>
-                            <input type="number" name="extra" value={formData.extra || 0} onChange={handleNumberChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Total Print Qty</label>
-                            <input type="number" value={formData.total_print_qty || 0} readOnly className="input-field bg-slate-50 font-bold" />
-                        </div>
-
-                        <div>
-                            <label className="label">paper ups</label>
-                            <input type="number" name="paper_ups" value={formData.paper_ups || 1} onChange={handleNumberChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">paper required</label>
-                            <input type="number" value={formData.paper_required || 0} readOnly className="input-field bg-slate-50 font-bold" />
-                        </div>
-                        <div>
-                            <label className="label">Paper ord qty</label>
-                            <input type="number" name="paper_order_qty" value={formData.paper_order_qty || 0} onChange={handleNumberChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">paper order size</label>
-                            <select
-                                name="paper_order_size_id"
-                                value={formData.paper_order_size_id || ''}
-                                onChange={(e) => {
-                                    const id = parseInt(e.target.value);
-                                    const matched = sizes.find(s => s.id === id);
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        paper_order_size_id: id || null,
-                                        paper_order_size: matched?.name || ''
-                                    }));
-                                }}
-                                className="input-field"
-                            >
-                                <option value="">Select Size...</option>
-                                {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                        </div>
-
-                        <SectionHeader icon={FileText} title="Invoicing & Delivery" />
-                        <div>
-                            <label className="label">Inv No</label>
-                            <input name="invoice_no" value={formData.invoice_no || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Batch No</label>
-                            <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field" placeholder="Auto-gen from Del Date" />
-                        </div>
-                        <div>
-                            <label className="label">Qty Delivered</label>
-                            <input type="number" name="qty_delivered" value={formData.qty_delivered || ''} onChange={handleNumberChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Delivery Date</label>
-                            <input type="date" name="delivery_date" value={formData.delivery_date || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Ready Date</label>
-                            <input type="date" name="ready_date" value={formData.ready_date || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Ready/Delivery</label>
-                            <input name="ready_delivery" value={formData.ready_delivery || ''} onChange={handleChange} className="input-field" placeholder="Status of readiness" />
-                        </div>
-                        <div className="lg:col-span-2">
-                            <label className="label">Delivery Address (From Product)</label>
-                            <textarea
-                                name="delivery_address"
-                                value={formData.delivery_address || ''}
-                                readOnly
-                                className="input-field h-10 min-h-[40px] py-2 bg-slate-50 text-slate-600 font-medium"
-                                placeholder="Address from product master..."
-                            />
-                        </div>
-
-                        <SectionHeader icon={Edit3} title="Production & Dispatch Detail" />
-                        <div>
-                            <label className="label">Packing Detail</label>
-                            <input name="packing_detail" value={formData.packing_detail || ''} onChange={handleChange} className="input-field" placeholder="e.g. 100/box" />
-                        </div>
-                        <div>
-                            <label className="label">Automation</label>
-                            <input name="automation" value={formData.automation || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">File No</label>
-                            <input name="file_no" value={formData.file_no || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div>
-                            <label className="label">Shade Card (Manual)</label>
-                            <input name="shade_card" value={formData.shade_card || ''} onChange={handleChange} className="input-field" />
-                        </div>
-                        <div className="lg:col-span-2">
-                            <label className="label">Remarks / Comments</label>
-                            <textarea name="remarks" value={(formData as any).remarks || ''} onChange={handleChange} className="input-field h-10 min-h-[40px] py-2" placeholder="Any additional instructions..." />
-                        </div>
+                        </p>
                     </div>
                 </div>
+                <Link href="/orders" className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white">
+                    <X className="w-6 h-6" />
+                </Link>
+            </div>
 
-                {/* --- SIDEBAR: Product Snapshot --- */}
-                <div className="lg:col-span-4 space-y-4">
-                    <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 shadow-sm">
-                        <SectionHeader icon={Settings} title="Product Snapshot" />
+            <div className="p-3 md:p-6 pt-2 md:pt-2">
 
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-6">
-                            {[
-                                { label: 'UPS', name: 'ups' },
-                                { label: 'Category', name: 'category_name' },
-                                { label: 'Customer', name: 'customer_name' },
-                                { label: 'Paper', name: 'paper_type_name' },
-                                { label: 'GSM', name: 'gsm_value' },
-                                { label: 'Size', name: 'print_size' },
-                                { label: 'Dim.', name: 'dimension' },
-                                { label: 'ink', name: 'ink' },
-                                { label: 'Plate', name: 'plate_no' },
-                                { label: 'Spec.', name: 'specification' },
-                                { label: 'Artwork', name: 'artwork_code' }
-                            ].map(f => (
-                                <div key={f.name} className="col-span-1">
-                                    <label className="text-[8px] font-black text-slate-400 uppercase">{f.label}</label>
-                                    <input name={f.name} value={(formData as any)[f.name] || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium focus:ring-1 focus:ring-indigo-500 outline-none" />
-                                </div>
-                            ))}
-                            <div className="col-span-2">
-                                <label className="text-[8px] font-black text-slate-400 uppercase">Special Effects</label>
-                                <input name="special_effects" value={formData.special_effects || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium" />
-                            </div>
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                        <SectionHeader icon={Zap} title="Automation Sync" />
-                        <div className="flex items-center gap-3">
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPaperwala}>
-                                <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                                    <PaperwalaWhatsAppLogo className="w-8 h-8" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">WA Paper</span>
-                                <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">Paperwala</div>
-                            </div>
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPrinter}>
-                                <div className="p-1 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                    <WhatsAppLogo className="w-8 h-8" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">WA Printer</span>
-                                <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">Supervisor</div>
-                            </div>
+                    {/* --- MAIN FORM --- */}
+                    <div className="lg:col-span-8 space-y-6">
 
-                            {initialData?.id ? (
-                                <Link
-                                    href={`/orders/${initialData.id}/coa`}
-                                    target="_blank"
-                                    className="flex flex-col items-center gap-1 group cursor-pointer"
-                                >
-                                    <div className="p-1 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                        <FileText className="w-8 h-8 text-indigo-600" />
-                                    </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
-                                    <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">Auto-Gen</div>
-                                </Link>
-                            ) : (
-                                <div className="flex flex-col items-center gap-1 opacity-40 cursor-not-allowed" title="Save order first">
-                                    <div className="p-1 bg-slate-50 rounded-lg">
-                                        <FileText className="w-8 h-8 text-slate-400" />
-                                    </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
-                                    <div className="text-[7px] bg-slate-50 text-slate-400 px-1 rounded font-bold border border-slate-100 italic">Save First</div>
-                                </div>
-                            )}
-
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Delivery Label')}>
-                                <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
-                                    <Truck className="w-8 h-8 text-amber-600" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN Label</span>
-                                <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Auto-Gen</div>
-                            </div>
-
-                            <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Shade Card')}>
-                                <div className="p-1 bg-rose-50 rounded-lg group-hover:bg-rose-100 transition-colors">
-                                    <Palette className="w-8 h-8 text-rose-600" />
-                                </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase">GEN Shade</span>
-                                <div className="text-[7px] bg-rose-50 text-rose-600 px-1 rounded font-bold border border-rose-100 italic">Auto-Gen</div>
-                            </div>
-
-                            {initialData?.id && (
-                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleSplitOrder}>
-                                    <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
-                                        <Split className="w-8 h-8 text-amber-600" />
-                                    </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase">Split Lot</span>
-                                    <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Partial</div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {formData.artwork_pdf && (
-                                <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-colors">
-                                    <PdfLogo className="w-6 h-6" />
-                                    PDF
-                                </a>
-                            )}
-                            {formData.artwork_cdr && (
-                                <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-bold border border-orange-100 hover:bg-orange-100 transition-colors">
-                                    <CdrLogo className="w-6 h-6" />
-                                    CDR
-                                </a>
-                            )}
-                        </div>
-
-                        {product?.product_image && (
-                            <div className="mt-6 rounded-lg overflow-hidden bg-white border border-slate-100 p-1">
-                                <img
-                                    src={product.product_image.startsWith('http') ? product.product_image : `/uploads/${product.product_image}`}
-                                    alt="Ref"
-                                    className="w-full h-32 object-contain"
+                        {/* SECTION 1: PRODUCT & LOGISTICS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <SectionHeader icon={Search} title="Product Selection" />
+                            <div className="lg:col-span-2 relative">
+                                <label className="label">Product</label>
+                                <input
+                                    type="text"
+                                    className="input-field border-indigo-100 bg-indigo-50/10 font-bold"
+                                    placeholder="Search Product..."
+                                    value={productSearch || (product?.product_name || '')}
+                                    onChange={(e) => {
+                                        setProductSearch(e.target.value);
+                                        setShowProductDropdown(true);
+                                    }}
+                                    onFocus={() => setShowProductDropdown(true)}
+                                    readOnly={!!initialData}
                                 />
-                                <div className="text-[8px] text-center text-slate-300 font-bold uppercase mt-1">Ref Image</div>
+                                {!initialData && showProductDropdown && filteredProducts.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                                        {filteredProducts.map(p => (
+                                            <div
+                                                key={p.id}
+                                                className="px-4 py-2 hover:bg-indigo-50 cursor-pointer border-b border-slate-50 last:border-0"
+                                                onClick={() => {
+                                                    setProductSearch(p.product_name);
+                                                    setShowProductDropdown(false);
+                                                    fetchProduct(p.id);
+                                                }}
+                                            >
+                                                <div className="text-sm font-bold text-slate-800">{p.product_name}</div>
+                                                <div className="text-[10px] text-slate-400">SKU: {p.sku} | Code: {p.artwork_code}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        )}
+
+                            <SectionHeader icon={Layers} title="Core Details" />
+                            <input type="hidden" name="order_id" value={formData.order_id || ''} />
+                            <div>
+                                <label className="label">order date</label>
+                                <input type="date" name="order_date" value={formData.order_date || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">progress</label>
+                                <select name="progress" value={formData.progress || ''} onChange={handleChange} className="input-field font-bold">
+                                    {['Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'].map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="label">Status</label>
+                                <select name="status" value={formData.status || ''} onChange={handleChange} className="input-field font-black text-slate-900 bg-white">
+                                    <option value="In Production">In Production</option>
+                                    <option value="Complete">Complete</option>
+                                    <option value="Hold">Hold</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Category</label>
+                                <input
+                                    type="text"
+                                    name="category_name"
+                                    value={formData.category_name || ''}
+                                    onChange={handleChange}
+                                    className="input-field bg-slate-50 font-medium"
+                                    placeholder="Auto-filled..."
+                                    readOnly
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Invoicing & Delivery</label>
+                                <select name="from_our_company" value={formData.from_our_company || ''} onChange={handleChange} className="input-field">
+                                    <option value="">Select...</option>
+                                    <option value="Printers">Printers</option>
+                                    <option value="Packaging">Packaging</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                </select>
+                            </div>
+
+                            <SectionHeader icon={Truck} title="Partners" />
+                            <div>
+                                <label className="label">printer</label>
+                                <select
+                                    name="printer_id"
+                                    value={formData.printer_id || ''}
+                                    onChange={(e) => {
+                                        const id = parseInt(e.target.value);
+                                        const matched = printers.find(p => p.id === id);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            printer_id: id || null,
+                                            printer_name: matched?.name || '',
+                                            printer_mobile: matched?.phone || prev.printer_mobile
+                                        }));
+                                    }}
+                                    className="input-field appearance-auto"
+                                >
+                                    <option value="">{printers.length === 0 ? 'Loading Printers...' : 'Select Printer...'}</option>
+                                    {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">printer mobile</label>
+                                <input name="printer_mobile" value={formData.printer_mobile || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono" />
+                            </div>
+                            <div>
+                                <label className="label">paperwala</label>
+                                <select
+                                    name="paperwala_id"
+                                    value={formData.paperwala_id || ''}
+                                    onChange={(e) => {
+                                        const id = parseInt(e.target.value);
+                                        const matched = paperwalas.find(p => p.id === id);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            paperwala_id: id || null,
+                                            paperwala_name: matched?.name || '',
+                                            paperwala_mobile: matched?.phone || prev.paperwala_mobile
+                                        }));
+                                    }}
+                                    className="input-field appearance-auto"
+                                >
+                                    <option value="">{paperwalas.length === 0 ? 'Loading...' : 'Select Paperwala...'}</option>
+                                    {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">paperwala mobile</label>
+                                <input name="paperwala_mobile" value={formData.paperwala_mobile || ''} onChange={handleChange} className="input-field bg-slate-50 font-mono" />
+                            </div>
+                            <div className="lg:col-span-1"></div>
+
+                            <SectionHeader icon={DollarSign} title="Numbers & Calculations" />
+                            <div>
+                                <label className="label font-black text-indigo-600">QTY</label>
+                                <input type="number" name="quantity" value={formData.quantity || ''} onChange={handleNumberChange} className="input-field border-indigo-200 bg-indigo-50/50" required />
+                            </div>
+                            <div>
+                                <label className="label">Rate</label>
+                                <input type="number" step="0.01" name="rate" value={formData.rate || ''} onChange={handleNumberChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Value (QTY X RATE)</label>
+                                <input type="number" value={formData.value || 0} readOnly className="input-field bg-slate-50 font-black text-emerald-600" />
+                            </div>
+
+                            <div>
+                                <label className="label">Gross Print Qty</label>
+                                <input type="number" value={formData.gross_print_qty || 0} readOnly className="input-field bg-slate-50" />
+                            </div>
+                            <div>
+                                <label className="label">Extra</label>
+                                <input type="number" name="extra" value={formData.extra || 0} onChange={handleNumberChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Total Print Qty</label>
+                                <input type="number" value={formData.total_print_qty || 0} readOnly className="input-field bg-slate-50 font-bold" />
+                            </div>
+
+                            <div>
+                                <label className="label">paper ups</label>
+                                <input type="number" name="paper_ups" value={formData.paper_ups || 1} onChange={handleNumberChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">paper required</label>
+                                <input type="number" value={formData.paper_required || 0} readOnly className="input-field bg-slate-50 font-bold" />
+                            </div>
+                            <div>
+                                <label className="label">Paper ord qty</label>
+                                <input type="number" name="paper_order_qty" value={formData.paper_order_qty || 0} onChange={handleNumberChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">paper order size</label>
+                                <select
+                                    name="paper_order_size_id"
+                                    value={formData.paper_order_size_id || ''}
+                                    onChange={(e) => {
+                                        const id = parseInt(e.target.value);
+                                        const matched = sizes.find(s => s.id === id);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            paper_order_size_id: id || null,
+                                            paper_order_size: matched?.name || ''
+                                        }));
+                                    }}
+                                    className="input-field"
+                                >
+                                    <option value="">Select Size...</option>
+                                    {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                            </div>
+
+                            <SectionHeader icon={FileText} title="Invoicing & Delivery" />
+                            <div>
+                                <label className="label">Inv No</label>
+                                <input name="invoice_no" value={formData.invoice_no || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Batch No</label>
+                                <input name="batch_no" value={formData.batch_no || ''} onChange={handleChange} className="input-field" placeholder="Auto-gen from Del Date" />
+                            </div>
+                            <div>
+                                <label className="label">Qty Delivered</label>
+                                <input type="number" name="qty_delivered" value={formData.qty_delivered || ''} onChange={handleNumberChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Delivery Date</label>
+                                <input type="date" name="delivery_date" value={formData.delivery_date || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Ready Date</label>
+                                <input type="date" name="ready_date" value={formData.ready_date || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Ready/Delivery</label>
+                                <input name="ready_delivery" value={formData.ready_delivery || ''} onChange={handleChange} className="input-field" placeholder="Status of readiness" />
+                            </div>
+                            <div className="lg:col-span-2">
+                                <label className="label">Delivery Address (From Product)</label>
+                                <textarea
+                                    name="delivery_address"
+                                    value={formData.delivery_address || ''}
+                                    readOnly
+                                    className="input-field h-10 min-h-[40px] py-2 bg-slate-50 text-slate-600 font-medium"
+                                    placeholder="Address from product master..."
+                                />
+                            </div>
+
+                            <SectionHeader icon={Edit3} title="Production & Dispatch Detail" />
+                            <div>
+                                <label className="label">Packing Detail</label>
+                                <input name="packing_detail" value={formData.packing_detail || ''} onChange={handleChange} className="input-field" placeholder="e.g. 100/box" />
+                            </div>
+                            <div>
+                                <label className="label">Automation</label>
+                                <input name="automation" value={formData.automation || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">File No</label>
+                                <input name="file_no" value={formData.file_no || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div>
+                                <label className="label">Shade Card (Manual)</label>
+                                <input name="shade_card" value={formData.shade_card || ''} onChange={handleChange} className="input-field" />
+                            </div>
+                            <div className="lg:col-span-2">
+                                <label className="label">Remarks / Comments</label>
+                                <textarea name="remarks" value={(formData as any).remarks || ''} onChange={handleChange} className="input-field h-10 min-h-[40px] py-2" placeholder="Any additional instructions..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* --- SIDEBAR: Product Snapshot --- */}
+                    <div className="lg:col-span-4 space-y-4">
+                        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 shadow-sm">
+                            <SectionHeader icon={Settings} title="Product Snapshot" />
+
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-6">
+                                {[
+                                    { label: 'UPS', name: 'ups' },
+                                    { label: 'Category', name: 'category_name' },
+                                    { label: 'Customer', name: 'customer_name' },
+                                    { label: 'Paper', name: 'paper_type_name' },
+                                    { label: 'GSM', name: 'gsm_value' },
+                                    { label: 'Size', name: 'print_size' },
+                                    { label: 'Dim.', name: 'dimension' },
+                                    { label: 'ink', name: 'ink' },
+                                    { label: 'Plate', name: 'plate_no' },
+                                    { label: 'Spec.', name: 'specification' },
+                                    { label: 'Artwork', name: 'artwork_code' }
+                                ].map(f => (
+                                    <div key={f.name} className="col-span-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase">{f.label}</label>
+                                        <input name={f.name} value={(formData as any)[f.name] || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium focus:ring-1 focus:ring-indigo-500 outline-none" />
+                                    </div>
+                                ))}
+                                <div className="col-span-2">
+                                    <label className="text-[8px] font-black text-slate-400 uppercase">Special Effects</label>
+                                    <input name="special_effects" value={formData.special_effects || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium" />
+                                </div>
+                            </div>
+
+                            <SectionHeader icon={Zap} title="Automation Sync" />
+                            <div className="flex items-center gap-3">
+                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPaperwala}>
+                                    <div className="p-1 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
+                                        <PaperwalaWhatsAppLogo className="w-8 h-8" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">WA Paper</span>
+                                    <div className="text-[7px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold border border-emerald-100 italic">Paperwala</div>
+                                </div>
+                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={sendToPrinter}>
+                                    <div className="p-1 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                        <WhatsAppLogo className="w-8 h-8" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">WA Printer</span>
+                                    <div className="text-[7px] bg-blue-50 text-blue-600 px-1 rounded font-bold border border-blue-100 italic">Supervisor</div>
+                                </div>
+
+                                {initialData?.id ? (
+                                    <Link
+                                        href={`/orders/${initialData.id}/coa`}
+                                        target="_blank"
+                                        className="flex flex-col items-center gap-1 group cursor-pointer"
+                                    >
+                                        <div className="p-1 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                            <FileText className="w-8 h-8 text-indigo-600" />
+                                        </div>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
+                                        <div className="text-[7px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold border border-indigo-100 italic">Auto-Gen</div>
+                                    </Link>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-1 opacity-40 cursor-not-allowed" title="Save order first">
+                                        <div className="p-1 bg-slate-50 rounded-lg">
+                                            <FileText className="w-8 h-8 text-slate-400" />
+                                        </div>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase">GEN COA</span>
+                                        <div className="text-[7px] bg-slate-50 text-slate-400 px-1 rounded font-bold border border-slate-100 italic">Save First</div>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Delivery Label')}>
+                                    <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
+                                        <Truck className="w-8 h-8 text-amber-600" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN Label</span>
+                                    <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Auto-Gen</div>
+                                </div>
+
+                                <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={() => generateDoc('Shade Card')}>
+                                    <div className="p-1 bg-rose-50 rounded-lg group-hover:bg-rose-100 transition-colors">
+                                        <Palette className="w-8 h-8 text-rose-600" />
+                                    </div>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">GEN Shade</span>
+                                    <div className="text-[7px] bg-rose-50 text-rose-600 px-1 rounded font-bold border border-rose-100 italic">Auto-Gen</div>
+                                </div>
+
+                                {initialData?.id && (
+                                    <div className="flex flex-col items-center gap-1 group cursor-pointer" onClick={handleSplitOrder}>
+                                        <div className="p-1 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
+                                            <Split className="w-8 h-8 text-amber-600" />
+                                        </div>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase">Split Lot</span>
+                                        <div className="text-[7px] bg-amber-50 text-amber-600 px-1 rounded font-bold border border-amber-100 italic">Partial</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {formData.artwork_pdf && (
+                                    <a href={formData.artwork_pdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-colors">
+                                        <PdfLogo className="w-6 h-6" />
+                                        PDF
+                                    </a>
+                                )}
+                                {formData.artwork_cdr && (
+                                    <a href={formData.artwork_cdr} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-[10px] font-bold border border-orange-100 hover:bg-orange-100 transition-colors">
+                                        <CdrLogo className="w-6 h-6" />
+                                        CDR
+                                    </a>
+                                )}
+                            </div>
+
+                            {product?.product_image && (
+                                <div className="mt-6 rounded-lg overflow-hidden bg-white border border-slate-100 p-1">
+                                    <img
+                                        src={product.product_image.startsWith('http') ? product.product_image : `/uploads/${product.product_image}`}
+                                        alt="Ref"
+                                        className="w-full h-32 object-contain"
+                                    />
+                                    <div className="text-[8px] text-center text-slate-300 font-bold uppercase mt-1">Ref Image</div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* --- FOOTER --- */}
-            <div className="flex flex-col md:flex-row justify-end items-center gap-4 pt-8 border-t border-slate-100 mb-6">
-                <Link href="/orders" className="w-full md:w-auto text-center text-sm font-bold text-slate-400 hover:text-slate-600 px-4 py-2 border border-transparent md:border-none">Cancel</Link>
-                <button
-                    type="submit"
-                    disabled={saving}
-                    className="w-full md:w-auto bg-indigo-600 text-white px-10 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
-                >
-                    {saving ? <><Loader2 className="animate-spin h-4 w-4" /> Saving...</> : <><CheckCircle className="h-4 w-4" /> {initialData ? 'Update Order' : 'Save Order'}</>}
-                </button>
-            </div>
+                {/* --- FOOTER --- */}
+                <div className="flex flex-col md:flex-row justify-end items-center gap-4 pt-8 border-t border-slate-100 mb-6 px-3 md:px-6">
+                    <Link href="/orders" className="w-full md:w-auto text-center text-sm font-bold text-slate-400 hover:text-slate-600 px-4 py-2 border border-transparent md:border-none">Cancel</Link>
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="w-full md:w-auto bg-indigo-600 text-white px-10 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                    >
+                        {saving ? <><Loader2 className="animate-spin h-4 w-4" /> Saving...</> : <><CheckCircle className="h-4 w-4" /> {initialData ? 'Update Order' : 'Save Order'}</>}
+                    </button>
+                </div>
 
-            <style jsx>{`
+                <style jsx>{`
                 .label { font-size: 0.65rem; font-weight: 800; color: #64748b; display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
                 .input-field { display: block; width: 100%; border-radius: 0.75rem; border: 1.5px solid #f1f5f9; padding: 0.625rem 0.875rem; font-size: 0.875rem; background-color: #f8fafc; transition: all 0.2s; color: #1e293b; min-height: 42px; }
                 .appearance-auto { appearance: auto !important; }
                 .input-field:focus { border-color: #6366f1; background-color: #fff; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
             `}</style>
+            </div>
         </form>
     );
 }

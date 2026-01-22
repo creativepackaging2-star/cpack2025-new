@@ -19,6 +19,8 @@ interface SearchableSelectProps {
     disabled?: boolean;
     displayField?: string;
     className?: string;
+    labelClassName?: string;
+    inputClassName?: string;
     required?: boolean;
 }
 
@@ -32,6 +34,8 @@ export default function SearchableSelect({
     disabled = false,
     displayField = 'name',
     className = '',
+    labelClassName = 'block text-sm font-medium text-slate-700 mb-1',
+    inputClassName = 'block w-full rounded-md border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-10',
     required = false
 }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -98,12 +102,12 @@ export default function SearchableSelect({
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
-            {label && <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>}
+            {label && <label className={labelClassName}>{label}</label>}
 
             <div className="relative">
                 <input
                     type="text"
-                    className="block w-full rounded-md border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none pr-10"
+                    className={inputClassName}
                     placeholder={placeholder}
                     value={searchTerm}
                     onChange={(e) => {

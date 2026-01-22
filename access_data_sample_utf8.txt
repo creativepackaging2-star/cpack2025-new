@@ -1,0 +1,302 @@
+﻿--- Access Quotation Data Sample ---
+--- Row ---
+ID: 1199
+customer: 
+Product: 
+category: 
+Qty: 19000
+Date: 
+size (H): 15
+Size (W): 20
+Gsm: 60
+Rate  - KG: 66
+AMount per sheet: 0.766451612903226
+ups- sheet: 4
+paper qty: 4750
+paper Order: 5000
+Paper Cost: 3832.25806451613
+colour: 1
+printing ups: 2
+printing rate: 250
+printing QTY: 10000
+Printing Amt: 2500
+print Size (H): 0
+Print Size (W): 0
+Aqua RT: 0
+Aqua Amt: 0
+punching Rt: 0
+PUNCHING aMT: 0
+PUNCH: 1500
+PLATE RatE: 300
+PLATE amT: 300
+PASTING RATE: 0
+PASTING AMT: 0
+PAPER Wt: 58.0645161290323
+packing: 309.677419354839
+foil: 0.07
+FOIL AMT: 700
+SUB TOTAL: 14341.935483871
+EXTRA: 5200
+INTEREST: 2
+interest amt: 286.838709677419
+Vat: 0
+vat Amt: 0
+profit: 1609.16516129032
+tatal Amt: 16237.9393548387
+rate -pcs: 0.854628387096774
+paper-pcs: 0.20169779286927
+printing-pcs: 0.131578947368421
+PLATE-PCS: 0.0157894736842105
+COATING-PCS: 0
+PUNCHING-PCS: 0
+PASTING-PCS: 0
+PACKING -PCS: 0.0162988115449915
+EXTRA-PCS: 0.273684210526316
+SUBTOTAL-PCS: 0.754838709677419
+FOIL-PCS: 0.0368421052631579
+PROFIT-PCS: 0.0846929032258064
+INTEREST-PCS: 0.0150967741935484
+VAT-PCS: 0
+punch -pcs: 0.0789473684210526
+
+--- Row ---
+ID: 1198
+customer: 
+Product: 
+category: 
+Qty: 15000
+Date: 
+size (H): 18
+Size (W): 23
+Gsm: 60
+Rate  - KG: 85
+AMount per sheet: 1.3621935483871
+ups- sheet: 6
+paper qty: 2500
+paper Order: 2800
+Paper Cost: 3814.14193548387
+colour: 1
+printing ups: 2
+printing rate: 300
+printing QTY: 5600
+Printing Amt: 1680
+print Size (H): 0
+Print Size (W): 0
+Aqua RT: 0
+Aqua Amt: 0
+punching Rt: 0
+PUNCHING aMT: 0
+PUNCH: 0
+PLATE RatE: 300
+PLATE amT: 300
+PASTING RATE: 80
+PASTING AMT: 1344
+PAPER Wt: 44.8722580645161
+packing: 239.318709677419
+foil: 0
+FOIL AMT: 0
+SUB TOTAL: 9377.46064516129
+EXTRA: 2000
+INTEREST: 2
+interest amt: 187.549212903226
+Vat: 3
+vat Amt: 281.323819354839
+profit: 1083.09670451613
+tatal Amt: 10929.4303819355
+rate -pcs: 0.728628692129032
+paper-pcs: 0.254276129032258
+printing-pcs: 0.112
+PLATE-PCS: 0.02
+COATING-PCS: 0
+PUNCHING-PCS: 0
+PASTING-PCS: 0.0896
+PACKING -PCS: 0.0159545806451613
+EXTRA-PCS: 0.133333333333333
+SUBTOTAL-PCS: 0.625164043010753
+FOIL-PCS: 0
+PROFIT-PCS: 0.0722064469677419
+INTEREST-PCS: 0.0125032808602151
+VAT-PCS: 0.0187549212903226
+punch -pcs: 0
+
+--- Row ---
+ID: 1197
+customer: 
+Product: 
+category: 
+Qty: 7500
+Date: 
+size (H): 15.75
+Size (W): 20.75
+Gsm: 350
+Rate  - KG: 80
+AMount per sheet: 5.90370967741936
+ups- sheet: 4
+paper qty: 1875
+paper Order: 2100
+Paper Cost: 12397.7903225806
+colour: 4
+printing ups: 1
+printing rate: 250
+printing QTY: 2100
+Printing Amt: 2100
+print Size (H): 15.75
+Print Size (W): 20.75
+Aqua RT: 0.002
+Aqua Amt: 1372.6125
+punching Rt: 400
+PUNCHING aMT: 840
+PUNCH: 3500
+PLATE RatE: 300
+PLATE amT: 1200
+PASTING RATE: 100
+PASTING AMT: 840
+PAPER Wt: 154.972379032258
+packing: 826.51935483871
+foil: 0.1
+FOIL AMT: 210
+SUB TOTAL: 32286.9221774194
+EXTRA: 9000
+INTEREST: 3
+interest amt: 968.607665322581
+Vat: 0
+vat Amt: 0
+profit: 3658.10828270161
+tatal Amt: 36913.6381254436
+rate -pcs: 4.92181841672581
+paper-pcs: 1.65303870967742
+printing-pcs: 0.28
+PLATE-PCS: 0.16
+COATING-PCS: 0.183015
+PUNCHING-PCS: 0.112
+PASTING-PCS: 0.112
+PACKING -PCS: 0.110202580645161
+EXTRA-PCS: 1.2
+SUBTOTAL-PCS: 4.30492295698925
+FOIL-PCS: 0.028
+PROFIT-PCS: 0.487747771026882
+INTEREST-PCS: 0.129147688709677
+VAT-PCS: 0
+punch -pcs: 0.466666666666667
+
+--- Row ---
+ID: 1196
+customer: 
+Product: 
+category: 
+Qty: 2000
+Date: 
+size (H): 20
+Size (W): 30
+Gsm: 60
+Rate  - KG: 90
+AMount per sheet: 2.09032258064516
+ups- sheet: 2
+paper qty: 1000
+paper Order: 1200
+Paper Cost: 2508.38709677419
+colour: 1
+printing ups: 2
+printing rate: 300
+printing QTY: 2400
+Printing Amt: 720
+print Size (H): 20
+Print Size (W): 30
+Aqua RT: 0.00015
+Aqua Amt: 216
+punching Rt: 300
+PUNCHING aMT: 720
+PUNCH: 0
+PLATE RatE: 300
+PLATE amT: 300
+PASTING RATE: 0
+PASTING AMT: 0
+PAPER Wt: 27.8709677419355
+packing: 148.645161290323
+foil: 0
+FOIL AMT: 0
+SUB TOTAL: 5613.03225806452
+EXTRA: 1000
+INTEREST: 3
+interest amt: 168.390967741935
+Vat: 0
+vat Amt: 0
+profit: 635.95655483871
+tatal Amt: 6417.37978064516
+rate -pcs: 3.20868989032258
+paper-pcs: 1.2541935483871
+printing-pcs: 0.36
+PLATE-PCS: 0.15
+COATING-PCS: 0.108
+PUNCHING-PCS: 0.36
+PASTING-PCS: 0
+PACKING -PCS: 0.0743225806451613
+EXTRA-PCS: 0.5
+SUBTOTAL-PCS: 2.80651612903226
+FOIL-PCS: 0
+PROFIT-PCS: 0.317978277419355
+INTEREST-PCS: 0.0841954838709677
+VAT-PCS: 0
+punch -pcs: 0
+
+--- Row ---
+ID: 1195
+customer: 
+Product: 
+category: 
+Qty: 2000
+Date: 
+size (H): 15.33
+Size (W): 18
+Gsm: 350
+Rate  - KG: 80
+AMount per sheet: 4.98472258064516
+ups- sheet: 6
+paper qty: 333.333333333333
+paper Order: 550
+Paper Cost: 2741.59741935484
+colour: 4
+printing ups: 1
+printing rate: 750
+printing QTY: 550
+Printing Amt: 1650
+print Size (H): 15.33
+Print Size (W): 18
+Aqua RT: 0.011
+Aqua Amt: 1669.437
+punching Rt: 1850
+PUNCHING aMT: 1017.5
+PUNCH: 5000
+PLATE RatE: 300
+PLATE amT: 1200
+PASTING RATE: 100
+PASTING AMT: 330
+PAPER Wt: 34.2699677419355
+packing: 182.773161290323
+foil: 0.95
+FOIL AMT: 522.5
+SUB TOTAL: 14313.8075806452
+EXTRA: 0
+INTEREST: 0
+interest amt: 0
+Vat: 0
+vat Amt: 0
+profit: 1574.51883387097
+tatal Amt: 15888.3264145161
+rate -pcs: 7.94416320725807
+paper-pcs: 1.37079870967742
+printing-pcs: 0.825
+PLATE-PCS: 0.6
+COATING-PCS: 0.8347185
+PUNCHING-PCS: 0.50875
+PASTING-PCS: 0.165
+PACKING -PCS: 0.0913865806451613
+EXTRA-PCS: 0
+SUBTOTAL-PCS: 7.15690379032258
+FOIL-PCS: 0.26125
+PROFIT-PCS: 0.787259416935484
+INTEREST-PCS: 0
+VAT-PCS: 0
+punch -pcs: 2.5
+
+Success
