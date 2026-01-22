@@ -7,6 +7,7 @@ import { Order, Product } from '@/types';
 import { Loader2, Save, X, FileText, CheckCircle, Truck, User, DollarSign, Settings, Layers, Link as LinkIcon, Edit3, Search, Zap, Palette, MessageCircle, UserCheck, Split } from 'lucide-react';
 import Link from 'next/link';
 import { WhatsAppLogo, PaperwalaWhatsAppLogo, PdfLogo, CdrLogo } from '@/components/FileLogos';
+import { useDataStore } from './DataStoreProvider';
 
 type Props = {
     initialData?: Order | null;
@@ -18,12 +19,19 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     const searchParams = useSearchParams();
     const productId = initialProductId || searchParams.get('product_id');
 
-    const [loading, setLoading] = useState(false);
+    const [loadingProducts, setLoadingProducts] = useState(false);
     const [saving, setSaving] = useState(false);
     const [product, setProduct] = useState<any>(null);
-    const [productList, setProductList] = useState<any[]>([]);
     const [productSearch, setProductSearch] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
+
+    const {
+        products: productList,
+        sizes,
+        printers,
+        paperwalas,
+        loading: storeLoading
+    } = useDataStore();
 
     const [formData, setFormData] = useState<Partial<Order>>(
         initialData || {
@@ -84,13 +92,10 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }
     );
 
-    const [printers, setPrinters] = useState<any[]>([]);
-    const [paperwalas, setPaperwalas] = useState<any[]>([]);
-    const [sizes, setSizes] = useState<any[]>([]);
+    // sizes, printers, paperwalas now come from useDataStore
 
     useEffect(() => {
-        fetchProductList();
-        fetchDropdowns();
+        // No longer need local fetchers, using useDataStore
     }, []);
 
     useEffect(() => {
@@ -105,40 +110,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }
     }, [productId]);
 
-    async function fetchDropdowns() {
-        console.log('Fetching dropdowns...');
-        try {
-            const [pRes, wRes, sRes] = await Promise.all([
-                supabase.from('printers').select('id, name, phone').order('name'),
-                supabase.from('paperwala').select('id, name, phone').order('name'),
-                supabase.from('sizes').select('id, name').order('name')
-            ]);
-
-            console.log('Dropdown Results:', {
-                printers: pRes.data?.length,
-                paperwalas: wRes.data?.length,
-                sizes: sRes.data?.length
-            });
-
-            if (pRes.error) console.error('Printers Fetch Error:', pRes.error);
-            if (wRes.error) console.error('Paperwala Fetch Error:', wRes.error);
-            if (sRes.error) console.error('Sizes Fetch Error:', sRes.error);
-
-            if (pRes.data) setPrinters(pRes.data);
-            if (wRes.data) setPaperwalas(wRes.data);
-            if (sRes.data) setSizes(sRes.data);
-        } catch (err) {
-            console.error('Fatal Error in fetchDropdowns:', err);
-        }
-    }
-
-    async function fetchProductList() {
-        const { data, error } = await supabase
-            .from('products')
-            .select('id, product_name, artwork_code, sku')
-            .order('product_name');
-        if (data) setProductList(data);
-    }
+    // fetchDropdowns and fetchProductList removed (using DataStore)
 
     const filteredProducts = useMemo(() => {
         if (!productSearch) return productList;
@@ -151,7 +123,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     }, [productList, productSearch]);
 
     async function fetchProduct(id: string) {
-        setLoading(true);
+        setLoadingProducts(true);
         console.log('Fetching details for product:', id);
 
         try {
@@ -230,7 +202,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             console.error('Error fetching product details:', err);
             alert(`Error loading product details: ${err.message}`);
         } finally {
-            setLoading(false);
+            setLoadingProducts(false);
         }
     }
 
@@ -500,7 +472,7 @@ Plate No   : ${formData.plate_no || '-'}`;
         </div>
     );
 
-    if (loading) return <div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-indigo-600" /><span className="text-slate-500 font-medium">Fetching Product Details...</span></div>;
+    if (loadingProducts) return <div className="p-20 flex flex-col items-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-indigo-600" /><span className="text-slate-500 font-medium">Fetching Product Details...</span></div>;
 
     return (
         <form onSubmit={handleSubmit} className="max-w-7xl mx-auto mb-20 space-y-4 bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">

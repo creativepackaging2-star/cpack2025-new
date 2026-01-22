@@ -16,7 +16,7 @@ export const PdfLogo = memo(({ className, onClick }: LogoProps) => (
         width={32}
         height={32}
         className={twMerge(
-            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            "w-8 h-8 select-none object-contain transition-transform",
             onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
             className
         )}
@@ -34,7 +34,7 @@ export const CdrLogo = memo(({ className, onClick }: LogoProps) => (
         width={32}
         height={32}
         className={twMerge(
-            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            "w-8 h-8 select-none object-contain transition-transform",
             onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
             className
         )}
@@ -52,7 +52,7 @@ export const WhatsAppLogo = memo(({ className, onClick }: LogoProps) => (
         width={32}
         height={32}
         className={twMerge(
-            "w-8 h-8 select-none object-contain transition-transform will-change-transform",
+            "w-8 h-8 select-none object-contain transition-transform",
             onClick ? "cursor-pointer hover:scale-110 active:scale-95" : "pointer-events-none",
             className
         )}

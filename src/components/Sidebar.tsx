@@ -19,7 +19,6 @@ const navigation = [
 const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
     <Link
         href={item.href}
-        prefetch={false}
         className={twMerge(
             'group flex items-center rounded-xl transition-all duration-200',
             isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
@@ -36,7 +35,7 @@ const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
                 isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
             )}
         />
-        {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap will-change-transform">{item.name}</span>}
+        {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap">{item.name}</span>}
     </Link>
 ));
 NavItem.displayName = 'NavItem';
@@ -98,7 +97,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                             <User className="h-4 w-4 text-indigo-100" />
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-[11px] font-black text-white truncate uppercase tracking-tighter">
+                            <p className="text-[11px] font-semibold text-slate-200 truncate uppercase tracking-tight">
                                 {user?.email?.split('@')[0] || 'Admin'}
                             </p>
                             <p className="text-[8px] text-slate-500 font-normal truncate uppercase tracking-widest"> Authorized </p>

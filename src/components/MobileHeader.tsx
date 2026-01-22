@@ -99,7 +99,7 @@ export function MobileHeader() {
                             <span className="text-xs font-medium">U</span>
                         </div>
                         <div>
-                            <p className="text-[11px] font-black text-white uppercase tracking-tight">
+                            <p className="text-[11px] font-semibold text-slate-200 uppercase tracking-tight">
                                 {user?.email?.split('@')[0] || 'Admin User'}
                             </p>
                             <p className="text-[8px] text-slate-500 font-normal uppercase tracking-widest">Authorized</p>

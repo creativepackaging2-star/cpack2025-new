@@ -8,6 +8,7 @@ import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filte
 import Link from 'next/link';
 import { PdfLogo, CdrLogo } from '@/components/FileLogos';
 import PageHeader from '@/components/PageHeader';
+import { useDataStore } from '@/components/DataStoreProvider';
 
 // Memoized Product Row Component to prevent unnecessary re-renders
 const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
@@ -165,50 +166,17 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
 ProductRow.displayName = 'ProductRow';
 
 export default function ProductsPage() {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
+    const {
+        products,
+        categories,
+        pastings: pastingsMap,
+        loading,
+        refreshData
+    } = useDataStore();
+
     const [searchQuery, setSearchQuery] = useState('');
     const [showArchived, setShowArchived] = useState(false);
-    const debouncedSearch = useDebounce(searchQuery, 300);
-
-    const [categories, setCategories] = useState<Record<number, string>>({});
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [specialEffectsMap, setSpecialEffectsMap] = useState<Record<number, string>>({});
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [pastingsMap, setPastingsMap] = useState<Record<number, string>>({});
-
-    useEffect(() => {
-        fetchResources();
-        fetchProducts();
-    }, []);
-
-    async function fetchResources() {
-        const results = await Promise.allSettled([
-            supabase.from('category').select('id, name'),
-            supabase.from('special_effects').select('id, name'),
-            supabase.from('pasting').select('id, name')
-        ]);
-
-        const [catRes, fxRes, pastRes] = results;
-
-        if (catRes.status === 'fulfilled' && catRes.value.data) {
-            const map: Record<number, string> = {};
-            catRes.value.data.forEach((c: any) => { map[c.id] = c.name; });
-            setCategories(map);
-        }
-
-        if (fxRes.status === 'fulfilled' && fxRes.value.data) {
-            const map: Record<number, string> = {};
-            fxRes.value.data.forEach((fx: any) => { map[fx.id] = fx.name; });
-            setSpecialEffectsMap(map);
-        }
-
-        if (pastRes.status === 'fulfilled' && pastRes.value.data) {
-            const map: Record<number, string> = {};
-            pastRes.value.data.forEach((p: any) => { map[p.id] = p.name; });
-            setPastingsMap(map);
-        }
-    }
 
     // Client-side filtering
     const filteredProducts = products.filter(product => {
@@ -263,7 +231,7 @@ export default function ProductsPage() {
         try {
             const { error } = await supabase.from('products').delete().eq('id', id);
             if (error) throw error;
-            setProducts(prev => prev.filter(p => p.id !== id));
+            await refreshData();
         } catch (error: any) {
             console.error('Error deleting:', error);
             const msg = error.message || 'Unknown error';
@@ -282,7 +250,7 @@ export default function ProductsPage() {
 
                         if (archiveError) throw archiveError;
 
-                        setProducts(prev => prev.map(p => p.id === id ? { ...p, status: 'archived' } : p));
+                        await refreshData();
                         alert(`"${name}" has been archived.`);
                     } catch (archiveError: any) {
                         alert(`Failed to archive product: ${archiveError.message}`);
@@ -300,7 +268,7 @@ export default function ProductsPage() {
                             const { error: deleteError } = await supabase.from('products').delete().eq('id', id);
                             if (deleteError) throw deleteError;
 
-                            setProducts(prev => prev.filter(p => p.id !== id));
+                            await refreshData();
                             alert(`"${name}" has been permanently deleted and unlinked from orders.`);
 
                         } catch (forceError: any) {
@@ -315,25 +283,10 @@ export default function ProductsPage() {
         } finally {
             setDeletingId(null);
         }
-    }, []);
+    }, [refreshData]);
 
     async function fetchProducts() {
-        setLoading(true);
-        try {
-            // Fetch ALL products for client-side filtering
-            const { data, error } = await supabase
-                .from('products')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching products:', error);
-            } else {
-                setProducts(data || []);
-            }
-        } finally {
-            setLoading(false);
-        }
+        await refreshData();
     }
 
     return (

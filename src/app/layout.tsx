@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "../components/AuthProvider";
+import { DataStoreProvider } from "../components/DataStoreProvider";
 
 export default function RootLayout({
   children,
@@ -33,7 +34,9 @@ export default function RootLayout({
         className={`${montserrat.variable} font-sans antialiased`}
       >
         <AuthProvider>
-          <LayoutClient>{children}</LayoutClient>
+          <DataStoreProvider>
+            <LayoutClient>{children}</LayoutClient>
+          </DataStoreProvider>
         </AuthProvider>
       </body>
     </html>
