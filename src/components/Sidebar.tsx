@@ -27,6 +27,7 @@ const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
                 : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
         )}
         title={isCollapsed ? item.name : ""}
+        prefetch={false}
     >
         <item.icon
             className={twMerge(
