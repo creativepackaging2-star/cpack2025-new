@@ -89,7 +89,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             delivery_address: '',
             artwork_pdf: '',
             artwork_cdr: '',
-            die_rate: 0
+
         }
     );
 
@@ -220,12 +220,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     useEffect(() => {
         const qty = parseFloat(String(formData.quantity)) || 0;
         const rate = parseFloat(String(formData.rate)) || 0;
-        const dieRate = parseFloat(String((formData as any).die_rate)) || 0;
+
         const ups = parseFloat(String(product?.ups)) || 1;
         const extra = parseFloat(String(formData.extra)) || 0;
         const paperUps = parseFloat(String(formData.paper_ups)) || 1;
 
-        const value = parseFloat(((qty * rate) + dieRate).toFixed(2));
+        const value = parseFloat(((qty * rate)).toFixed(2));
         const grossPrint = ups > 0 ? Math.ceil(qty / ups) : 0;
         const totalPrint = Math.ceil(grossPrint + extra);
         const paperReq = Math.ceil(totalPrint / paperUps);
@@ -242,7 +242,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             }
             return prev;
         });
-    }, [formData.quantity, formData.rate, formData.extra, formData.paper_ups, (formData as any).die_rate, product?.ups]);
+    }, [formData.quantity, formData.rate, formData.extra, formData.paper_ups, product?.ups]);
 
     const generateBatchNoFromDate = (dateStr: string | null | undefined) => {
         if (!dateStr) return '';
@@ -655,12 +655,9 @@ Plate No   : ${formData.plate_no || '-'}`;
                                 <label className="label">Rate (Basic)</label>
                                 <input type="number" step="0.01" name="rate" value={formData.rate || ''} onChange={handleNumberChange} className="input-field" />
                             </div>
+
                             <div>
-                                <label className="label">Punch Rate (Die)</label>
-                                <input type="number" step="0.01" name="die_rate" value={(formData as any).die_rate || ''} onChange={handleNumberChange} className="input-field border-orange-100 bg-orange-50/10" placeholder="0.00" />
-                            </div>
-                            <div>
-                                <label className="label">Value (Basic + Die)</label>
+                                <label className="label">Value (Qty * Rate)</label>
                                 <input type="number" value={formData.value || 0} readOnly className="input-field bg-slate-50 font-black text-emerald-600" />
                             </div>
 

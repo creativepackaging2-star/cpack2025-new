@@ -453,7 +453,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                 <input type="number" name="aqua_rt" value={formData.aqua_rt} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-slate-400 rounded text-xs outline-none font-bold text-slate-950 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                             </div>
                             <div className="flex flex-col gap-1 bg-amber-50/50 p-1 rounded border border-amber-400">
-                                <label className="text-[9px] font-bold text-amber-900 uppercase">Punch Cost</label>
+                                <label className="text-[9px] font-bold text-amber-900 uppercase">Punch Rate (Die)</label>
                                 <input type="number" name="punch_rate" value={formData.punch_rate} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-amber-300 rounded text-xs outline-none font-bold text-amber-950 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                             </div>
                             <div className="flex flex-col gap-1">
@@ -505,7 +505,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                 <BreakdownRow label="Plate Amt" total={calculations.plateAmt} perPc={calculations.breakdown?.platePcs} />
                                 <BreakdownRow label="Printing Amt" total={calculations.printingAmt} perPc={calculations.breakdown?.printingPcs} />
                                 <BreakdownRow label="Aqua Amt" total={calculations.aquaAmt} perPc={calculations.breakdown?.coatingPcs} />
-                                <BreakdownRow label="Punch Cost" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
+                                <BreakdownRow label="Punch Rate (Die)" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
                                 <BreakdownRow label="Punching Amt" total={calculations.punchingAmt} perPc={calculations.breakdown?.punchingPcs} />
                                 <BreakdownRow label="Pasting Amt" total={calculations.pastingAmt} perPc={calculations.breakdown?.pastingPcs} />
                                 <BreakdownRow label="Foil Amt" total={calculations.foilAmt} perPc={calculations.breakdown?.foilPcs} />
