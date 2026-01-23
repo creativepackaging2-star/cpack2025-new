@@ -46,7 +46,6 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
         aqua_rt: '',
         punch_rate: '',
         punching_rt: '',
-        punch_cost: '',
         plate_rate: '',
         pasting_rate: '',
         foil_pc: '',
@@ -123,7 +122,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
     const calculateAll = () => {
         const {
             qty, size_h, size_w, gsm, rate_kg, ups_sheet, buffer_qty,
-            printing_ups, printing_rate, aqua_rt, punching_rt, punch_cost,
+            printing_ups, printing_rate, aqua_rt, punching_rt,
             plate_rate, pasting_rate, foil_pc, extra_cost, interest_pc,
             profit_pc, colour, packing_rate, print_size_h, print_size_w,
             punch_rate
@@ -152,12 +151,12 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
         const aquaAmt = effectivePrintH * effectivePrintW * printingQty * val(aqua_rt);
 
         const punchingAmt = (printingQty / 1000) * val(punching_rt);
-        const punchRateAmt = (printingQty / 1000) * val(punch_rate);
+        const punchRateAmt = val(punch_rate); // Fixed Die Cost
         const plateAmt = val(plate_rate) * val(colour);
         const pastingAmt = (paperOrderQty * nUps / 1000) * val(pasting_rate);
         const foilAmt = printingQty * val(foil_pc);
 
-        const subtotal = paperCost + packingAmt + printingAmt + aquaAmt + punchingAmt + punchRateAmt + val(punch_cost) + plateAmt + pastingAmt + foilAmt + val(extra_cost);
+        const subtotal = paperCost + packingAmt + printingAmt + aquaAmt + punchingAmt + punchRateAmt + plateAmt + pastingAmt + foilAmt + val(extra_cost);
 
         // Standard Sequential Logic:
         // 1. Interest on Subtotal (Costs)
@@ -184,7 +183,6 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
         const foilPcs = foilAmt / divisorQty;
         const profitPcs = profitAmt / divisorQty;
         const interestPcs = interestAmt / divisorQty;
-        const punchOnlyPcs = val(punch_cost) / divisorQty;
 
         const amountPerSheet = (val(size_h) * val(size_w) * val(gsm) * val(rate_kg)) / 1550000;
         const paperQty = nQty / nUps;
@@ -212,7 +210,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 paperPcs, printingPcs, platePcs, coatingPcs, punchingPcs,
                 punchRatePcs: punchRateAmt / divisorQty,
                 pastingPcs, packingPcs, subtotalPcs, foilPcs, profitPcs,
-                interestPcs, punchOnlyPcs, extraPcs
+                interestPcs, extraPcs
             }
         });
     };
@@ -278,7 +276,6 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 aqua_rt: num(formData.aqua_rt),
                 punch_rate: num(formData.punch_rate),
                 punching_rt: num(formData.punching_rt),
-                punch_cost: num(formData.punch_cost),
                 plate_rate: num(formData.plate_rate),
                 pasting_rate: num(formData.pasting_rate),
                 foil_pc: num(formData.foil_pc),
@@ -298,7 +295,6 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 pasting_pcs: calculations.breakdown?.pastingPcs || 0,
                 foil_pcs: calculations.breakdown?.foilPcs || 0,
                 profit_pcs: calculations.breakdown?.profitPcs || 0,
-                punch_only_pcs: calculations.breakdown?.punchOnlyPcs || 0,
                 interest_pcs: calculations.breakdown?.interestPcs || 0,
                 packing_pcs: calculations.breakdown?.packingPcs || 0,
                 extra_pcs: calculations.breakdown?.extraPcs || 0,
@@ -457,7 +453,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                 <input type="number" name="aqua_rt" value={formData.aqua_rt} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-slate-400 rounded text-xs outline-none font-bold text-slate-950 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                             </div>
                             <div className="flex flex-col gap-1 bg-amber-50/50 p-1 rounded border border-amber-400">
-                                <label className="text-[9px] font-bold text-amber-900 uppercase">Punch Rate</label>
+                                <label className="text-[9px] font-bold text-amber-900 uppercase">Punch Cost</label>
                                 <input type="number" name="punch_rate" value={formData.punch_rate} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-amber-300 rounded text-xs outline-none font-bold text-amber-950 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                             </div>
                             <div className="flex flex-col gap-1">
@@ -509,8 +505,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                 <BreakdownRow label="Plate Amt" total={calculations.plateAmt} perPc={calculations.breakdown?.platePcs} />
                                 <BreakdownRow label="Printing Amt" total={calculations.printingAmt} perPc={calculations.breakdown?.printingPcs} />
                                 <BreakdownRow label="Aqua Amt" total={calculations.aquaAmt} perPc={calculations.breakdown?.coatingPcs} />
-                                <BreakdownRow label="Punch Rate" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
-                                <BreakdownRow label="Punch Cost" total={Number(formData.punch_cost)} perPc={calculations.breakdown?.punchOnlyPcs} />
+                                <BreakdownRow label="Punch Cost" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
                                 <BreakdownRow label="Punching Amt" total={calculations.punchingAmt} perPc={calculations.breakdown?.punchingPcs} />
                                 <BreakdownRow label="Pasting Amt" total={calculations.pastingAmt} perPc={calculations.breakdown?.pastingPcs} />
                                 <BreakdownRow label="Foil Amt" total={calculations.foilAmt} perPc={calculations.breakdown?.foilPcs} />

@@ -225,7 +225,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         const extra = parseFloat(String(formData.extra)) || 0;
         const paperUps = parseFloat(String(formData.paper_ups)) || 1;
 
-        const value = parseFloat((qty * (rate + dieRate)).toFixed(2));
+        const value = parseFloat(((qty * rate) + dieRate).toFixed(2));
         const grossPrint = ups > 0 ? Math.ceil(qty / ups) : 0;
         const totalPrint = Math.ceil(grossPrint + extra);
         const paperReq = Math.ceil(totalPrint / paperUps);
@@ -660,7 +660,7 @@ Plate No   : ${formData.plate_no || '-'}`;
                                 <input type="number" step="0.01" name="die_rate" value={(formData as any).die_rate || ''} onChange={handleNumberChange} className="input-field border-orange-100 bg-orange-50/10" placeholder="0.00" />
                             </div>
                             <div>
-                                <label className="label">Value (QTY X (RATE+DIE))</label>
+                                <label className="label">Value (Basic + Die)</label>
                                 <input type="number" value={formData.value || 0} readOnly className="input-field bg-slate-50 font-black text-emerald-600" />
                             </div>
 
