@@ -502,7 +502,6 @@ Plate No   : ${order.plate_no || '-'}`;
                             <div className="md:col-span-2">
                                 <DetailGroup title="Rates & Costing" items={[
                                     { label: 'Basic Rate', value: `₹${order.rate || 0}` },
-                                    { label: 'Die Rate', value: `₹${order.die_rate || 0}` },
                                     { label: 'Total Qty', value: order.quantity },
                                     { label: 'Total Value', value: `₹${(order.value || 0).toLocaleString()}` },
                                 ]} />

@@ -509,6 +509,8 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                 <BreakdownRow label="Plate Amt" total={calculations.plateAmt} perPc={calculations.breakdown?.platePcs} />
                                 <BreakdownRow label="Printing Amt" total={calculations.printingAmt} perPc={calculations.breakdown?.printingPcs} />
                                 <BreakdownRow label="Aqua Amt" total={calculations.aquaAmt} perPc={calculations.breakdown?.coatingPcs} />
+                                <BreakdownRow label="Punch Rate" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
+                                <BreakdownRow label="Punch Cost" total={Number(formData.punch_cost)} perPc={calculations.breakdown?.punchOnlyPcs} />
                                 <BreakdownRow label="Punching Amt" total={calculations.punchingAmt} perPc={calculations.breakdown?.punchingPcs} />
                                 <BreakdownRow label="Pasting Amt" total={calculations.pastingAmt} perPc={calculations.breakdown?.pastingPcs} />
                                 <BreakdownRow label="Foil Amt" total={calculations.foilAmt} perPc={calculations.breakdown?.foilPcs} />
