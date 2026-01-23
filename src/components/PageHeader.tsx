@@ -14,8 +14,8 @@ export default function PageHeader({ title, icon, showBackButton = false, action
     const router = useRouter();
 
     return (
-        <div className="flex items-center justify-between py-4 px-6 bg-white border-b border-slate-200 mb-6 -mx-4 -mt-6 sm:-mx-6 lg:-mx-8">
-            <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 px-4 md:px-6 bg-white border-b border-slate-200 mb-6 -mx-4 -mt-6 sm:-mx-6 lg:-mx-8 sticky top-0 md:static z-30 shadow-sm md:shadow-none">
+            <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
                 {showBackButton && (
                     <button
                         onClick={() => router.back()}
@@ -25,16 +25,16 @@ export default function PageHeader({ title, icon, showBackButton = false, action
                     </button>
                 )}
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     {icon && <div className="text-indigo-600">{icon}</div>}
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight uppercase">
+                    <h1 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight uppercase">
                         {title}
                     </h1>
                 </div>
             </div>
 
             {actions && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
                     {actions}
                 </div>
             )}
