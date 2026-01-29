@@ -179,36 +179,22 @@ const OrderRow = memo(({
         handleSplitOrder(order);
     };
 
-    const sendToPaperwala = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!order.paperwala_mobile) {
-            alert('No mobile number found for Paperwala.');
-            return;
-        }
-
+    const getPaperwalaUrl = () => {
+        if (!order.paperwala_mobile) return null;
         const gsmDisplay = order.products?.actual_gsm_used || order.gsm_value || '-';
-
         const msg = `*PAPER ORDER*
 Size        : ${order.paper_order_size || '-'}
 Qty         : ${order.paper_order_qty || '-'}
 Paper       : ${order.paper_type_name || '-'}
 GSM         : ${gsmDisplay}
 Delivery At : ${order.printer_name || '-'}`;
-
         const phone = order.paperwala_mobile.replace(/\D/g, '');
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+        return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
     };
 
-    const sendToPrinter = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!order.printer_mobile) {
-            alert('No mobile number found for Printer/Supervisor.');
-            return;
-        }
-
+    const getPrinterUrl = () => {
+        if (!order.printer_mobile) return null;
         const gsmDisplay = order.products?.actual_gsm_used || order.gsm_value || '-';
-
         const msg = `*PRINTING ORDER*
 Product    : ${order.products?.product_name || order.product_name || '-'}
 Print Size : ${order.print_size || '-'}
@@ -218,11 +204,12 @@ GSM        : ${gsmDisplay}
 Code       : ${order.products?.artwork_code || order.artwork_code || '-'}
 Ink        : ${order.ink || '-'}
 Plate No   : ${order.plate_no || '-'}`;
-
         const phone = order.printer_mobile.replace(/\D/g, '');
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+        return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
     };
+
+    const paperwalaUrl = getPaperwalaUrl();
+    const printerUrl = getPrinterUrl();
 
     const generateDoc = (type: string, orderId: number) => {
         if (type === 'COA') {
@@ -277,14 +264,31 @@ Plate No   : ${order.plate_no || '-'}`;
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button onClick={sendToPaperwala} className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold border border-emerald-100 active:scale-95 transition-all">
-                        <PaperwalaWhatsAppLogo className="w-4 h-4" />
-                        PAPER
-                    </button>
-                    <button onClick={sendToPrinter} className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-bold border border-blue-100 active:scale-95 transition-all">
-                        <WhatsAppLogo className="w-4 h-4" />
-                        PRINT
-                    </button>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                        {paperwalaUrl ? (
+                            <a href={paperwalaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold border border-emerald-100 active:scale-95 transition-all" onClick={e => e.stopPropagation()}>
+                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                                PAPER
+                            </a>
+                        ) : (
+                            <button className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 cursor-not-allowed opacity-60" onClick={e => { e.stopPropagation(); alert('No Paperwala mobile number found'); }}>
+                                <PaperwalaWhatsAppLogo className="w-4 h-4 grayscale" />
+                                PAPER
+                            </button>
+                        )}
+
+                        {printerUrl ? (
+                            <a href={printerUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-bold border border-blue-100 active:scale-95 transition-all" onClick={e => e.stopPropagation()}>
+                                <WhatsAppLogo className="w-4 h-4" />
+                                PRINT
+                            </a>
+                        ) : (
+                            <button className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 cursor-not-allowed opacity-60" onClick={e => { e.stopPropagation(); alert('No Printer mobile number found'); }}>
+                                <WhatsAppLogo className="w-4 h-4 grayscale" />
+                                PRINT
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3 text-[11px] font-medium text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
@@ -423,12 +427,25 @@ Plate No   : ${order.plate_no || '-'}`;
                 <td className="px-3 py-1 text-center">
                     <div className="flex flex-col items-center gap-1.5 min-w-[140px]">
                         <div className="flex items-center justify-center gap-2">
-                            <button onClick={sendToPrinter} aria-label="Send to Printer" title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
-                                <WhatsAppLogo className="w-4 h-4" />
-                            </button>
-                            <button onClick={sendToPaperwala} aria-label="Send to Paperwala" title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
-                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
-                            </button>
+                            {printerUrl ? (
+                                <a href={printerUrl} target="_blank" rel="noopener noreferrer" aria-label="Send to Printer" title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors" onClick={e => e.stopPropagation()}>
+                                    <WhatsAppLogo className="w-4 h-4" />
+                                </a>
+                            ) : (
+                                <button aria-label="No Printer Mobile" title="No Printer Mobile Number" className="p-0.5 opacity-30 cursor-not-allowed grayscale" onClick={e => e.stopPropagation()}>
+                                    <WhatsAppLogo className="w-4 h-4" />
+                                </button>
+                            )}
+
+                            {paperwalaUrl ? (
+                                <a href={paperwalaUrl} target="_blank" rel="noopener noreferrer" aria-label="Send to Paperwala" title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors" onClick={e => e.stopPropagation()}>
+                                    <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                                </a>
+                            ) : (
+                                <button aria-label="No Paperwala Mobile" title="No Paperwala Mobile Number" className="p-0.5 opacity-30 cursor-not-allowed grayscale" onClick={e => e.stopPropagation()}>
+                                    <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                                </button>
+                            )}
                             {order.artwork_pdf && (
                                 <a href={order.artwork_pdf} aria-label="View PDF Artwork" target="_blank" rel="noopener noreferrer" title="View PDF">
                                     <PdfLogo className="w-4 h-4" />

@@ -74,7 +74,7 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
 
             {/* 3. Specs */}
             <td className="px-6 py-2">
-                <div className="text-sm text-slate-600 whitespace-pre-wrap">
+                <div className="text-sm text-slate-600 whitespace-pre-wrap line-clamp-6" title={product.specs || ''}>
                     {product.specs || '-'}
                 </div>
                 {/* Dimensions as subtitle if needed, or if not in specs already */}
