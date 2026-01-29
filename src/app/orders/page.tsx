@@ -599,6 +599,7 @@ export default function OrdersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearchTerm = useDeferredValue(searchTerm);
     const [isPending, startTransition] = useTransition();
+    const [isToggling, startToggleTransition] = useTransition();
 
     // Pagination State
     const [page, setPage] = useState(1);
@@ -893,7 +894,9 @@ export default function OrdersPage() {
     }, [orders]);
 
     const toggleRow = useCallback((id: number) => {
-        setExpandedOrderId(prev => prev === id ? null : id);
+        startToggleTransition(() => {
+            setExpandedOrderId(prev => prev === id ? null : id);
+        });
     }, []);
 
     const sortedOrders = useMemo(() => {
