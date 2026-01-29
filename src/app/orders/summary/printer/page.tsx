@@ -35,7 +35,10 @@ function PrinterSummaryContent() {
                     products (
                         product_name,
                         artwork_code,
-                        actual_gsm_used
+                        actual_gsm_used,
+                        gsm ( name ),
+                        sizes ( name ),
+                        dimension
                     )
                 `);
 
@@ -103,9 +106,16 @@ function PrinterSummaryContent() {
         message += `--------------------------------\n`;
 
         filteredOrders.forEach((o, i) => {
-            const gsmDisplay = o.products?.actual_gsm_used || o.gsm_value || '-';
-            message += `${i + 1}. *${o.products?.product_name || o.product_name}*\n`;
-            message += `   Size: ${o.print_size || '-'} | Qty: *${(o.total_print_qty || 0).toLocaleString()}*\n`;
+            const product = o.products;
+            // GSM Logic: Actual (Product) -> GSM Master (Product) -> Snapshot (Order) -> '-'
+            const gsmDisplay = product?.actual_gsm_used || product?.gsm?.name || o.gsm_value || '-';
+
+            // Size Logic: Snapshot (Order) -> Size Master (Product) -> Dimension (Product) -> '-'
+            // Using Order Snapshot first for Size because sometimes order size is custom, but falling back to Product if blank.
+            const sizeDisplay = o.print_size || product?.sizes?.name || product?.dimension || '-';
+
+            message += `${i + 1}. *${product?.product_name || o.product_name}*\n`;
+            message += `   Size: ${sizeDisplay} | Qty: *${(o.total_print_qty || 0).toLocaleString()}*\n`;
             message += `   Paper: ${o.paper_type_name || '-'} (${gsmDisplay} GSM)\n`;
             message += `   Plate: ${o.plate_no || '-'} | Ink: ${o.ink || '-'}\n`;
             message += `--------------------------------\n`;
@@ -290,9 +300,15 @@ function PrinterSummaryContent() {
                                     <div style={{ color: '#0f172a', fontWeight: 700 }} className="leading-tight">{order.products?.product_name || order.product_name}</div>
                                     <div style={{ color: '#94a3b8', fontSize: '9px' }} className="uppercase mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                 </td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">
+                                    {/* GSM: Actual (Prod) -> GSM (Prod) -> Snapshot -> '-' */}
+                                    {order.products?.actual_gsm_used || order.products?.gsm?.name || order.gsm_value || '-'}
+                                </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px]">{order.paper_type_name || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#1e293b', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center">{order.print_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#1e293b', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center">
+                                    {/* Size: Snapshot -> Size (Prod) -> Dim (Prod) -> '-' */}
+                                    {order.print_size || order.products?.sizes?.name || order.products?.dimension || '-'}
+                                </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#047857', fontWeight: 900, padding: '4px 2px' }} className="text-[10px] text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#475569', padding: '4px 2px' }} className="text-[9px] leading-tight max-w-[150px]">{order.ink || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#dc2626', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center whitespace-nowrap">{order.plate_no || '-'}</td>

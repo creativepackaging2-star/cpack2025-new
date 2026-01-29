@@ -55,6 +55,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                             <th className="px-3 py-3 text-left w-[40px]">
                                 <input
                                     type="checkbox"
+                                    aria-label="Select all orders in this group"
                                     checked={catOrders.every((o: any) => selectedIds.includes(o.id))}
                                     onChange={() => selectAll(catOrders.map((o: any) => o.id))}
                                     className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -245,6 +246,7 @@ Plate No   : ${order.plate_no || '-'}`;
                     <div className="mr-3 pt-0.5" onClick={e => e.stopPropagation()}>
                         <input
                             type="checkbox"
+                            aria-label={`Select order ${order.order_id}`}
                             checked={selected}
                             onChange={() => toggleSelect(order.id)}
                             className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -296,6 +298,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
                             className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border transition-colors ${order.automation === 'PAPER_ENTRY_DONE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 cursor-not-allowed' : 'bg-amber-50 text-amber-700 border-amber-100 active:bg-amber-100'}`}
                             disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
+                            aria-label={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry Done" : "Log Paper Entry"}
                         >
                             {order.automation === 'PAPER_ENTRY_DONE' ? <CheckCircle className="w-3 h-3" /> : <Database className="w-3 h-3" />}
                             {order.automation === 'PAPER_ENTRY_DONE' ? 'Entry Done' : 'Log Paper'}
@@ -317,6 +320,7 @@ Plate No   : ${order.plate_no || '-'}`;
                         {(!order.status || order.status !== 'Complete') && (
                             <button
                                 onClick={onCompleteClick}
+                                aria-label="Mark as Complete"
                                 className={`p-1.5 rounded-full border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100'}`}
                             >
                                 {confirming ? <CheckCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -324,12 +328,13 @@ Plate No   : ${order.plate_no || '-'}`;
                         )}
                         <button
                             onClick={handleSplit}
+                            aria-label="Split Order"
                             className="p-1.5 text-amber-600 bg-amber-50 rounded-full border border-amber-100"
                             title="Split Lot"
                         >
                             <Split className="w-4 h-4" />
                         </button>
-                        <Link href={`/orders/${order.id}`} className="p-1.5 text-slate-400 border border-slate-100 rounded-full">
+                        <Link href={`/orders/${order.id}`} aria-label="Edit Order" className="p-1.5 text-slate-400 border border-slate-100 rounded-full">
                             <Edit className="w-4 h-4" />
                         </Link>
                     </div>
@@ -356,6 +361,7 @@ Plate No   : ${order.plate_no || '-'}`;
                 <td className="px-3 py-2 text-center" onClick={e => e.stopPropagation()}>
                     <input
                         type="checkbox"
+                        aria-label={`Select order ${order.order_id}`}
                         checked={selected}
                         onChange={() => toggleSelect(order.id)}
                         className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -401,7 +407,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             >
                                 {PROCESS_OPTIONS.map((s: string) => <option key={s} value={s}>{s}</option>)}
                             </select>
-                            <button onClick={() => handleQuickUpdate(order.id)} className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"><Save className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => handleQuickUpdate(order.id)} aria-label="Save Progress" className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"><Save className="w-3.5 h-3.5" /></button>
                         </div>
                     ) : (
                         <button
@@ -417,19 +423,19 @@ Plate No   : ${order.plate_no || '-'}`;
                 <td className="px-3 py-1 text-center">
                     <div className="flex flex-col items-center gap-1.5 min-w-[140px]">
                         <div className="flex items-center justify-center gap-2">
-                            <button onClick={sendToPrinter} title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
+                            <button onClick={sendToPrinter} aria-label="Send to Printer" title="Send to Printer via WhatsApp" className="p-0.5 hover:bg-blue-50 rounded-full transition-colors">
                                 <WhatsAppLogo className="w-4 h-4" />
                             </button>
-                            <button onClick={sendToPaperwala} title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
+                            <button onClick={sendToPaperwala} aria-label="Send to Paperwala" title="Send to Paperwala via WhatsApp" className="p-0.5 hover:bg-emerald-50 rounded-full transition-colors">
                                 <PaperwalaWhatsAppLogo className="w-4 h-4" />
                             </button>
                             {order.artwork_pdf && (
-                                <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="View PDF">
+                                <a href={order.artwork_pdf} aria-label="View PDF Artwork" target="_blank" rel="noopener noreferrer" title="View PDF">
                                     <PdfLogo className="w-4 h-4" />
                                 </a>
                             )}
                             {order.artwork_cdr && (
-                                <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="View CDR">
+                                <a href={order.artwork_cdr} aria-label="Download CDR Artwork" target="_blank" rel="noopener noreferrer" title="View CDR">
                                     <CdrLogo className="w-4 h-4" />
                                 </a>
                             )}
@@ -438,6 +444,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             <button
                                 onClick={(e) => { e.stopPropagation(); handlePaperEntry(order); }}
                                 disabled={isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE'}
+                                aria-label={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry Done" : "Log Paper Entry"}
                                 title={order.automation === 'PAPER_ENTRY_DONE' ? "Paper Entry already recorded" : "Run Paper Entry (IN/OUT)"}
                                 className={`p-0.5 rounded-full transition-colors ${isUpdating === order.id || order.automation === 'PAPER_ENTRY_DONE' ? 'cursor-not-allowed' : 'hover:bg-amber-50'}`}
                             >
@@ -446,15 +453,16 @@ Plate No   : ${order.plate_no || '-'}`;
                             <Link
                                 href={`/orders/${order.id}/coa`}
                                 target="_blank"
+                                aria-label="Generate COA"
                                 title="Generate COA"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <FileText className="w-4 h-4 text-indigo-400 hover:text-indigo-600" />
                             </Link>
-                            <button onClick={() => generateDoc('Delivery Label', order.id)} title="Generate Delivery Label">
+                            <button onClick={() => generateDoc('Delivery Label', order.id)} aria-label="Generate Delivery Label" title="Generate Delivery Label">
                                 <Truck className="w-4 h-4 text-amber-400 hover:text-amber-600" />
                             </button>
-                            <button onClick={() => generateDoc('Shade Card', order.id)} title="Generate Shade Card">
+                            <button onClick={() => generateDoc('Shade Card', order.id)} aria-label="Generate Shade Card" title="Generate Shade Card">
                                 <Palette className="w-4 h-4 text-rose-400 hover:text-rose-600" />
                             </button>
                         </div>
@@ -467,6 +475,7 @@ Plate No   : ${order.plate_no || '-'}`;
                             <button
                                 onClick={onCompleteClick}
                                 disabled={isUpdating}
+                                aria-label="Mark as Complete"
                                 className={`p-1 rounded-full transition-all border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100 hover:bg-emerald-50'} ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                 title={confirming ? 'Click again to confirm complete' : 'Mark as Complete'}
                             >
@@ -476,12 +485,13 @@ Plate No   : ${order.plate_no || '-'}`;
                         <button
                             onClick={handleSplit}
                             disabled={isUpdating}
+                            aria-label="Split Order"
                             className="p-1 text-amber-500 hover:bg-amber-50 rounded-full transition-colors border border-amber-100"
                             title="Split for Partial Delivery"
                         >
                             <Split className="w-3 h-3" />
                         </button>
-                        <Link href={`/orders/${order.id}`} className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
+                        <Link href={`/orders/${order.id}`} aria-label="Edit Order Details" className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
                             <Edit className="w-3 h-3" />
                         </Link>
                     </div>

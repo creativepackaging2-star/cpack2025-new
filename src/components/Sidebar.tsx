@@ -20,14 +20,13 @@ const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
     <Link
         href={item.href}
         className={twMerge(
-            'group flex items-center rounded-xl transition-all duration-200',
+            'group flex items-center rounded-xl transition-colors duration-200',
             isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
             isActive
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                 : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
         )}
         title={isCollapsed ? item.name : ""}
-        prefetch={false}
     >
         <item.icon
             className={twMerge(

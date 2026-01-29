@@ -787,12 +787,12 @@ Plate No   : ${formData.plate_no || '-'}`;
                                     { label: 'Artwork', name: 'artwork_code' }
                                 ].map(f => (
                                     <div key={f.name} className="col-span-1">
-                                        <label className="text-[8px] font-black text-slate-400 uppercase">{f.label}</label>
+                                        <label className="text-[8px] font-black text-slate-500 uppercase">{f.label}</label>
                                         <input name={f.name} value={(formData as any)[f.name] || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium focus:ring-1 focus:ring-indigo-500 outline-none" />
                                     </div>
                                 ))}
                                 <div className="col-span-2">
-                                    <label className="text-[8px] font-black text-slate-400 uppercase">Special Effects</label>
+                                    <label className="text-[8px] font-black text-slate-500 uppercase">Special Effects</label>
                                     <input name="special_effects" value={formData.special_effects || ''} onChange={handleChange} className="w-full bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] uppercase font-medium" />
                                 </div>
                             </div>
