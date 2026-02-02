@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo, Fragment, useTransition, useDeferredValue, memo, useCallback } from 'react';
+import { useEffect, useState, useMemo, Fragment, useTransition, useDeferredValue, memo, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
 import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer, ShoppingCart } from 'lucide-react';
@@ -585,6 +586,20 @@ Plate No   : ${order.plate_no || '-'}`;
 OrderRow.displayName = 'OrderRow';
 
 export default function OrdersPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            </div>
+        }>
+            <OrdersList />
+        </Suspense>
+    );
+}
+
+function OrdersList() {
+    const searchParams = useSearchParams();
+    const q = searchParams.get('q');
 
     // Data State
     const [orders, setOrders] = useState<any[]>([]);
@@ -596,7 +611,7 @@ export default function OrdersPage() {
     // View State
     const [showCompleted, setShowCompleted] = useState(false);
     const [groupByCategory, setGroupByCategory] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(q || '');
     const deferredSearchTerm = useDeferredValue(searchTerm);
     const [isPending, startTransition] = useTransition();
     const [isToggling, startToggleTransition] = useTransition();
@@ -1021,6 +1036,15 @@ export default function OrdersPage() {
                                 >
                                     <Palette className="w-3.5 h-3.5" />
                                     <span className="hidden md:inline ml-1.5 text-[13px] font-bold">Punching</span>
+                                </Link>
+                                <div className="w-[1px] h-3 bg-slate-700 mx-0.5"></div>
+                                <Link
+                                    href="/production"
+                                    title="Production Board"
+                                    className="flex items-center justify-center w-8 h-7 md:w-auto md:h-auto md:px-3 md:py-1 text-amber-100 bg-amber-600 hover:bg-amber-500 rounded transition-all shadow-sm"
+                                >
+                                    <Database className="w-3.5 h-3.5" />
+                                    <span className="hidden md:inline ml-1.5 text-[13px] font-bold uppercase tracking-tight">Production Board</span>
                                 </Link>
                             </div>
 

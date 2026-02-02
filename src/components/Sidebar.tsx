@@ -12,6 +12,7 @@ const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
+    { name: 'Production', href: '/production', icon: LayoutDashboard },
     { name: 'Quotations', href: '/quotations', icon: FileText },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },
 ];
@@ -76,14 +77,22 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
             <div className="px-3 py-6">
                 <nav className="space-y-2">
-                    {navigation.map((item) => (
-                        <NavItem
-                            key={item.name}
-                            item={item}
-                            isActive={pathname === item.href}
-                            isCollapsed={isCollapsed}
-                        />
-                    ))}
+                    {navigation.map((item) => {
+                        const isActive = pathname === item.href || (
+                            item.href !== '/' &&
+                            pathname.startsWith(item.href + '/') &&
+                            !navigation.some(nav => nav.href !== item.href && nav.href.startsWith(item.href) && pathname.startsWith(nav.href))
+                        );
+
+                        return (
+                            <NavItem
+                                key={item.name}
+                                item={item}
+                                isActive={isActive}
+                                isCollapsed={isCollapsed}
+                            />
+                        );
+                    })}
                 </nav>
             </div>
 
