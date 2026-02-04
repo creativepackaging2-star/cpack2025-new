@@ -7,7 +7,7 @@ import {
     Loader2, Save, X, FileText, CheckCircle, Truck, User,
     DollarSign, Settings, Layers, Link as LinkIcon, Edit3,
     Search, Palette, MessageCircle, UserCheck, Split, Printer,
-    Zap, Share2, Image as ImageIcon, Briefcase, Ruler
+    Zap, Share2, Image as ImageIcon, Briefcase, Ruler, Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { WhatsAppLogo, PaperwalaWhatsAppLogo, PdfLogo, CdrLogo } from '@/components/FileLogos';
@@ -85,11 +85,56 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     const [productSearch, setProductSearch] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
 
-    const { products: productList, sizes, printers, paperwalas, loading: storeLoading } = useDataStore();
+    const { products: productList, sizes, printers, paperwalas, loading: storeLoading, refreshData } = useDataStore();
 
     const [formData, setFormData] = useState<Partial<Order>>(
         initialData || { ...DEFAULT_ORDER, product_id: productId || '' }
     );
+
+    // --- New Data Handlers ---
+    const handleAddSize = async () => {
+        const name = window.prompt("Enter New Paper Size (e.g., 20x30):");
+        if (!name) return;
+        setSaving(true);
+        try {
+            const { data, error } = await supabase.from('sizes').insert([{ name }]).select().single();
+            if (error) throw error;
+            await refreshData();
+            if (data) {
+                setFormData(prev => ({ ...prev, paper_order_size_id: data.id, paper_order_size: data.name }));
+            }
+        } catch (err: any) { alert(err.message); } finally { setSaving(false); }
+    };
+
+    const handleAddPrinter = async () => {
+        const name = window.prompt("Enter New Printer Name:");
+        if (!name) return;
+        const phone = window.prompt("Enter Printer Phone (optional):") || '';
+        setSaving(true);
+        try {
+            const { data, error } = await supabase.from('printers').insert([{ name, phone }]).select().single();
+            if (error) throw error;
+            await refreshData();
+            if (data) {
+                setFormData(prev => ({ ...prev, printer_id: data.id, printer_name: data.name, printer_mobile: data.phone }));
+            }
+        } catch (err: any) { alert(err.message); } finally { setSaving(false); }
+    };
+
+    const handleAddPaperwala = async () => {
+        const name = window.prompt("Enter New Paperwala Name:");
+        if (!name) return;
+        const phone = window.prompt("Enter Paperwala Phone (optional):") || '';
+        setSaving(true);
+        try {
+            const { data, error } = await supabase.from('paperwala').insert([{ name, phone }]).select().single();
+            if (error) throw error;
+            await refreshData();
+            if (data) {
+                setFormData(prev => ({ ...prev, paperwala_id: data.id, paperwala_name: data.name, paperwala_mobile: data.phone }));
+            }
+        } catch (err: any) { alert(err.message); } finally { setSaving(false); }
+    };
 
     useEffect(() => {
         if (!initialData && !formData.order_id) {
@@ -203,6 +248,16 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         if (name === 'delivery_date') {
             const newBatch = calculateBatchNo(formData.product_name || '', formData.category_name || '', value);
             setFormData(prev => ({ ...prev, [name]: value, batch_no: newBatch || prev.batch_no }));
+        } else if (name === 'delivery_address') {
+            // "Halol" logic: Auto-select Printer invoicing if Halol is detected and wasn't previously
+            const hasHalol = value.toLowerCase().includes('halol');
+            const hadHalol = formData.delivery_address?.toLowerCase().includes('halol');
+
+            if (hasHalol && !hadHalol) {
+                setFormData(prev => ({ ...prev, [name]: value, from_our_company: 'Printers' }));
+            } else {
+                setFormData(prev => ({ ...prev, [name]: value }));
+            }
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -423,13 +478,16 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         {/* Logistics Line 1 */}
                         <div>
                             <label className="label">Paper Size</label>
-                            <select name="paper_order_size_id" className="input-field text-xs" value={formData.paper_order_size_id || ''} onChange={(e) => {
-                                const m = sizes.find(s => s.id === parseInt(e.target.value));
-                                setFormData(prev => ({ ...prev, paper_order_size_id: m?.id || null, paper_order_size: m?.name || '' }));
-                            }}>
-                                <option value="">Select...</option>
-                                {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
+                            <div className="flex gap-1">
+                                <select name="paper_order_size_id" className="input-field text-xs flex-1" value={formData.paper_order_size_id || ''} onChange={(e) => {
+                                    const m = sizes.find(s => s.id === parseInt(e.target.value));
+                                    setFormData(prev => ({ ...prev, paper_order_size_id: m?.id || null, paper_order_size: m?.name || '' }));
+                                }}>
+                                    <option value="">Select...</option>
+                                    {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                                <button type="button" onClick={handleAddSize} className="bg-slate-200 hover:bg-slate-300 rounded px-1 min-h-[1.5rem] flex items-center justify-center -mt-1"><Plus className="w-3 h-3 text-slate-700" /></button>
+                            </div>
                         </div>
                         <div>
                             <label className="label">Paper UPS</label>
@@ -447,13 +505,16 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         {/* Printer Line */}
                         <div>
                             <label className="label">Printer</label>
-                            <select name="printer_id" className="input-field text-xs" value={formData.printer_id || ''} onChange={(e) => {
-                                const m = printers.find(p => p.id === parseInt(e.target.value));
-                                setFormData(prev => ({ ...prev, printer_id: m?.id || null, printer_name: m?.name || '', printer_mobile: m?.phone || '' }));
-                            }}>
-                                <option value="">Select...</option>
-                                {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
+                            <div className="flex gap-1">
+                                <select name="printer_id" className="input-field text-xs flex-1" value={formData.printer_id || ''} onChange={(e) => {
+                                    const m = printers.find(p => p.id === parseInt(e.target.value));
+                                    setFormData(prev => ({ ...prev, printer_id: m?.id || null, printer_name: m?.name || '', printer_mobile: m?.phone || '' }));
+                                }}>
+                                    <option value="">Select...</option>
+                                    {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                <button type="button" onClick={handleAddPrinter} className="bg-slate-200 hover:bg-slate-300 rounded px-1 min-h-[1.5rem] flex items-center justify-center -mt-1"><Plus className="w-3 h-3 text-slate-700" /></button>
+                            </div>
                         </div>
                         <div>
                             <label className="label">Printer Phone</label>
@@ -461,13 +522,16 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         </div>
                         <div>
                             <label className="label">Paperwala</label>
-                            <select name="paperwala_id" className="input-field text-xs" value={formData.paperwala_id || ''} onChange={(e) => {
-                                const m = paperwalas.find(p => p.id === parseInt(e.target.value));
-                                setFormData(prev => ({ ...prev, paperwala_id: m?.id || null, paperwala_name: m?.name || '', paperwala_mobile: m?.phone || '' }));
-                            }}>
-                                <option value="">Select...</option>
-                                {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
+                            <div className="flex gap-1">
+                                <select name="paperwala_id" className="input-field text-xs flex-1" value={formData.paperwala_id || ''} onChange={(e) => {
+                                    const m = paperwalas.find(p => p.id === parseInt(e.target.value));
+                                    setFormData(prev => ({ ...prev, paperwala_id: m?.id || null, paperwala_name: m?.name || '', paperwala_mobile: m?.phone || '' }));
+                                }}>
+                                    <option value="">Select...</option>
+                                    {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                <button type="button" onClick={handleAddPaperwala} className="bg-slate-200 hover:bg-slate-300 rounded px-1 min-h-[1.5rem] flex items-center justify-center -mt-1"><Plus className="w-3 h-3 text-slate-700" /></button>
+                            </div>
                         </div>
                         <div>
                             <label className="label">Paperwala Phone</label>
