@@ -176,6 +176,14 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         }));
     }, [formData.quantity, formData.rate, formData.extra, formData.paper_ups, product?.ups]);
 
+    // Auto-set invoicing unit based on delivery address
+    useEffect(() => {
+        const address = formData.delivery_address || '';
+        if (address.toLowerCase().includes('halol') && formData.from_our_company !== 'Printers') {
+            setFormData(prev => ({ ...prev, from_our_company: 'Printers' }));
+        }
+    }, [formData.delivery_address]);
+
     const generateBatchNoFromDate = useCallback((dateStr: string | null | undefined) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
