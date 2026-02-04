@@ -495,7 +495,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 {/* 5. Delivery & Production Tools */}
                 <div className="lg:col-span-2 bg-slate-50 border border-slate-100 p-2 rounded-xl">
                     <SectionHeader icon={Truck} title="Delivery & Dispatch" />
-                    <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="grid grid-cols-4 gap-2 mb-3">
                         <div>
                             <label className="label">Ready Date</label>
                             <input name="ready_date" type="date" className="input-field" value={formData.ready_date || ''} onChange={handleChange} />
@@ -503,6 +503,19 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         <div>
                             <label className="label">Delivery Date</label>
                             <input name="delivery_date" type="date" className="input-field" value={formData.delivery_date || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="label">Max Del</label>
+                            <div className="input-field text-xs text-center flex items-center justify-center font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: 'white' }}>
+                                {(() => {
+                                    const n = Number(formData.quantity) || 0;
+                                    let max = 0;
+                                    if (n <= 5000) max = Math.ceil(n * 1.20);
+                                    else if (n <= 10000) max = Math.ceil(n * 1.17);
+                                    else max = Math.ceil(n * 1.15);
+                                    return max.toLocaleString();
+                                })()}
+                            </div>
                         </div>
                         <div>
                             <label className="label">Qty Delivered</label>
