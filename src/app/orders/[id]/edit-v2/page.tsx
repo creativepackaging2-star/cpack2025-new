@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
-import OrderForm from '@/components/OrderForm';
+import OrderFormV2 from '@/components/OrderFormV2';
 import { Order } from '@/types';
 import { Loader2 } from 'lucide-react';
 
-export default function EditOrderPage() {
+export default function EditOrderV2Page() {
     const params = useParams();
     const id = params.id as string;
     const [order, setOrder] = useState<Order | null>(null);
@@ -36,8 +36,8 @@ export default function EditOrderPage() {
     if (!order) return <div className="p-10 text-center text-slate-500">Order not found.</div>;
 
     return (
-        <div className="py-2">
-            <OrderForm initialData={order} productId={order.product_id} />
+        <div className="py-6">
+            <OrderFormV2 initialData={order} productId={order.product_id} />
         </div>
     );
 }

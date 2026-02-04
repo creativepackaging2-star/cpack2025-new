@@ -74,7 +74,7 @@ const DEFAULT_ORDER: Partial<Order> = {
     artwork_cdr: '',
 };
 
-export default function OrderForm({ initialData, productId: initialProductId }: Props) {
+export default function OrderFormV2({ initialData, productId: initialProductId }: Props) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const productId = initialProductId || searchParams.get('product_id');
