@@ -235,7 +235,7 @@ export default function OfflineOrdersPage() {
                                                 <div className="flex items-center gap-3 shrink-0">
                                                     <Link
                                                         href={`/orders?q=${encodeURIComponent(order.order_id || '')}`}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-lg transition-all shadow-sm group/btn"
+                                                        className="flex items-center gap-2 px-4 py-2 bg-black/70 hover:bg-indigo-600 text-white rounded-lg transition-all shadow-sm group/btn"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <span className="text-[11px] font-bold uppercase tracking-widest hidden md:inline">View Order</span>
