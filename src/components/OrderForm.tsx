@@ -212,6 +212,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             ]);
             setProduct(prod);
             if (!initialData) {
+                const address = addr.data?.name || '';
                 setFormData(prev => ({
                     ...prev,
                     product_id: prod.id,
@@ -221,7 +222,8 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                     gsm_value: gsm.data?.name || '',
                     print_size: sz.data?.name || '',
                     customer_name: cust.data?.name || '',
-                    delivery_address: addr.data?.name || '',
+                    delivery_address: address,
+                    from_our_company: address.toLowerCase().includes('halol') ? 'Printers' : 'Packaging',
                     ups: prod.ups || null,
                     rate: prod.last_rate || 0,
                     artwork_code: prod.artwork_code || '',
