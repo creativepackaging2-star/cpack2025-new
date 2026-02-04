@@ -59,6 +59,7 @@ const DEFAULT_ORDER: Partial<Order> = {
     customer_name: '',
     paper_type_name: '',
     gsm_value: '',
+    actual_gsm_used: '',
     print_size: '',
     dimension: '',
     ink: '',
@@ -228,6 +229,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                     category_name: cat.data?.name || '',
                     paper_type_name: paper.data?.name || '',
                     gsm_value: gsm.data?.name || '',
+                    actual_gsm_used: prod.actual_gsm_used || '',
                     print_size: sz.data?.name || '',
                     customer_name: cust.data?.name || '',
                     delivery_address: address,
@@ -313,7 +315,8 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
     // --- External Actions ---
     const sendToPaperwala = () => {
         if (!formData.paperwala_mobile) { alert('No mobile number for Paperwala.'); return; }
-        const msg = `*PAPER ORDER*\nSize: ${formData.paper_order_size || '-'}\nQty: ${formData.paper_order_qty || '-'}\nPaper: ${formData.paper_type_name || '-'}\nGSM: ${formData.gsm_value || '-'}\nDelivery At: ${formData.printer_name || '-'}`;
+        const gsmToUse = formData.actual_gsm_used || formData.gsm_value || '-';
+        const msg = `*PAPER ORDER*\nSize: ${formData.paper_order_size || '-'}\nQty: ${formData.paper_order_qty || '-'}\nPaper: ${formData.paper_type_name || '-'}\nGSM: ${gsmToUse}\nDelivery At: ${formData.printer_name || '-'}`;
         window.open(`https://wa.me/${formData.paperwala_mobile.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 

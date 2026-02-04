@@ -79,6 +79,7 @@ export type Order = {
     customer_name: string | null
     paper_type_name: string | null
     gsm_value: string | null
+    actual_gsm_used: string | null
     print_size: string | null
     dimension: string | null
     // Added fields
