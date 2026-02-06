@@ -597,14 +597,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         <div>
                             <label className="label">Max Del</label>
                             <div className="input-field text-xs text-center flex items-center justify-center font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: 'white' }}>
-                                {(() => {
-                                    const n = Number(formData.quantity) || 0;
-                                    let max = 0;
-                                    if (n <= 5000) max = Math.ceil(n * 1.20);
-                                    else if (n <= 10000) max = Math.ceil(n * 1.17);
-                                    else max = Math.ceil(n * 1.15);
-                                    return max.toLocaleString();
-                                })()}
+                                {(formData.max_del_qty || 0).toLocaleString()}
                             </div>
                         </div>
                         <div>
