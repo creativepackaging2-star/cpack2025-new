@@ -103,6 +103,7 @@ export type Order = {
     ups: number | null
     parent_id?: number | null
     die_rate?: number | null
+    max_del_qty?: number | null
     products?: Partial<Product> | null
     created_at: string
     updated_at: string

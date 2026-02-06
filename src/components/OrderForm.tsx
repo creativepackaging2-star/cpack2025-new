@@ -38,6 +38,7 @@ const DEFAULT_ORDER: Partial<Order> = {
     paper_ups: 1,
     total_print_qty: 0,
     extra: 0,
+    max_del_qty: 0,
     paper_order_size: '',
     paper_order_size_id: null,
     paper_required: 0,
@@ -163,14 +164,22 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         const extra = parseFloat(String(formData.extra)) || 0;
         const paperUps = parseFloat(String(formData.paper_ups)) || 1;
 
+        // Auto-calculate max_del_qty based on quantity
+        let maxDelQty = 0;
+        if (qty <= 5000) maxDelQty = Math.ceil(qty * 1.20);
+        else if (qty <= 10000) maxDelQty = Math.ceil(qty * 1.17);
+        else maxDelQty = Math.ceil(qty * 1.15);
+
         const value = parseFloat(((qty * rate)).toFixed(2));
-        const grossPrint = ups > 0 ? Math.ceil(qty / ups) : 0;
+        // Use max_del_qty for gross calculation
+        const grossPrint = ups > 0 ? Math.ceil(maxDelQty / ups) : 0;
         const totalPrint = Math.ceil(grossPrint + extra);
         const paperReq = Math.ceil(totalPrint / paperUps);
 
         setFormData(prev => ({
             ...prev,
             value,
+            max_del_qty: maxDelQty,
             gross_print_qty: grossPrint,
             total_print_qty: totalPrint,
             paper_required: paperReq
@@ -286,7 +295,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         try {
             const payload = { ...formData };
 
-            const numFields = ['quantity', 'rate', 'value', 'gross_print_qty', 'paper_ups', 'total_print_qty', 'extra', 'paper_required', 'paper_order_qty', 'qty_delivered'];
+            const numFields = ['quantity', 'rate', 'value', 'gross_print_qty', 'paper_ups', 'total_print_qty', 'extra', 'paper_required', 'paper_order_qty', 'qty_delivered', 'max_del_qty'];
             numFields.forEach(f => {
                 const val = (payload as any)[f];
                 if (val !== undefined && val !== null && val !== '') {
@@ -474,6 +483,10 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                         <div>
                             <label className="label">Print Size</label>
                             <input name="print_size" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.print_size || ''} onChange={handleChange} placeholder="Size" />
+                        </div>
+                        <div>
+                            <label className="label text-amber-600">Max Del. Qty</label>
+                            <input type="number" className="input-field text-xs bg-amber-50 border-amber-200" style={{ color: '#d97706', fontWeight: 'bold' }} value={formData.max_del_qty || 0} readOnly />
                         </div>
                         <div>
                             <label className="label text-slate-400">Gross</label>
