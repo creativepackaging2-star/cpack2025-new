@@ -140,12 +140,18 @@ function PunchingSummaryContent() {
     }, [selectedPrinter, filteredOrders]);
 
     const waUrl = useMemo(() => {
-        if (!selectedPrinter || filteredOrders.length === 0) return "#";
+        if (filteredOrders.length === 0) return "#";
         const message = generateMessage();
-        let phone = String(selectedPrinter.phone || '').replace(/\D/g, '');
-        if (!phone) return "#";
-        if (phone.length === 10) phone = '91' + phone;
-        return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        const printer = selectedPrinter || { id: 0, phone: '' };
+        let phone = String(printer.phone || '').replace(/\D/g, '');
+
+        if (phone) {
+            if (phone.length === 10) phone = '91' + phone;
+            return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        }
+
+        // No phone number (Manual Selection mode)
+        return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     }, [selectedPrinter, filteredOrders, generateMessage]);
 
     const sendWhatsAppImage = async () => {
@@ -263,7 +269,7 @@ function PunchingSummaryContent() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={sendWhatsAppImage}
-                            disabled={isGenerating || waUrl === "#"}
+                            disabled={isGenerating || filteredOrders.length === 0}
                             className="bg-emerald-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 disabled:opacity-50"
                         >
                             <Camera className="w-4 h-4" />
@@ -317,7 +323,7 @@ function PunchingSummaryContent() {
                                 <td style={{ borderRight: '1px solid #f8fafc', padding: '8px 8px' }} className="text-sm">
                                     <div style={{ color: '#0f172a', fontWeight: 700 }} className="leading-tight">{order.products?.product_name || order.product_name || 'N/A'}</div>
                                     {(!selectedPrinter || selectedPrinter.id === 0) && (
-                                        <div style={{ color: '#6366f1', fontSize: '9px', fontWeight: 700 }} className="uppercase border border-indigo-100 bg-indigo-50 px-1 rounded-sm mt-1 w-fit">
+                                        <div style={{ color: '#4f46e5', fontSize: '9px', fontWeight: 700, backgroundColor: '#eef2ff', borderColor: '#e0e7ff', borderWidth: '1px', borderStyle: 'solid' }} className="uppercase px-1 rounded-sm mt-1 w-fit">
                                             {order.printer_name || 'NO PRINTER'}
                                         </div>
                                     )}

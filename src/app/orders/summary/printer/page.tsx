@@ -36,8 +36,6 @@ function PrinterSummaryContent() {
                         product_name,
                         artwork_code,
                         actual_gsm_used,
-                        gsm ( name ),
-                        sizes ( name ),
                         dimension
                     )
                 `);
@@ -87,7 +85,7 @@ function PrinterSummaryContent() {
         if (!selectedPrinter || selectedPrinter.id === 0) return orders;
         return orders.filter(o =>
             String(o.printer_id) === String(selectedPrinter.id) ||
-            o.printer_name === selectedPrinter.name
+            String(o.printer_name) === String(selectedPrinter.name)
         );
     }, [orders, selectedPrinter]);
 
@@ -111,12 +109,11 @@ function PrinterSummaryContent() {
 
         filteredOrders.forEach((o, i) => {
             const product = o.products;
-            // GSM Logic: Actual (Product) -> GSM Master (Product) -> Snapshot (Order) -> '-'
-            const gsmDisplay = product?.actual_gsm_used || product?.gsm?.name || o.gsm_value || '-';
+            // GSM Logic: Actual (Product) -> Snapshot (Order) -> '-'
+            const gsmDisplay = product?.actual_gsm_used || o.gsm_value || '-';
 
-            // Size Logic: Snapshot (Order) -> Size Master (Product) -> Dimension (Product) -> '-'
-            // Using Order Snapshot first for Size because sometimes order size is custom, but falling back to Product if blank.
-            const sizeDisplay = o.print_size || product?.sizes?.name || product?.dimension || '-';
+            // Size Logic: Snapshot (Order) -> Dimension (Product) -> '-'
+            const sizeDisplay = o.print_size || product?.dimension || '-';
 
             message += `${i + 1}. *${product?.product_name || o.product_name}*\n`;
             message += `   Size: ${sizeDisplay} | Qty: *${(o.total_print_qty || 0).toLocaleString()}*\n`;
@@ -129,12 +126,18 @@ function PrinterSummaryContent() {
     }, [selectedPrinter, filteredOrders]);
 
     const waUrl = useMemo(() => {
-        if (!selectedPrinter || filteredOrders.length === 0) return "#";
+        if (filteredOrders.length === 0) return "#";
         const message = generateMessage();
-        let phone = String(selectedPrinter.phone || '').replace(/\D/g, '');
-        if (!phone) return "#";
-        if (phone.length === 10) phone = '91' + phone;
-        return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        const printer = selectedPrinter || { id: 0, phone: '' };
+        let phone = String(printer.phone || '').replace(/\D/g, '');
+
+        if (phone) {
+            if (phone.length === 10) phone = '91' + phone;
+            return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        }
+
+        // No phone number (Manual Selection mode)
+        return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     }, [selectedPrinter, filteredOrders, generateMessage]);
 
     const sendWhatsAppImage = async () => {
@@ -249,7 +252,7 @@ function PrinterSummaryContent() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={sendWhatsAppImage}
-                            disabled={isGenerating || waUrl === "#"}
+                            disabled={isGenerating || filteredOrders.length === 0}
                             className="bg-emerald-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95 disabled:opacity-50"
                         >
                             <Camera className="w-4 h-4" />
@@ -309,20 +312,20 @@ function PrinterSummaryContent() {
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <div style={{ color: '#94a3b8', fontSize: '9px' }} className="uppercase">{order.products?.artwork_code || order.artwork_code || '-'}</div>
                                         {(!selectedPrinter || selectedPrinter.id === 0) && (
-                                            <div style={{ color: '#6366f1', fontSize: '9px', fontWeight: 700 }} className="uppercase border border-indigo-100 bg-indigo-50 px-1 rounded-sm">
+                                            <div style={{ color: '#4f46e5', fontSize: '9px', fontWeight: 700, backgroundColor: '#eef2ff', borderColor: '#e0e7ff', borderWidth: '1px', borderStyle: 'solid' }} className="uppercase px-1 rounded-sm">
                                                 {order.printer_name || 'NO PRINTER'}
                                             </div>
                                         )}
                                     </div>
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">
-                                    {/* GSM: Actual (Prod) -> GSM (Prod) -> Snapshot -> '-' */}
-                                    {order.products?.actual_gsm_used || order.products?.gsm?.name || order.gsm_value || '-'}
+                                    {/* GSM: Actual (Prod) -> Snapshot -> '-' */}
+                                    {order.products?.actual_gsm_used || order.gsm_value || '-'}
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px]">{order.paper_type_name || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#1e293b', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center">
-                                    {/* Size: Snapshot -> Size (Prod) -> Dim (Prod) -> '-' */}
-                                    {order.print_size || order.products?.sizes?.name || order.products?.dimension || '-'}
+                                    {/* Size: Snapshot -> Dim (Prod) -> '-' */}
+                                    {order.print_size || order.products?.dimension || '-'}
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#047857', fontWeight: 900, padding: '4px 2px' }} className="text-[10px] text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#475569', padding: '4px 2px' }} className="text-[9px] leading-tight max-w-[150px]">{order.ink || '-'}</td>
