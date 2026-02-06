@@ -258,9 +258,14 @@ Plate No   : ${order.plate_no || '-'}`;
                             )}
                         </div>
                     </div>
-                    <div className="text-right ml-4">
+                    <div className="text-right ml-4 flex flex-col items-end gap-1">
                         <div className="text-sm font-black text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Qty</div>
+                        {order.max_del_qty && (
+                            <div className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-100 uppercase tracking-tighter shadow-sm">
+                                Max: {order.max_del_qty.toLocaleString()}
+                            </div>
+                        )}
+                        <div className="text-[10px] text-slate-400 font-bold uppercase">Qty</div>
                     </div>
                 </div>
 
@@ -387,8 +392,15 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
                 </td>
 
-                <td className="px-3 py-2 text-center w-[60px]">
-                    <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                <td className="px-3 py-2 text-center w-[80px]">
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="text-sm font-semibold text-slate-900">{(order.quantity || 0).toLocaleString()}</div>
+                        {order.max_del_qty && (
+                            <div className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded-md border border-blue-100 uppercase tracking-tighter whitespace-nowrap shadow-sm">
+                                Max: {order.max_del_qty.toLocaleString()}
+                            </div>
+                        )}
+                    </div>
                 </td>
 
                 <td className="px-3 py-2 text-center">
