@@ -95,7 +95,7 @@ function PunchingSummaryContent() {
     }, [orders, printers]);
 
     const filteredOrders = useMemo(() => {
-        if (!selectedPrinter) return orders;
+        if (!selectedPrinter || selectedPrinter.id === 0) return orders;
         return orders.filter(o =>
             String(o.printer_id) === String(selectedPrinter.id) ||
             String(o.printer_name) === String(selectedPrinter.name)
@@ -110,7 +110,7 @@ function PunchingSummaryContent() {
     }, [activePrinters, selectedPrinter]);
 
     const generateMessage = useCallback(() => {
-        if (!selectedPrinter) return '';
+        const printerName = selectedPrinter && selectedPrinter.id !== 0 ? selectedPrinter.name : 'ALL SELECTED';
 
         // Define column widths
         const w = { sr: 2, prod: 10, pqty: 6, past: 6, mqty: 6 };
@@ -118,7 +118,7 @@ function PunchingSummaryContent() {
         const border = `+${'-'.repeat(w.sr)}+${'-'.repeat(w.prod)}+${'-'.repeat(w.pqty)}+${'-'.repeat(w.past)}+${'-'.repeat(w.mqty)}+\n`;
 
         let message = `*PUNCHING SUMMARY*\n`;
-        message += `*To:* ${selectedPrinter.name || 'Printer'}\n`;
+        message += `*To:* ${printerName}\n`;
         message += '```\n';
         message += border;
         message += `|${pad('Sr', w.sr)}|${pad('Product', w.prod)}|${pad('PQty', w.pqty)}|${pad('Past', w.past)}|${pad('MQty', w.mqty)}|\n`;
@@ -130,7 +130,8 @@ function PunchingSummaryContent() {
             const mqty = calculateMaxQty(o.quantity || 0).toLocaleString('en-IN').replace(/,/g, ''); // Compact
             const past = (o.pasting_type || '-').slice(0, w.past);
 
-            message += `|${pad(String(i + 1), w.sr)}|${pad(product, w.prod)}|${pad(pqty, w.pqty)}|${pad(past, w.past)}|${pad(mqty, w.mqty)}|\n`;
+            const printerSuffix = (!selectedPrinter || selectedPrinter.id === 0) ? ` [${o.printer_name || '?'}]` : '';
+            message += `|${pad(String(i + 1), w.sr)}|${pad(product + printerSuffix, w.prod)}|${pad(pqty, w.pqty)}|${pad(past, w.past)}|${pad(mqty, w.mqty)}|\n`;
         });
 
         message += border;
@@ -148,7 +149,7 @@ function PunchingSummaryContent() {
     }, [selectedPrinter, filteredOrders, generateMessage]);
 
     const sendWhatsAppImage = async () => {
-        if (!selectedPrinter || waUrl === "#") return;
+        if (filteredOrders.length === 0) return;
         setIsGenerating(true);
         try {
             const tableElement = document.getElementById('punching-summary-table');
@@ -234,14 +235,18 @@ function PunchingSummaryContent() {
                             <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Selected Printer</span>
                             <select
                                 className="text-sm font-black text-emerald-600 outline-none bg-transparent min-w-[200px] cursor-pointer"
-                                value={selectedPrinter?.id?.toString() || ""}
+                                value={selectedPrinter?.id?.toString() || "0"}
                                 onChange={(e) => {
                                     const val = e.target.value;
+                                    if (val === "0") {
+                                        setSelectedPrinter({ id: 0, name: 'All Selected', phone: '' });
+                                        return;
+                                    }
                                     const p = printers.find(pr => String(pr.id) === val);
                                     if (p) setSelectedPrinter(p);
                                 }}
                             >
-                                <option value="">Select Printer...</option>
+                                <option value="0">ALL SELECTED ORDERS</option>
                                 {activePrinters.map(p => (
                                     <option key={String(p.id)} value={String(p.id)}>{String(p.name || 'Unknown').toUpperCase()}</option>
                                 ))}
@@ -311,6 +316,11 @@ function PunchingSummaryContent() {
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '8px 4px' }} className="text-[10px] text-center">{index + 1}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', padding: '8px 8px' }} className="text-sm">
                                     <div style={{ color: '#0f172a', fontWeight: 700 }} className="leading-tight">{order.products?.product_name || order.product_name || 'N/A'}</div>
+                                    {(!selectedPrinter || selectedPrinter.id === 0) && (
+                                        <div style={{ color: '#6366f1', fontSize: '9px', fontWeight: 700 }} className="uppercase border border-indigo-100 bg-indigo-50 px-1 rounded-sm mt-1 w-fit">
+                                            {order.printer_name || 'NO PRINTER'}
+                                        </div>
+                                    )}
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.print_size || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', padding: '8px 4px' }} className="text-[11px] font-bold text-center">{(Number(order.total_print_qty) || 0).toLocaleString()}</td>

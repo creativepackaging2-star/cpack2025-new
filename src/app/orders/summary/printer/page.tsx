@@ -84,7 +84,7 @@ function PrinterSummaryContent() {
 
     // Filter orders based on selected printer
     const filteredOrders = useMemo(() => {
-        if (!selectedPrinter) return orders;
+        if (!selectedPrinter || selectedPrinter.id === 0) return orders;
         return orders.filter(o =>
             String(o.printer_id) === String(selectedPrinter.id) ||
             o.printer_name === selectedPrinter.name
@@ -93,10 +93,14 @@ function PrinterSummaryContent() {
 
     // Auto-select first printer if none selected
     useEffect(() => {
-        if (activePrinters.length > 0 && !selectedPrinter) {
-            setSelectedPrinter(activePrinters[0]);
+        if (!selectedPrinter) {
+            if (idsString) {
+                setSelectedPrinter({ id: 0, name: 'All Selected', phone: '' });
+            } else if (activePrinters.length > 0) {
+                setSelectedPrinter(activePrinters[0]);
+            }
         }
-    }, [activePrinters, selectedPrinter]);
+    }, [activePrinters, selectedPrinter, idsString]);
 
     const generateMessage = useCallback(() => {
         if (!selectedPrinter) return '';
@@ -134,7 +138,7 @@ function PrinterSummaryContent() {
     }, [selectedPrinter, filteredOrders, generateMessage]);
 
     const sendWhatsAppImage = async () => {
-        if (!selectedPrinter || waUrl === "#") return;
+        if (filteredOrders.length === 0) return;
         setIsGenerating(true);
         try {
             const tableElement = document.getElementById('printer-summary-table');
@@ -217,14 +221,18 @@ function PrinterSummaryContent() {
                             <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Selected Printer</span>
                             <select
                                 className="text-sm font-black text-indigo-600 outline-none bg-transparent min-w-[200px] cursor-pointer"
-                                value={selectedPrinter?.id.toString() || ""}
+                                value={selectedPrinter?.id?.toString() || "0"}
                                 onChange={(e) => {
                                     const val = e.target.value;
+                                    if (val === "0") {
+                                        setSelectedPrinter({ id: 0, name: 'All Selected', phone: '' });
+                                        return;
+                                    }
                                     const p = activePrinters.find(pr => String(pr.id) === val);
                                     if (p) setSelectedPrinter(p);
                                 }}
                             >
-                                <option value="">Select Printer...</option>
+                                <option value="0">ALL SELECTED ORDERS</option>
                                 {activePrinters.map(p => (
                                     <option key={String(p.id)} value={String(p.id)}>{p.name}</option>
                                 ))}
@@ -298,7 +306,14 @@ function PrinterSummaryContent() {
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '4px 2px' }} className="text-[9px] text-center">{index + 1}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', padding: '4px 4px' }} className="text-xs">
                                     <div style={{ color: '#0f172a', fontWeight: 700 }} className="leading-tight">{order.products?.product_name || order.product_name}</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '9px' }} className="uppercase mt-0.5">{order.products?.artwork_code || order.artwork_code || '-'}</div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <div style={{ color: '#94a3b8', fontSize: '9px' }} className="uppercase">{order.products?.artwork_code || order.artwork_code || '-'}</div>
+                                        {(!selectedPrinter || selectedPrinter.id === 0) && (
+                                            <div style={{ color: '#6366f1', fontSize: '9px', fontWeight: 700 }} className="uppercase border border-indigo-100 bg-indigo-50 px-1 rounded-sm">
+                                                {order.printer_name || 'NO PRINTER'}
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">
                                     {/* GSM: Actual (Prod) -> GSM (Prod) -> Snapshot -> '-' */}
