@@ -340,7 +340,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 <div className="col-span-12 lg:col-span-8 space-y-2">
                     {/* Customer & Product Section - Compact 2 Columns */}
                     <div className="bg-[#f8fafc] border border-slate-300 rounded-lg p-2 shadow-sm">
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                             <div className="space-y-2">
                                 <div className="grid grid-cols-[60px,1fr] items-center gap-2">
                                     <label className="text-[9px] font-bold text-slate-900 uppercase tracking-wider">customer:</label>
@@ -352,7 +352,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                             setFormData((prev: any) => ({ ...prev, customer_id: val as number, customer: cust?.name || '' }));
                                         }}
                                         placeholder="Select Customer"
-                                        inputClassName="w-full px-2 py-1 bg-white border border-slate-400 rounded shadow-sm text-xs focus:border-indigo-500 outline-none font-bold text-slate-950"
+                                        inputClassName="w-full px-2 py-1 bg-white border border-slate-400 rounded shadow-sm text-[11px] md:text-xs focus:border-indigo-500 outline-none font-bold text-slate-950"
                                     />
                                 </div>
                                 <div className="grid grid-cols-[60px,1fr] items-center gap-2">
@@ -362,18 +362,18 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                         value={formData.product_id}
                                         onChange={(val) => handleProductChange(val as string)}
                                         placeholder="Select Product"
-                                        inputClassName="w-full px-2 py-1 bg-white border border-slate-400 rounded shadow-sm text-xs focus:border-indigo-500 outline-none font-bold text-slate-950"
+                                        inputClassName="w-full px-2 py-1 bg-white border border-slate-400 rounded shadow-sm text-[11px] md:text-xs focus:border-indigo-500 outline-none font-bold text-slate-950"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <div className="grid grid-cols-[60px,1fr] items-center gap-2">
                                     <label className="text-[9px] font-bold text-slate-900 uppercase tracking-wider">DATE</label>
-                                    <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-slate-400 rounded shadow-sm text-xs outline-none font-bold text-slate-950" />
+                                    <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-slate-400 rounded shadow-sm text-[11px] md:text-xs outline-none font-bold text-slate-950" />
                                 </div>
-                                <div className="grid grid-cols-[60px,80px] items-center gap-2">
+                                <div className="grid grid-cols-[60px,1fr] md:grid-cols-[60px,80px] items-center gap-2">
                                     <label className="text-[9px] font-bold text-indigo-900 uppercase tracking-wider">Qty (Nos)</label>
-                                    <input type="number" name="qty" value={formData.qty} onChange={handleChange} className="w-full px-2 py-1 bg-indigo-50 border border-indigo-400 rounded text-xs font-bold text-indigo-950 focus:border-indigo-500 outline-none shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                    <input type="number" name="qty" value={formData.qty} onChange={handleChange} className="w-full px-2 py-1 bg-indigo-50 border border-indigo-400 rounded text-[11px] md:text-xs font-bold text-indigo-950 focus:border-indigo-500 outline-none shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                 </div>
                             </div>
                         </div>
@@ -381,7 +381,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
 
                     {/* Dimensions - Compact 5 Columns (2 Rows) */}
                     <div className="bg-[#f8fafc] border border-slate-300 rounded-lg p-2 shadow-sm">
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                             {/* Row 1 */}
                             <div className="flex flex-col gap-1">
                                 <label className="text-[9px] font-bold text-slate-900 uppercase">Size (H)</label>
@@ -431,7 +431,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                     {/* Production Specifications - Compact Grid */}
                     <div className="bg-[#f8fafc] border border-slate-300 rounded-lg p-2 shadow-sm space-y-2">
                         <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest border-b border-slate-300 pb-1">Production Specifications</h3>
-                        <div className="grid grid-cols-6 gap-x-2 gap-y-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-2 gap-y-2">
                             <div className="flex flex-col gap-1">
                                 <label className="text-[9px] font-bold text-slate-900 uppercase">colour</label>
                                 <input type="number" name="colour" value={formData.colour} onChange={handleChange} className="w-full px-2 py-1 bg-white border border-slate-400 rounded text-xs outline-none font-bold text-slate-950 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
@@ -491,44 +491,45 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
 
                 {/* Right Side: Summary Table */}
                 <div className="col-span-12 lg:col-span-4">
-                    <div className="bg-[#f1f5f9] border border-slate-300 rounded-xl overflow-hidden shadow-xl sticky top-6">
-                        <table className="w-full text-sm">
-                            <thead className="bg-[#334155] text-white">
-                                <tr>
-                                    <th className="py-3 px-4 text-left font-black uppercase text-[10px] tracking-widest border-r border-white/10">Breakdown</th>
-                                    <th className="py-3 px-4 text-right font-black uppercase text-[10px] tracking-widest border-r border-white/10">Total (₹)</th>
-                                    <th className="py-3 px-4 text-right font-black uppercase text-[10px] tracking-widest">Per PC</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-300 bg-[#e2e8f0]">
-                                <BreakdownRow label="Paper Cost" total={calculations.paperCost} perPc={calculations.breakdown?.paperPcs} />
-                                <BreakdownRow label="Plate Amt" total={calculations.plateAmt} perPc={calculations.breakdown?.platePcs} />
-                                <BreakdownRow label="Printing Amt" total={calculations.printingAmt} perPc={calculations.breakdown?.printingPcs} />
-                                <BreakdownRow label="Aqua Amt" total={calculations.aquaAmt} perPc={calculations.breakdown?.coatingPcs} />
-                                <BreakdownRow label="Punch Rate (Die)" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
-                                <BreakdownRow label="Punching Amt" total={calculations.punchingAmt} perPc={calculations.breakdown?.punchingPcs} />
-                                <BreakdownRow label="Pasting Amt" total={calculations.pastingAmt} perPc={calculations.breakdown?.pastingPcs} />
-                                <BreakdownRow label="Foil Amt" total={calculations.foilAmt} perPc={calculations.breakdown?.foilPcs} />
-                                <BreakdownRow label="Packing" total={calculations.packingAmt} perPc={calculations.breakdown?.packingPcs} />
-                                <BreakdownRow label="Extra Cost" total={Number(formData.extra_cost) || 0} perPc={calculations.breakdown?.extraPcs} />
+                    <div className="bg-[#f1f5f9] border border-slate-300 rounded-xl overflow-hidden shadow-xl sticky top-6 mb-20 md:mb-0">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm min-w-[300px]">
+                                <thead className="bg-[#334155] text-white">
+                                    <tr>
+                                        <th className="py-2.5 md:py-3 px-3 md:px-4 text-left font-black uppercase text-[9px] md:text-[10px] tracking-widest border-r border-white/10">Breakdown</th>
+                                        <th className="py-2.5 md:py-3 px-3 md:px-4 text-right font-black uppercase text-[9px] md:text-[10px] tracking-widest border-r border-white/10">Total (₹)</th>
+                                        <th className="py-2.5 md:py-3 px-3 md:px-4 text-right font-black uppercase text-[9px] md:text-[10px] tracking-widest">Per PC</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-300 bg-[#e2e8f0]">
+                                    <BreakdownRow label="Paper Cost" total={calculations.paperCost} perPc={calculations.breakdown?.paperPcs} />
+                                    <BreakdownRow label="Plate Amt" total={calculations.plateAmt} perPc={calculations.breakdown?.platePcs} />
+                                    <BreakdownRow label="Printing Amt" total={calculations.printingAmt} perPc={calculations.breakdown?.printingPcs} />
+                                    <BreakdownRow label="Aqua Amt" total={calculations.aquaAmt} perPc={calculations.breakdown?.coatingPcs} />
+                                    <BreakdownRow label="Punch Rate (Die)" total={calculations.breakdown?.punchRatePcs * Number(formData.qty)} perPc={calculations.breakdown?.punchRatePcs} />
+                                    <BreakdownRow label="Punching Amt" total={calculations.punchingAmt} perPc={calculations.breakdown?.punchingPcs} />
+                                    <BreakdownRow label="Pasting Amt" total={calculations.pastingAmt} perPc={calculations.breakdown?.pastingPcs} />
+                                    <BreakdownRow label="Foil Amt" total={calculations.foilAmt} perPc={calculations.breakdown?.foilPcs} />
+                                    <BreakdownRow label="Packing" total={calculations.packingAmt} perPc={calculations.breakdown?.packingPcs} />
+                                    <BreakdownRow label="Extra Cost" total={Number(formData.extra_cost) || 0} perPc={calculations.breakdown?.extraPcs} />
 
-                                <tr className="bg-[#cbd5e1] font-bold border-y border-slate-300">
-                                    <td className="py-2 px-4 text-slate-600 uppercase text-[9px] border-r border-slate-300">Cost Subtotal</td>
-                                    <td className="py-2 px-4 text-right font-mono text-slate-700 border-r border-slate-300">₹{calculations.subtotal?.toFixed(2)}</td>
-                                    <td className="py-2 px-4 text-right font-mono text-slate-600 text-xs">{(calculations.subtotal / (Number(formData.qty) || 1)).toFixed(4)}</td>
-                                </tr>
+                                    <tr className="bg-[#cbd5e1] font-bold border-y border-slate-300">
+                                        <td className="py-2 px-3 md:px-4 text-slate-600 uppercase text-[8px] md:text-[9px] border-r border-slate-300">Cost Subtotal</td>
+                                        <td className="py-2 px-3 md:px-4 text-right font-mono text-slate-700 border-r border-slate-300">₹{calculations.subtotal?.toFixed(2)}</td>
+                                        <td className="py-2 px-3 md:px-4 text-right font-mono text-slate-600 text-[10px] md:text-xs">{(calculations.subtotal / (Number(formData.qty) || 1)).toFixed(4)}</td>
+                                    </tr>
 
-                                <BreakdownRow label="Interest Amt" total={calculations.interestAmt} perPc={calculations.breakdown?.interestPcs} />
-                                <BreakdownRow label="Net Profit" total={calculations.profitAmt} perPc={calculations.breakdown?.profitPcs} color="text-indigo-900 font-bold" />
+                                    <BreakdownRow label="Interest Amt" total={calculations.interestAmt} perPc={calculations.breakdown?.interestPcs} />
+                                    <BreakdownRow label="Net Profit" total={calculations.profitAmt} perPc={calculations.breakdown?.profitPcs} color="text-indigo-900 font-bold" />
 
-                                <tr className="bg-slate-900 font-bold border-y-2 border-slate-900">
-                                    <td className="py-2.5 px-4 text-white uppercase text-[10px] border-r border-slate-700">Net Total</td>
-                                    <td className="py-2.5 px-4 text-right font-mono text-white border-r border-slate-700">₹{calculations.totalAmt?.toFixed(2)}</td>
-                                    <td className="py-2.5 px-4 text-right font-mono text-amber-400 tracking-tighter">{calculations.ratePcs?.toFixed(4)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
+                                    <tr className="bg-slate-900 font-bold border-y-2 border-slate-900">
+                                        <td className="py-2.5 px-3 md:px-4 text-white uppercase text-[9px] md:text-[10px] border-r border-slate-700">Net Total</td>
+                                        <td className="py-2.5 px-3 md:px-4 text-right font-mono text-white border-r border-slate-700">₹{calculations.totalAmt?.toFixed(2)}</td>
+                                        <td className="py-2.5 px-3 md:px-4 text-right font-mono text-amber-400 tracking-tighter text-[11px] md:text-sm">{calculations.ratePcs?.toFixed(4)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -539,9 +540,9 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
 function BreakdownRow({ label, total, perPc, color = "text-slate-800" }: any) {
     return (
         <tr className="hover:bg-slate-200/50 transition-colors">
-            <td className="py-2 px-4 text-slate-900 font-bold text-[11px] uppercase">{label}</td>
-            <td className="py-2 px-4 text-right font-mono text-black text-xs font-bold">₹{total?.toFixed(2) || '0.00'}</td>
-            <td className={`py-2 px-4 text-right font-mono ${color} text-xs font-bold`}>{perPc?.toFixed(4) || '0.0000'}</td>
+            <td className="py-2 px-3 md:px-4 text-slate-900 font-bold text-[10px] md:text-[11px] uppercase">{label}</td>
+            <td className="py-2 px-3 md:px-4 text-right font-mono text-black text-[10px] md:text-xs font-bold">₹{total?.toFixed(2) || '0.00'}</td>
+            <td className={`py-2 px-3 md:px-4 text-right font-mono ${color} text-[10px] md:text-xs font-bold`}>{perPc?.toFixed(4) || '0.0000'}</td>
         </tr>
     );
 }

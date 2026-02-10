@@ -270,31 +270,29 @@ Plate No   : ${order.plate_no || '-'}`;
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                        {paperwalaUrl ? (
-                            <a href={paperwalaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold border border-emerald-100 active:scale-95 transition-all" onClick={e => e.stopPropagation()}>
-                                <PaperwalaWhatsAppLogo className="w-4 h-4" />
-                                PAPER
-                            </a>
-                        ) : (
-                            <button className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 cursor-not-allowed opacity-60" onClick={e => { e.stopPropagation(); alert('No Paperwala mobile number found'); }}>
-                                <PaperwalaWhatsAppLogo className="w-4 h-4 grayscale" />
-                                PAPER
-                            </button>
-                        )}
+                    {paperwalaUrl ? (
+                        <a href={paperwalaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold border border-emerald-100 active:scale-95 transition-all" onClick={e => e.stopPropagation()}>
+                            <PaperwalaWhatsAppLogo className="w-4 h-4" />
+                            PAPER
+                        </a>
+                    ) : (
+                        <button className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 cursor-not-allowed opacity-60" onClick={e => { e.stopPropagation(); alert('No Paperwala mobile number found'); }}>
+                            <PaperwalaWhatsAppLogo className="w-4 h-4 grayscale" />
+                            PAPER
+                        </button>
+                    )}
 
-                        {printerUrl ? (
-                            <a href={printerUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-bold border border-blue-100 active:scale-95 transition-all" onClick={e => e.stopPropagation()}>
-                                <WhatsAppLogo className="w-4 h-4" />
-                                PRINT
-                            </a>
-                        ) : (
-                            <button className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 cursor-not-allowed opacity-60" onClick={e => { e.stopPropagation(); alert('No Printer mobile number found'); }}>
-                                <WhatsAppLogo className="w-4 h-4 grayscale" />
-                                PRINT
-                            </button>
-                        )}
-                    </div>
+                    {printerUrl ? (
+                        <a href={printerUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl text-[11px] font-bold border border-blue-100 active:scale-95 transition-all" onClick={e => e.stopPropagation()}>
+                            <WhatsAppLogo className="w-4 h-4" />
+                            PRINT
+                        </a>
+                    ) : (
+                        <button className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 cursor-not-allowed opacity-60" onClick={e => { e.stopPropagation(); alert('No Printer mobile number found'); }}>
+                            <WhatsAppLogo className="w-4 h-4 grayscale" />
+                            PRINT
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex items-center justify-between mt-3 text-[11px] font-medium text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">

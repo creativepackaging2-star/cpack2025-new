@@ -469,7 +469,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 {/* 4. Manufacturing & Logistics - FULL WIDTH */}
                 <div className="lg:col-span-3 bg-indigo-50/20 border border-indigo-100 p-2 rounded-xl">
                     <SectionHeader icon={Briefcase} title="Manufacturing & Logistics" />
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-3 gap-y-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-x-3 gap-y-2">
 
                         {/* Manufacturing Line 1 */}
                         <div>
@@ -625,7 +625,7 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                     {/* Production Tools */}
                     <div className="pt-2 border-t border-slate-200">
                         <h4 className="text-[9px] font-black text-slate-400 uppercase mb-2 text-center">Production Tools</h4>
-                        <div className="grid grid-cols-6 gap-2">
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                             <button type="button" onClick={sendToPaperwala} className="action-btn-compact bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600" title="WA Paper">
                                 <PaperwalaWhatsAppLogo className="w-6 h-6" />
                                 <span className="text-[9px] font-bold uppercase whitespace-nowrap">WA Paper</span>
@@ -678,12 +678,12 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             </div>
 
             {/* Footer */}
-            <div className="sticky bottom-0 bg-white px-6 py-2 flex justify-between items-center border-t border-slate-200 z-50">
-                <Link href="/orders" className="btn-secondary">Discard & Exit</Link>
-                <div className="flex gap-4">
-                    <button type="submit" disabled={saving} className="btn-primary flex items-center gap-3 shadow-xl shadow-indigo-100 active:scale-95 transition-all min-w-[200px] justify-center text-sm font-black">
+            <div className="sticky bottom-0 bg-white px-4 md:px-6 py-2 flex flex-col md:flex-row justify-between items-center border-t border-slate-200 z-50 gap-2">
+                <Link href="/orders" className="btn-secondary w-full md:w-auto text-center py-2 md:py-3 text-[11px] md:text-xs">Discard & Exit</Link>
+                <div className="flex gap-4 w-full md:w-auto">
+                    <button type="submit" disabled={saving} className="btn-primary flex items-center gap-3 shadow-xl shadow-indigo-100 active:scale-95 transition-all w-full md:min-w-[200px] justify-center text-sm font-black py-2 md:py-3">
                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-                        {saving ? "SAVING DATA..." : initialData ? "UPDATE ORDER" : "CREATE NEW ORDER"}
+                        {saving ? "SAVING..." : initialData ? "UPDATE ORDER" : "CREATE ORDER"}
                     </button>
                 </div>
             </div>

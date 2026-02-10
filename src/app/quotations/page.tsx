@@ -73,7 +73,8 @@ export default function QuotationsPage() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr className="bg-slate-50">
@@ -136,6 +137,62 @@ export default function QuotationsPage() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden divide-y divide-slate-200">
+                        {loading ? (
+                            <div className="px-6 py-12 text-center text-slate-400 italic">Loading quotations...</div>
+                        ) : filteredQuotations.length === 0 ? (
+                            <div className="px-6 py-12 text-center text-slate-400 italic font-medium">No quotations found.</div>
+                        ) : (
+                            filteredQuotations.map((q) => (
+                                <div
+                                    key={q.id}
+                                    className="p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
+                                    onClick={() => router.push(`/quotations/${q.id}`)}
+                                >
+                                    <div className="flex justify-between items-start gap-3 mb-2">
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-bold text-slate-900 leading-tight mb-1">{q.product_name || 'Unnamed Job'}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{q.customer}</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                                ₹{q.rate_pcs?.toFixed(4)}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between mt-3 text-[11px]">
+                                        <div className="flex gap-4">
+                                            <div>
+                                                <span className="text-slate-400 uppercase font-bold text-[9px] block">Quantity</span>
+                                                <span className="text-slate-700 font-bold">{q.qty?.toLocaleString()}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-slate-400 uppercase font-bold text-[9px] block">Total Amount</span>
+                                                <span className="text-slate-900 font-black">₹{q.total_amt?.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                            <button onClick={() => router.push(`/quotations/${q.id}`)} className="p-2 text-slate-400 bg-slate-50 rounded-lg border border-slate-200">
+                                                <Edit2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={(e) => handleDelete(q.id, e)} className="p-2 text-rose-400 bg-rose-50 rounded-lg border border-rose-100">
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 text-[9px] text-slate-400 font-mono font-bold flex items-center gap-1">
+                                        <Calendar className="w-2.5 h-2.5" />
+                                        {new Date(q.created_at).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
