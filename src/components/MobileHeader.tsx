@@ -32,7 +32,7 @@ export function MobileHeader() {
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-8 w-auto"
-                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                        style={{ filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))' }}
                     />
                 </div>
                 <button
@@ -64,7 +64,7 @@ export function MobileHeader() {
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-10 w-auto"
-                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                        style={{ filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))' }}
                     />
                     <button onClick={closeMenu} className="ml-auto rounded-md p-1 text-slate-400 hover:text-white">
                         <X className="h-5 w-5" />

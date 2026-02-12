@@ -64,7 +64,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-12 w-auto transition-all duration-300"
-                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                        style={{ filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))' }}
                     />
                 )}
                 {isCollapsed && (
@@ -72,7 +72,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-8 w-8 object-contain mx-auto"
-                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                        style={{ filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))' }}
                     />
                 )}
             </div>
