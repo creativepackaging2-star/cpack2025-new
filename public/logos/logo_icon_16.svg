@@ -1,0 +1,13 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradBird" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2dd4bf;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path d="M200 100L280 220L200 180L120 220L200 100Z" fill="url(#gradBird)" />
+  <path d="M200 180L280 220L320 300L200 260V180Z" fill="#ec4899" fill-opacity="0.8" />
+  <path d="M200 180L120 220L80 300L200 260V180Z" fill="#06b6d4" fill-opacity="0.8" />
+  <path d="M200 260L260 340L200 310L140 340L200 260Z" fill="#fbbf24" fill-opacity="0.9" />
+</svg>

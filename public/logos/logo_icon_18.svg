@@ -1,0 +1,14 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradRoller" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#be123c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4338ca;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="200" height="80" rx="40" fill="url(#gradRoller)" />
+  <path d="M100 140H300" stroke="white" stroke-width="4" stroke-opacity="0.3" />
+  <path d="M80 140C80 140 100 200 200 200C300 200 320 140 320 140" stroke="url(#gradRoller)" stroke-width="15" stroke-linecap="round" />
+  <rect x="120" y="240" width="160" height="20" rx="10" fill="#be123c" fill-opacity="0.6" />
+  <rect x="140" y="280" width="120" height="20" rx="10" fill="#4338ca" fill-opacity="0.6" />
+  <rect x="160" y="320" width="80" height="20" rx="10" fill="#312e81" fill-opacity="0.6" />
+</svg>

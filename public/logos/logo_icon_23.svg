@@ -1,0 +1,16 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gearGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="dropGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+  <path d="M200 40L230 20H170L200 40ZM313 113L348 83L317 78L313 113ZM360 200L380 230V170L360 200ZM313 287L317 322L348 317L313 287ZM200 360L170 380H230L200 360ZM87 287L52 317L83 322L87 287ZM40 200L20 170V230L40 200ZM87 113L83 78L52 83L87 113Z" fill="url(#gearGrad)" />
+  <circle cx="200" cy="200" r="140" stroke="url(#gearGrad)" stroke-width="40" />
+  <path d="M200 100C200 100 280 180 200 300C120 180 200 100 200 100Z" fill="url(#dropGrad)" />
+  <circle cx="200" cy="180" r="30" fill="white" fill-opacity="0.2" />
+</svg>

@@ -58,14 +58,23 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             "hidden border-r bg-slate-900 md:block transition-all duration-300 ease-in-out text-white h-screen sticky top-0 z-50",
             isCollapsed ? "w-20" : "w-36 lg:w-40"
         )}>
-            <div className="flex h-[80px] items-center border-b border-slate-800 px-6 justify-between overflow-hidden">
+            <div className="flex h-[80px] items-center border-b border-slate-800 px-6 justify-center overflow-hidden">
                 {!isCollapsed && (
-                    <h1 className="flex flex-col leading-none">
-                        <span className="text-[14px] font-bold text-indigo-400 uppercase tracking-widest">Print</span>
-                        <span className="text-xl font-bold tracking-tight text-white mt-1">Mfg</span>
-                    </h1>
+                    <img
+                        src="/logos/logo_main_user_transparent.png"
+                        alt="CPack Logo"
+                        className="h-12 w-auto transition-all duration-300"
+                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                    />
                 )}
-                {isCollapsed && <Package className="h-6 w-6 text-indigo-500 mx-auto" />}
+                {isCollapsed && (
+                    <img
+                        src="/logos/logo_main_user_transparent.png"
+                        alt="CPack Logo"
+                        className="h-8 w-8 object-contain mx-auto"
+                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                    />
+                )}
             </div>
 
             <button

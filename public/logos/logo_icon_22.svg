@@ -1,0 +1,14 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="birdGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+  </defs>
+  <path d="M200 60L320 180H220L280 340L200 240L120 340L180 180H80L200 60Z" fill="url(#birdGrad)" />
+  <path d="M200 60L220 180H180L200 60Z" fill="black" fill-opacity="0.1" />
+  <path d="M180 180L200 240L220 180H180Z" fill="white" fill-opacity="0.2" />
+  <circle cx="200" cy="65" r="5" fill="white" />
+  <path d="M220 140H300M240 100H280M260 60V140" stroke="white" stroke-width="4" stroke-linecap="round" stroke-opacity="0.4" />
+</svg>

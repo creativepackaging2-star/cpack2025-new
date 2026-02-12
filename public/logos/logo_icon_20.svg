@@ -1,0 +1,14 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradStack" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path d="M100 300H300L340 340H60L100 300Z" fill="#1d4ed8" fill-opacity="0.4" />
+  <rect x="80" y="240" width="240" height="40" rx="5" fill="#38bdf8" />
+  <rect x="100" y="190" width="200" height="40" rx="5" fill="#0ea5e9" />
+  <rect x="120" y="140" width="160" height="40" rx="5" fill="#0284c7" />
+  <rect x="250" y="60" width="40" height="240" rx="5" fill="#f59e0b" />
+  <rect x="300" y="40" width="40" height="260" rx="5" fill="#f97316" />
+</svg>

@@ -28,10 +28,12 @@ export function MobileHeader() {
         <>
             <header className="md:hidden sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900 px-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <h1 className="flex flex-col leading-none">
-                        <span className="text-[12px] font-bold text-indigo-400 uppercase tracking-widest">Print</span>
-                        <span className="text-base font-bold tracking-tight text-white">Mfg</span>
-                    </h1>
+                    <img
+                        src="/logos/logo_main_user_transparent.png"
+                        alt="CPack Logo"
+                        className="h-8 w-auto"
+                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                    />
                 </div>
                 <button
                     onClick={toggleMenu}
@@ -58,10 +60,12 @@ export function MobileHeader() {
                 )}
             >
                 <div className="flex h-16 items-center border-b border-slate-800 px-6">
-                    <h1 className="flex flex-col leading-none">
-                        <span className="text-[14px] font-bold text-indigo-400 uppercase tracking-widest">Print</span>
-                        <span className="text-xl font-bold tracking-tight text-white mt-1">Mfg</span>
-                    </h1>
+                    <img
+                        src="/logos/logo_main_user_transparent.png"
+                        alt="CPack Logo"
+                        className="h-10 w-auto"
+                        style={{ filter: 'drop-shadow(0 0 1px rgba(255, 255, 255, 0.3))' }}
+                    />
                     <button onClick={closeMenu} className="ml-auto rounded-md p-1 text-slate-400 hover:text-white">
                         <X className="h-5 w-5" />
                     </button>

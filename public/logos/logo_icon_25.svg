@@ -1,0 +1,13 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+  <path d="M200 40L360 140V260L200 360L40 260V140L200 40Z" stroke="url(#hexGrad)" stroke-width="20" stroke-linejoin="round" />
+  <path d="M200 100V160M140 140H260M100 200H300M140 260H260" stroke="url(#hexGrad)" stroke-width="10" stroke-linecap="round" stroke-opacity="0.5" />
+  <rect x="170" y="170" width="60" height="60" rx="10" fill="url(#hexGrad)" />
+  <path d="M185 200H215" stroke="white" stroke-width="5" stroke-linecap="round" />
+  <circle cx="200" cy="185" r="5" fill="white" />
+</svg>

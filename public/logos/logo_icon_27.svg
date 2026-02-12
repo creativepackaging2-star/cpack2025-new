@@ -1,0 +1,32 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#e11d48" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Isometric Stacked Layers -->
+  <!-- Bottom Layer (Blue) -->
+  <path d="M200 280L340 200L200 120L60 200L200 280Z" fill="url(#g1)" opacity="0.4" />
+  <path d="M200 280L60 200V240L200 320V280Z" fill="#1d4ed8" opacity="0.6" />
+  <path d="M200 280L340 200V240L200 320V280Z" fill="#1e40af" opacity="0.6" />
+
+  <!-- Middle Layer (Purple) -->
+  <path d="M200 240L340 160L200 80L60 160L200 240Z" fill="url(#g2)" />
+  <path d="M200 240L60 160V180L200 260V240Z" fill="#6d28d9" />
+  <path d="M200 240L340 160V180L200 260V240Z" fill="#5b21b6" />
+
+  <!-- Top Element (Rose) - Abstract "P" or Fold -->
+  <path d="M200 180L280 135L200 90L120 135L200 180Z" fill="url(#g3)" />
+  <path d="M200 180L120 135V160L200 205V180Z" fill="#be123c" />
+  <path d="M200 180L280 135V160L200 205V180Z" fill="#9f1239" />
+</svg>
