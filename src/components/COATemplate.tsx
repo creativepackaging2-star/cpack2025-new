@@ -190,7 +190,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
                             <div className="flex border-b border-slate-200 pb-1">
                                 <span className="w-32 font-bold text-slate-700">Quantity:</span>
                                 <span className="flex items-center gap-2">
-                                    {(order.qty_delivered || 0).toLocaleString()}
+                                    {(order.qty_delivered || order.quantity || 0).toLocaleString()}
                                     {(order.order_id?.includes('-P') || order.order_id?.includes('SPLIT-')) && (
                                         <span className="text-[9px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase print:border-amber-200">
                                             Split Lot

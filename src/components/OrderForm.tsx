@@ -303,6 +303,10 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 }
             });
 
+            // Remove fields that don't exist in orders table
+            delete (payload as any).actual_gsm_used;
+            delete (payload as any).products;
+
             if (payload.billed === 'true') (payload as any).billed = true;
             else if (payload.billed === 'false') (payload as any).billed = false;
 
@@ -311,10 +315,18 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 if (!(payload as any)[f]) (payload as any)[f] = null;
             });
 
+            if (!payload.product_id) {
+                alert('Please select a product from the dropdown list.');
+                setSaving(false);
+                return;
+            }
+
             if (initialData?.id) {
-                await supabase.from('orders').update(payload).eq('id', initialData.id);
+                const { error: updErr } = await supabase.from('orders').update(payload).eq('id', initialData.id);
+                if (updErr) throw updErr;
             } else {
-                await supabase.from('orders').insert([payload]);
+                const { error: insErr } = await supabase.from('orders').insert([payload]);
+                if (insErr) throw insErr;
             }
             router.push('/orders');
             router.refresh();
@@ -335,14 +347,52 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
         window.open(`https://wa.me/${formData.printer_mobile.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
-    const generateDoc = (type: string) => {
-        if (!initialData?.id) { alert('Please save first.'); return; }
-        const routes: Record<string, string> = {
-            'COA': `/orders/${initialData.id}/coa`,
-            'Delivery Label': `/orders/${initialData.id}/delivery-label`,
-            'Shade Card': `/orders/${initialData.id}/shade-card`
-        };
-        if (routes[type]) window.open(routes[type], '_blank');
+    const generateDoc = async (type: string) => {
+        // If it's a new order (no ID yet), we must save first to get an ID.
+        if (!initialData?.id && !formData.id) {
+            alert('Please create the order first by clicking "Create Order".');
+            return;
+        }
+
+        // Auto-save the current form state before generation
+        setSaving(true);
+        try {
+            // Re-use submit logic structure but for update only
+            const payload = { ...formData };
+            // Ensure numeric fields are parsed
+            const numFields = ['quantity', 'rate', 'value', 'gross_print_qty', 'paper_ups', 'total_print_qty', 'extra', 'paper_required', 'paper_order_qty', 'qty_delivered', 'max_del_qty'];
+            numFields.forEach(f => {
+                const val = (payload as any)[f];
+                if (val !== undefined && val !== null && val !== '') {
+                    (payload as any)[f] = parseFloat(val) || 0;
+                }
+            });
+            delete (payload as any).actual_gsm_used;
+            if (payload.billed === 'true') (payload as any).billed = true;
+            else if (payload.billed === 'false') (payload as any).billed = false;
+
+            const targetId = initialData?.id || formData.id;
+
+            if (targetId) {
+                const { error } = await supabase.from('orders').update(payload).eq('id', targetId);
+                if (error) throw error;
+                // Update local state to reflect save successful
+                if (initialData) Object.assign(initialData, payload);
+            }
+
+            // Open document in new tab
+            const routeMap: Record<string, string> = {
+                'COA': `/orders/${targetId}/coa`,
+                'Delivery Label': `/orders/${targetId}/delivery-label`,
+                'Shade Card': `/orders/${targetId}/shade-card`
+            };
+            if (routeMap[type]) window.open(routeMap[type], '_blank');
+
+        } catch (err: any) {
+            alert('Error saving for document generation: ' + err.message);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleSplitOrder = async () => {

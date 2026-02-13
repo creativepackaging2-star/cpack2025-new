@@ -1,0 +1,34 @@
+﻿[dotenv@17.2.3] injecting env (2) from .env.local -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: ['.env.local', '.env'] }
+[
+  {
+    "id": "8575c520-5c5d-4506-ad59-fb4a738263d8",
+    "sku": "226",
+    "product_name": "Strocoz 2 ml Carton",
+    "ups": "10",
+    "dimension": "90 x 75 x 17",
+    "ink": null,
+    "plate_no": null,
+    "coating": "UV",
+    "actual_gsm_used": "290",
+    "artwork_code": "YARCLBXIN/C2",
+    "product_image": null,
+    "artwork_cdr": null,
+    "artwork_pdf": "Product_Files_/226.ArtworkPDF.112649.pdf",
+    "folding_dim": null,
+    "folding": null,
+    "category_id": 2,
+    "customer_id": 4,
+    "paper_type_id": 3,
+    "gsm_id": 15,
+    "size_id": 15,
+    "construction_id": null,
+    "specification_id": 17,
+    "delivery_address_id": 15,
+    "pasting_id": 1,
+    "created_at": "2025-12-07T09:32:20.244585",
+    "special_effects": null,
+    "updated_at": "2025-12-31T10:15:47.462959+00:00",
+    "specs": "300 | Yellow | 18 ├ù 23 | 10 | 90 x 75 x 17 | UV",
+    "status": "active"
+  }
+]

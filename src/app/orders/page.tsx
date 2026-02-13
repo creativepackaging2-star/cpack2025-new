@@ -689,7 +689,6 @@ function OrdersList() {
                 products (
                     product_name, 
                     artwork_code, 
-                    specs, 
                     dimension,
                     artwork_pdf, 
                     artwork_cdr, 
