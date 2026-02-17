@@ -104,7 +104,14 @@ export type Order = {
     parent_id?: number | null
     die_rate?: number | null
     max_del_qty?: number | null
-    products?: Partial<Product> | null
+    products?: Partial<Product> & {
+        specifications?: { name: string } | null,
+        pasting?: { name: string } | null,
+        constructions?: { name: string } | null,
+        gsm?: { name: string } | null,
+        paper_types?: { name: string } | null,
+        sizes?: { name: string } | null
+    } | null
     created_at: string
     updated_at: string
 }

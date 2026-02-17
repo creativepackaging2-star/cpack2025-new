@@ -72,37 +72,53 @@ export default function COAPage() {
                 } else {
                     let { data: orderData, error: sbError } = await supabase
                         .from('orders')
-                        .select('*')
+                        .select(`
+                            *,
+                            products (
+                                id,
+                                product_name,
+                                dimension,
+                                artwork_code,
+                                folding,
+                                folding_dim,
+                                delivery_address_id,
+                                specifications (name)
+                            )
+                        `)
                         .eq('id', id)
                         .single();
 
                     if (sbError) throw sbError;
 
-                    // Fallback logic for missing data
-                    if (orderData.product_id) {
-                        // 1. Fetch Product details if folding/address info is missing
-                        const { data: productData } = await supabase
-                            .from('products')
-                            .select('*')
-                            .eq('id', orderData.product_id)
-                            .single();
+                    // Fallback logic for missing data & Live Specs Override
+                    if (orderData.products) {
+                        const p = orderData.products;
 
-                        if (productData) {
-                            // Fill missing folding info
-                            if (!orderData.folding) orderData.folding = productData.folding;
-                            if (!orderData.folding_dim) orderData.folding_dim = productData.folding_dim;
+                        // LIVE OVERRIDES from Product Master
+                        if (p.product_name) orderData.product_name = p.product_name;
+                        if (p.dimension) orderData.dimension = p.dimension;
+                        if (p.artwork_code) orderData.artwork_code = p.artwork_code;
 
-                            // Fill missing delivery address
-                            if (!orderData.delivery_address && productData.delivery_address_id) {
-                                const { data: addressData } = await supabase
-                                    .from('delivery_addresses')
-                                    .select('name') // Assuming 'name' is the address field based on debug output
-                                    .eq('id', productData.delivery_address_id)
-                                    .single();
+                        // Fill missing folding info
+                        if (!orderData.folding) orderData.folding = p.folding;
+                        if (!orderData.folding_dim) orderData.folding_dim = p.folding_dim;
 
-                                if (addressData) {
-                                    orderData.delivery_address = addressData.name;
-                                }
+                        // LIVE SPECIFICATION OVERRIDE
+                        // If the product has a linked specification, use that name instead of the snapshot
+                        if (p.specifications?.name) {
+                            orderData.specification = p.specifications.name;
+                        }
+
+                        // Fill missing delivery address
+                        if (!orderData.delivery_address && p.delivery_address_id) {
+                            const { data: addressData } = await supabase
+                                .from('delivery_addresses')
+                                .select('name')
+                                .eq('id', p.delivery_address_id)
+                                .single();
+
+                            if (addressData) {
+                                orderData.delivery_address = addressData.name;
                             }
                         }
                     }

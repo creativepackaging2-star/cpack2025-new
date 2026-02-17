@@ -229,36 +229,48 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 prod.delivery_address_id ? supabase.from('delivery_addresses').select('name').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
             ]);
             setProduct(prod);
+
+            // Always update technical specs from live product data to ensure consistency
+            const liveSpecs = {
+                product_name: prod.product_name || '',
+                category_name: cat.data?.name || '',
+                paper_type_name: paper.data?.name || '',
+                gsm_value: gsm.data?.name || '',
+                print_size: sz.data?.name || '',
+                ups: prod.ups || null,
+                artwork_code: prod.artwork_code || '',
+                plate_no: prod.plate_no || '',
+                ink: prod.ink || '',
+                paper_order_size: sz.data?.name || '', // Default paper size to product size
+                paper_order_size_id: prod.size_id || null, // Default paper size ID
+                dimension: prod.dimension || '',
+                artwork_pdf: prod.artwork_pdf || '',
+                artwork_cdr: prod.artwork_cdr || '',
+                coating: prod.coating || '',
+                special_effects: prod.special_effects || '',
+                pasting_type: past.data?.name || '',
+                construction_type: cons.data?.name || '',
+                specification: spec.data?.name || '',
+                specs: prod.specs || '',
+            };
+
             if (!initialData) {
                 const address = addr.data?.name || '';
                 setFormData(prev => ({
                     ...prev,
                     product_id: prod.id,
-                    product_name: prod.product_name || '',
-                    category_name: cat.data?.name || '',
-                    paper_type_name: paper.data?.name || '',
-                    gsm_value: gsm.data?.name || '',
-                    actual_gsm_used: prod.actual_gsm_used || '',
-                    print_size: sz.data?.name || '',
                     customer_name: cust.data?.name || '',
                     delivery_address: address,
                     from_our_company: address.toLowerCase().includes('halol') ? 'Printers' : 'Packaging',
-                    ups: prod.ups || null,
                     rate: prod.last_rate || 0,
-                    artwork_code: prod.artwork_code || '',
-                    plate_no: prod.plate_no || '',
-                    ink: prod.ink || '',
-                    paper_order_size: sz.data?.name || '',
-                    paper_order_size_id: prod.size_id || null,
-                    dimension: prod.dimension || '',
-                    artwork_pdf: prod.artwork_pdf || '',
-                    artwork_cdr: prod.artwork_cdr || '',
-                    coating: prod.coating || '',
-                    special_effects: prod.special_effects || '',
-                    pasting_type: past.data?.name || '',
-                    construction_type: cons.data?.name || '',
-                    specification: spec.data?.name || '',
-                    specs: prod.specs || '',
+                    ...liveSpecs
+                }));
+            } else {
+                // If editing an existing order, ONLY update the technical specs from the live product
+                // This ensures that if Product Master changes, the Order reflects it.
+                setFormData(prev => ({
+                    ...prev,
+                    ...liveSpecs
                 }));
             }
         } catch (err: any) { alert(err.message); } finally { setLoading(false); }
