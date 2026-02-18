@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2, ShieldCheck } from 'lucide-react';
 
+import { LayoutProvider } from './LayoutContext';
+
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const pathname = usePathname();
@@ -53,5 +55,9 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         );
     }
 
-    return <AppLayout>{children}</AppLayout>;
+    return (
+        <LayoutProvider>
+            <AppLayout>{children}</AppLayout>
+        </LayoutProvider>
+    );
 }

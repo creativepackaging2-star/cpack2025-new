@@ -1,0 +1,9 @@
+{
+  "specifications": "Try changing 'specifications' to one of the following: 'specifications!fk_specification', 'specifications!products_specification_id_fkey'. Find the desired relationship in the 'details' key.",
+  "pasting": "Try changing 'pasting' to one of the following: 'pasting!fk_pasting', 'pasting!products_pasting_id_fkey'. Find the desired relationship in the 'details' key.",
+  "constructions": "Try changing 'constructions' to one of the following: 'constructions!fk_construction', 'constructions!products_construction_id_fkey'. Find the desired relationship in the 'details' key.",
+  "gsm": "Try changing 'gsm' to one of the following: 'gsm!fk_gsm', 'gsm!products_gsm_id_fkey'. Find the desired relationship in the 'details' key.",
+  "paper_types": "Try changing 'paper_types' to one of the following: 'paper_types!fk_paper_type', 'paper_types!products_paper_type_id_fkey'. Find the desired relationship in the 'details' key.",
+  "sizes": "Try changing 'sizes' to one of the following: 'sizes!fk_size', 'sizes!products_size_id_fkey'. Find the desired relationship in the 'details' key.",
+  "categories": "ERROR: Could not find a relationship between 'products' and 'categories' in the schema cache"
+}

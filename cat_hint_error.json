@@ -1,0 +1,17 @@
+{
+  "code": "PGRST201",
+  "details": [
+    {
+      "cardinality": "many-to-one",
+      "embedding": "products with category",
+      "relationship": "fk_category using products(category_id) and category(id)"
+    },
+    {
+      "cardinality": "many-to-one",
+      "embedding": "products with category",
+      "relationship": "products_category_id_fkey using products(category_id) and category(id)"
+    }
+  ],
+  "hint": "Try changing 'category' to one of the following: 'category!fk_category', 'category!products_category_id_fkey'. Find the desired relationship in the 'details' key.",
+  "message": "Could not embed because more than one relationship was found for 'products' and 'category'"
+}

@@ -1,53 +1,64 @@
--- Trigger to propagate product updates to orders
-CREATE OR REPLACE FUNCTION propagate_product_updates()
+-- Function to update orders when a product is modified
+CREATE OR REPLACE FUNCTION update_orders_from_product()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only update if relevant textual fields changed
-    IF (OLD.product_name IS DISTINCT FROM NEW.product_name) OR
-       (OLD.specs IS DISTINCT FROM NEW.specs) OR
-       (OLD.special_effects IS DISTINCT FROM NEW.special_effects) OR
-       (OLD.dimension IS DISTINCT FROM NEW.dimension) OR
-       (OLD.ups IS DISTINCT FROM NEW.ups) OR
-       (OLD.plate_no IS DISTINCT FROM NEW.plate_no) OR
-       (OLD.ink IS DISTINCT FROM NEW.ink) OR
-       (OLD.pasting_type IS DISTINCT FROM NEW.pasting_type) OR
-       (OLD.construction_type IS DISTINCT FROM NEW.construction_type) OR
-       (OLD.specification IS DISTINCT FROM NEW.specification) OR
-       (OLD.print_size IS DISTINCT FROM NEW.print_size) OR
-       (OLD.folding_dimension IS DISTINCT FROM NEW.folding_dimension) OR
-       (OLD.artwork_code IS DISTINCT FROM NEW.artwork_code)
-    THEN
-        UPDATE orders
-        SET 
-            product_name = NEW.product_name,
-            specs = NEW.specs,
-            product_specs = NEW.specs,
-            special_effects = NEW.special_effects,
-            dimension = NEW.dimension,
-            plate_no = NEW.plate_no,
-            ink = NEW.ink,
-            pasting_type = NEW.pasting_type,
-            construction_type = NEW.construction_type,
-            specification = NEW.specification,
-            print_size = NEW.print_size,
-            folding_dimension = NEW.folding_dimension,
-            
-            -- Sync UPS if numeric (handling text field nature of ups in products vs potentially int in orders)
-            ups = CASE WHEN NEW.ups ~ '^[0-9]+$' THEN NEW.ups::integer ELSE NULL END,
-            product_ups = CASE WHEN NEW.ups ~ '^[0-9]+$' THEN NEW.ups::integer ELSE NULL END,
-            
-            artwork_code = NEW.artwork_code,
-            artwork_pdf = NEW.artwork_pdf,
-            artwork_cdr = NEW.artwork_cdr
-        WHERE product_id = NEW.id;
-    END IF;
+    UPDATE orders
+    SET 
+        product_name = NEW.product_name,
+        artwork_code = NEW.artwork_code,
+        dimension = NEW.dimension,
+        specs = NEW.specs,
+        ink = NEW.ink,
+        plate_no = NEW.plate_no,
+        coating = NEW.coating,
+        special_effects = NEW.special_effects,
+        artwork_pdf = NEW.artwork_pdf,
+        artwork_cdr = NEW.artwork_cdr,
+        -- Fetch values from related tables using correct product links
+        specification = (SELECT name FROM specifications WHERE id = NEW.specification_id),
+        pasting_type = (SELECT name FROM pasting WHERE id = NEW.pasting_id),
+        construction_type = (SELECT name FROM constructions WHERE id = NEW.construction_id),
+        gsm_value = (SELECT name FROM gsm WHERE id = NEW.gsm_id),
+        paper_type_name = (SELECT name FROM paper_types WHERE id = NEW.paper_type_id),
+        print_size = (SELECT name FROM sizes WHERE id = NEW.size_id)
+    WHERE product_id = NEW.id;
+    
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_propagate_product_updates ON products;
+-- Trigger to run the function ON UPDATE
+DROP TRIGGER IF EXISTS trg_propagate_product_updates ON products;
+CREATE TRIGGER trg_propagate_product_updates
+AFTER UPDATE ON products
+FOR EACH ROW
+WHEN (OLD.* IS DISTINCT FROM NEW.*)
+EXECUTE FUNCTION update_orders_from_product();
 
-CREATE TRIGGER trigger_propagate_product_updates
-    AFTER UPDATE ON products
-    FOR EACH ROW
-    EXECUTE FUNCTION propagate_product_updates();
+-- Manual sync functionality
+CREATE OR REPLACE FUNCTION sync_all_orders_to_master()
+RETURNS void AS $$
+BEGIN
+    UPDATE orders o
+    SET 
+        product_name = p.product_name,
+        artwork_code = p.artwork_code,
+        dimension = p.dimension,
+        specs = p.specs,
+        ink = p.ink,
+        plate_no = p.plate_no,
+        coating = p.coating,
+        special_effects = p.special_effects,
+        artwork_pdf = p.artwork_pdf,
+        artwork_cdr = p.artwork_cdr,
+        -- Corrected sync logic
+        specification = (SELECT name FROM specifications WHERE id = p.specification_id),
+        pasting_type = (SELECT name FROM pasting WHERE id = p.pasting_id),
+        construction_type = (SELECT name FROM constructions WHERE id = p.construction_id),
+        gsm_value = (SELECT name FROM gsm WHERE id = p.gsm_id),
+        paper_type_name = (SELECT name FROM paper_types WHERE id = p.paper_type_id),
+        print_size = (SELECT name FROM sizes WHERE id = p.size_id)
+    FROM products p
+    WHERE o.product_id = p.id;
+END;
+$$ LANGUAGE plpgsql;

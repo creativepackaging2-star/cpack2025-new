@@ -1,0 +1,6 @@
+{
+  "code": "PGRST200",
+  "details": "Searched for a foreign key relationship between 'products' and 'categories' in the schema 'public', but no matches were found.",
+  "hint": "Perhaps you meant 'category' instead of 'categories'.",
+  "message": "Could not find a relationship between 'products' and 'categories' in the schema cache"
+}

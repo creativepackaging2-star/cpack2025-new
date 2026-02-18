@@ -44,31 +44,37 @@ export default function DeliveryLabelPage() {
                 } else {
                     let { data: orderData, error: sbError } = await supabase
                         .from('orders')
-                        .select('*')
+                        .select(`
+                            *,
+                            products (
+                                id,
+                                product_name,
+                                artwork_code,
+                                delivery_address_id
+                            )
+                        `)
                         .eq('id', id)
                         .single();
 
                     if (sbError) throw sbError;
 
-                    // Fallback logic for missing data
-                    if (orderData.product_id) {
-                        const { data: productData } = await supabase
-                            .from('products')
-                            .select('*')
-                            .eq('id', orderData.product_id)
-                            .single();
+                    // Fallback logic for missing data & LIVE OVERRIDES
+                    if (orderData.products) {
+                        const p = orderData.products;
 
-                        if (productData) {
-                            if (!orderData.delivery_address && productData.delivery_address_id) {
-                                const { data: addressData } = await supabase
-                                    .from('delivery_addresses')
-                                    .select('name')
-                                    .eq('id', productData.delivery_address_id)
-                                    .single();
+                        // Live Master Data Overrides
+                        if (p.product_name) orderData.product_name = p.product_name;
+                        if (p.artwork_code) orderData.artwork_code = p.artwork_code;
 
-                                if (addressData) {
-                                    orderData.delivery_address = addressData.name;
-                                }
+                        if (!orderData.delivery_address && p.delivery_address_id) {
+                            const { data: addressData } = await supabase
+                                .from('delivery_addresses')
+                                .select('name')
+                                .eq('id', p.delivery_address_id)
+                                .single();
+
+                            if (addressData) {
+                                orderData.delivery_address = addressData.name;
                             }
                         }
                     }

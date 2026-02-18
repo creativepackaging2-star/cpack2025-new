@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -48,10 +48,12 @@ interface SidebarProps {
 
 import { useAuth } from './AuthProvider';
 import { LogOut } from 'lucide-react';
+import { useLayout } from './LayoutContext';
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     const pathname = usePathname();
     const { user, signOut } = useAuth();
+    const { toggleNavStyle } = useLayout();
 
     return (
         <div className={twMerge(
@@ -82,6 +84,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 className="absolute -right-3 top-20 bg-indigo-600 rounded-full p-1 border-2 border-slate-900 hover:bg-indigo-500 transition-colors z-50"
             >
                 {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+            </button>
+
+            {/* Layout Switch Toggle */}
+            <button
+                onClick={toggleNavStyle}
+                className={twMerge(
+                    "absolute -right-3 top-32 bg-slate-800 rounded-full p-1.5 border-2 border-slate-900 hover:bg-slate-700 transition-all z-50 group",
+                    "text-slate-400 hover:text-indigo-400"
+                )}
+                title="Switch to Top Navigation"
+            >
+                <Tally2 className="h-3 w-3 rotate-90" />
             </button>
 
             <div className="px-3 py-6">

@@ -1,102 +1,109 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
+const path = require('path');
 
 const env = {};
-const lines = fs.readFileSync('.env.local', 'utf8').split('\n');
-lines.forEach(l => {
-    const parts = l.split('=');
-    if (parts.length >= 2) env[parts[0].trim()] = parts.slice(1).join('=').trim();
-});
+const envPath = path.resolve('.env.local');
+if (fs.existsSync(envPath)) {
+    fs.readFileSync(envPath, 'utf8').split('\n').filter(line => line.includes('=')).forEach(l => {
+        const [k, v] = l.split('=');
+        if (k && v) env[k.trim()] = v.trim();
+    });
+}
 
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-(async () => {
-    console.log('=== SYNCING ALL ORDERS FROM PRODUCTS ===\n');
+async function syncAll() {
+    console.log('--- STARTING FULL DATABASE SYNC ---');
 
-    // Get all special effects for lookup
-    const { data: effects } = await supabase.from('special_effects').select('*');
-    const effectMap = {};
-    effects.forEach(e => effectMap[e.id] = e.name);
+    try {
+        // 1. Fetch all products with all related data
+        const { data: products, error: pErr } = await supabase
+            .from('products')
+            .select(`
+                id,
+                product_name,
+                artwork_code,
+                dimension,
+                specs,
+                ink,
+                plate_no,
+                coating,
+                special_effects,
+                artwork_pdf,
+                artwork_cdr,
+                specification_id,
+                gsm_id,
+                paper_type_id,
+                size_id,
+                pasting_id,
+                construction_id
+            `);
 
-    // Get all products with orders
-    const { data: products } = await supabase
-        .from('products')
-        .select('id, product_name, special_effects, specs, dimension, plate_no, ink, ups, artwork_code');
+        if (pErr) throw pErr;
+        console.log(`Found ${products.length} products to process.`);
 
-    console.log(`Processing ${products.length} products...\n`);
+        // 2. Fetch all related tables into maps for fast lookup
+        const [specData, gsmData, paperData, sizeData, pastingData, constrData] = await Promise.all([
+            supabase.from('specifications').select('id, name'),
+            supabase.from('gsm').select('id, name'),
+            supabase.from('paper_types').select('id, name'),
+            supabase.from('sizes').select('id, name'),
+            supabase.from('pasting').select('id, name'),
+            supabase.from('constructions').select('id, name')
+        ]);
 
-    let totalUpdated = 0;
+        const specMap = new Map(specData.data?.map(i => [i.id, i.name]));
+        const gsmMap = new Map(gsmData.data?.map(i => [i.id, i.name]));
+        const paperMap = new Map(paperData.data?.map(i => [i.id, i.name]));
+        const sizeMap = new Map(sizeData.data?.map(i => [i.id, i.name]));
+        const pastingMap = new Map(pastingData.data?.map(i => [i.id, i.name]));
+        const constrMap = new Map(constrData.data?.map(i => [i.id, i.name]));
 
-    for (const product of products) {
-        // Check if product has orders
-        const { data: orders } = await supabase
-            .from('orders')
-            .select('id')
-            .eq('product_id', product.id);
+        // 3. Iterate products and update their orders
+        let totalUpdated = 0;
+        for (const p of products) {
+            const payload = {
+                product_name: p.product_name,
+                artwork_code: p.artwork_code,
+                dimension: p.dimension,
+                specs: p.specs,
+                ink: p.ink,
+                plate_no: p.plate_no,
+                coating: p.coating,
+                special_effects: p.special_effects,
+                artwork_pdf: p.artwork_pdf,
+                artwork_cdr: p.artwork_cdr,
+                specification: specMap.get(p.specification_id) || null,
+                gsm_value: gsmMap.get(p.gsm_id) || null,
+                paper_type_name: paperMap.get(p.paper_type_id) || null,
+                print_size: sizeMap.get(p.size_id) || null,
+                pasting_type: pastingMap.get(p.pasting_id) || null,
+                construction_type: constrMap.get(p.construction_id) || null
+            };
 
-        if (!orders || orders.length === 0) continue;
+            const { data, error, count } = await supabase
+                .from('orders')
+                .update(payload)
+                .eq('product_id', p.id);
 
-        // Resolve special effects IDs to names
-        let specialEffectsNames = '';
-        if (product.special_effects) {
-            const ids = product.special_effects.split('|').map(s => s.trim());
-            const names = ids.map(id => {
-                // Check if it's already a name or an ID
-                if (/^\d+$/.test(id)) {
-                    return effectMap[id] || id;
-                }
-                return id;
-            });
-            specialEffectsNames = names.join(' | ');
-        }
-
-        // Resolve names in the specs string if they are IDs
-        let resolvedSpecs = product.specs || '';
-        if (resolvedSpecs) {
-            resolvedSpecs = resolvedSpecs.split('|').map(part => {
-                const trimmed = part.trim();
-                if (/^\d+$/.test(trimmed)) {
-                    return effectMap[trimmed] || trimmed;
-                }
-                return trimmed;
-            }).join(' | ');
-        }
-
-        // Update orders
-        const updateData = {
-            product_name: product.product_name,
-            specs: resolvedSpecs,
-            product_specs: resolvedSpecs,
-            special_effects: specialEffectsNames,
-            dimension: product.dimension,
-            plate_no: product.plate_no,
-            ink: product.ink,
-            artwork_code: product.artwork_code
-        };
-
-        // Handle UPS safely
-        if (product.ups && !isNaN(Number(product.ups))) {
-            updateData.ups = Number(product.ups);
-            updateData.product_ups = Number(product.ups);
-        }
-
-        const { error } = await supabase
-            .from('orders')
-            .update(updateData)
-            .eq('product_id', product.id);
-
-        if (error) {
-            console.error(`❌ ${product.product_name}: ${error.message}`);
-        } else {
-            totalUpdated += orders.length;
-            if (product.product_name.includes('S One Trio')) {
-                console.log(`✅ ${product.product_name}: Updated ${orders.length} orders`);
-                console.log(`   special_effects: "${specialEffectsNames}"`);
-                console.log(`   specs: "${product.specs?.substring(0, 50)}..."`);
+            if (error) {
+                console.error(`Error updating orders for product ${p.product_name}:`, error.message);
+            } else {
+                // Supabase update doesn't return count unless { count: 'exact' } is passed, 
+                // but we can assume success if error is null.
+                totalUpdated++;
+                if (totalUpdated % 10 === 0) console.log(`Processed ${totalUpdated}/${products.length} products...`);
             }
         }
-    }
 
-    console.log(`\n=== COMPLETE ===`);
-    console.log(`Total orders updated: ${totalUpdated}`);
-})();
+        console.log('\n--- SYNC COMPLETED SUCCESSFULLY ---');
+        console.log(`Total Products Synced: ${totalUpdated}`);
+        console.log('Existing orders now match the Product Master.');
+
+    } catch (e) {
+        console.error('CRITICAL SYNC ERROR:', e);
+    }
+}
+
+syncAll();
