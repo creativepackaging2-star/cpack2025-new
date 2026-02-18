@@ -1,7 +1,5 @@
-import { redirect } from 'next/navigation';
+import ProductionBoardGrid from '@/components/ProductionBoardGrid';
 
 export default function Dashboard() {
-  redirect('/orders');
-
-  return null;
+  return <ProductionBoardGrid />;
 }
