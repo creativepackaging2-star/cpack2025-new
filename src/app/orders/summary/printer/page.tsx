@@ -33,10 +33,17 @@ function PrinterSummaryContent() {
                 .select(`
                     *,
                     products (
+                        id,
                         product_name,
                         artwork_code,
+                        dimension,
+                        ink,
+                        plate_no,
+                        coating,
                         actual_gsm_used,
-                        dimension
+                        paper_types!paper_type_id (name),
+                        gsm!gsm_id (name),
+                        sizes!size_id (name)
                     )
                 `);
 
@@ -108,17 +115,26 @@ function PrinterSummaryContent() {
         message += `--------------------------------\n`;
 
         filteredOrders.forEach((o, i) => {
-            const product = o.products;
-            // GSM Logic: Actual (Product) -> Snapshot (Order) -> '-'
-            const gsmDisplay = product?.actual_gsm_used || o.gsm_value || '-';
+            const p = o.products;
 
-            // Size Logic: Snapshot (Order) -> Dimension (Product) -> '-'
-            const sizeDisplay = o.print_size || product?.dimension || '-';
+            // LIVE OVERRIDES
+            const productName = p?.product_name || o.product_name;
+            const ink = p?.ink || o.ink || '-';
+            const plateNo = p?.plate_no || o.plate_no || '-';
 
-            message += `${i + 1}. *${product?.product_name || o.product_name}*\n`;
+            // GSM Logic: Actual (Product) -> Linked Name -> Snapshot (Order) -> '-'
+            const gsmDisplay = p?.actual_gsm_used || p?.gsm?.name || o.gsm_value || '-';
+
+            // Size Logic: Linked Name -> Dimension (Product) -> Snapshot (Order) -> '-'
+            const sizeDisplay = p?.sizes?.name || p?.dimension || o.print_size || '-';
+
+            // Paper Type
+            const paperType = p?.paper_types?.name || o.paper_type_name || '-';
+
+            message += `${i + 1}. *${productName}*\n`;
             message += `   Size: ${sizeDisplay} | Qty: *${(o.total_print_qty || 0).toLocaleString()}*\n`;
-            message += `   Paper: ${o.paper_type_name || '-'} (${gsmDisplay} GSM)\n`;
-            message += `   Plate: ${o.plate_no || '-'} | Ink: ${o.ink || '-'}\n`;
+            message += `   Paper: ${paperType} (${gsmDisplay} GSM)\n`;
+            message += `   Plate: ${plateNo} | Ink: ${ink}\n`;
             message += `--------------------------------\n`;
         });
 
@@ -319,17 +335,17 @@ function PrinterSummaryContent() {
                                     </div>
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">
-                                    {/* GSM: Actual (Prod) -> Snapshot -> '-' */}
-                                    {order.products?.actual_gsm_used || order.gsm_value || '-'}
+                                    {/* GSM: Actual (Prod) -> Linked Name -> Snapshot -> '-' */}
+                                    {order.products?.actual_gsm_used || order.products?.gsm?.name || order.gsm_value || '-'}
                                 </td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px]">{order.paper_type_name || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px]">{order.products?.paper_types?.name || order.paper_type_name || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#1e293b', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center">
-                                    {/* Size: Snapshot -> Dim (Prod) -> '-' */}
-                                    {order.print_size || order.products?.dimension || '-'}
+                                    {/* Size: Linked Name -> Snapshot -> Dim (Prod) -> '-' */}
+                                    {order.products?.sizes?.name || order.print_size || order.products?.dimension || '-'}
                                 </td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#047857', fontWeight: 900, padding: '4px 2px' }} className="text-[10px] text-center">{(order.total_print_qty || 0).toLocaleString()}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#475569', padding: '4px 2px' }} className="text-[9px] leading-tight max-w-[150px]">{order.ink || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#dc2626', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center whitespace-nowrap">{order.plate_no || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#475569', padding: '4px 2px' }} className="text-[9px] leading-tight max-w-[150px]">{order.products?.ink || order.ink || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#dc2626', fontWeight: 700, padding: '4px 2px' }} className="text-[10px] text-center whitespace-nowrap">{order.products?.plate_no || order.plate_no || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.paper_order_size || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.paper_ups || '-'}</td>

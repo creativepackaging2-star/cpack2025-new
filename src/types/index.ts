@@ -110,7 +110,8 @@ export type Order = {
         constructions?: { name: string } | null,
         gsm?: { name: string } | null,
         paper_types?: { name: string } | null,
-        sizes?: { name: string } | null
+        sizes?: { name: string } | null,
+        categories?: { name: string } | null
     } | null
     created_at: string
     updated_at: string

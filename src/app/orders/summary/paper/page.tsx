@@ -33,8 +33,12 @@ function PaperSummaryContent() {
                 .select(`
                     *,
                     products (
+                        id,
                         product_name,
-                        actual_gsm_used
+                        actual_gsm_used,
+                        gsm!gsm_id (name),
+                        paper_types!paper_type_id (name),
+                        sizes!size_id (name)
                     )
                 `);
 
@@ -102,9 +106,13 @@ function PaperSummaryContent() {
         message += `--------------------------------\n`;
 
         filteredOrders.forEach((o, i) => {
-            const gsmDisplay = o.products?.actual_gsm_used || o.gsm_value || '-';
-            message += `${i + 1}. *${o.paper_type_name || 'Paper'}* | ${gsmDisplay} GSM\n`;
-            message += `   Size: ${o.paper_order_size || '-'} | Qty: *${(o.paper_order_qty || 0).toLocaleString()}*\n`;
+            const p = o.products;
+            const gsmDisplay = p?.actual_gsm_used || p?.gsm?.name || o.gsm_value || '-';
+            const paperType = p?.paper_types?.name || o.paper_type_name || '-';
+            const sizeDisplay = o.paper_order_size || p?.sizes?.name || '-';
+
+            message += `${i + 1}. *${paperType}* | ${gsmDisplay} GSM\n`;
+            message += `   Size: ${sizeDisplay} | Qty: *${(o.paper_order_qty || 0).toLocaleString()}*\n`;
             message += `   Del. at: ${o.printer_name || 'Stock'}\n`;
             message += `--------------------------------\n`;
         });
@@ -278,8 +286,8 @@ function PaperSummaryContent() {
                         {filteredOrders.length > 0 ? filteredOrders.map((order, index) => (
                             <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#64748b', padding: '4px 2px' }} className="text-[9px] text-center">{index + 1}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.gsm_value || order.products?.actual_gsm_used || '-'}</td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', fontWeight: 700, padding: '4px 4px' }} className="text-[10px]">{order.paper_type_name || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.products?.actual_gsm_used || order.products?.gsm?.name || order.gsm_value || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', fontWeight: 700, padding: '4px 4px' }} className="text-[10px]">{order.products?.paper_types?.name || order.paper_type_name || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 2px' }} className="text-[10px] text-center">{order.paper_order_size || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#059669', fontWeight: 900, padding: '4px 2px' }} className="text-[10px] text-center">{(order.paper_order_qty || 0).toLocaleString()}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '4px 4px' }} className="text-[10px]">{order.printer_name || 'Stock'}</td>

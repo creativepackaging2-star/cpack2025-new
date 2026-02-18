@@ -77,12 +77,24 @@ export default function COAPage() {
                             products (
                                 id,
                                 product_name,
-                                dimension,
                                 artwork_code,
+                                dimension,
                                 folding,
                                 folding_dim,
                                 delivery_address_id,
-                                specifications (name)
+                                ink,
+                                plate_no,
+                                coating,
+                                special_effects,
+                                specs,
+                                artwork_pdf,
+                                artwork_cdr,
+                                specifications!specification_id (name),
+                                pasting!pasting_id (name),
+                                constructions!construction_id (name),
+                                gsm!gsm_id (name),
+                                paper_types!paper_type_id (name),
+                                sizes!size_id (name)
                             )
                         `)
                         .eq('id', id)
@@ -98,16 +110,25 @@ export default function COAPage() {
                         if (p.product_name) orderData.product_name = p.product_name;
                         if (p.dimension) orderData.dimension = p.dimension;
                         if (p.artwork_code) orderData.artwork_code = p.artwork_code;
+                        if (p.ink) orderData.ink = p.ink;
+                        if (p.plate_no) orderData.plate_no = p.plate_no;
+                        if (p.coating) orderData.coating = p.coating;
+                        if (p.special_effects) orderData.special_effects = p.special_effects;
+                        if (p.specs) orderData.specs = p.specs;
+                        if (p.artwork_pdf) orderData.artwork_pdf = p.artwork_pdf;
+                        if (p.artwork_cdr) orderData.artwork_cdr = p.artwork_cdr;
+
+                        // Linked Tables Overrides
+                        if (p.specifications?.name) orderData.specification = p.specifications.name;
+                        if (p.pasting?.name) orderData.pasting_type = p.pasting.name;
+                        if (p.constructions?.name) orderData.construction_type = p.constructions.name;
+                        if (p.gsm?.name) orderData.gsm_value = p.gsm.name;
+                        if (p.paper_types?.name) orderData.paper_type_name = p.paper_types.name;
+                        if (p.sizes?.name) orderData.print_size = p.sizes.name;
 
                         // Fill missing folding info
                         if (!orderData.folding) orderData.folding = p.folding;
                         if (!orderData.folding_dim) orderData.folding_dim = p.folding_dim;
-
-                        // LIVE SPECIFICATION OVERRIDE
-                        // If the product has a linked specification, use that name instead of the snapshot
-                        if (p.specifications?.name) {
-                            orderData.specification = p.specifications.name;
-                        }
 
                         // Fill missing delivery address
                         if (!orderData.delivery_address && p.delivery_address_id) {

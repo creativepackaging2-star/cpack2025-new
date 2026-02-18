@@ -212,6 +212,26 @@ Plate No   : ${order.plate_no || '-'}`;
     const paperwalaUrl = getPaperwalaUrl();
     const printerUrl = getPrinterUrl();
 
+    // LIVE DATA RESOLUTION
+    const products = order.products;
+    const live = {
+        product_name: products?.product_name || order.product_name,
+        artwork_code: products?.artwork_code || order.artwork_code,
+        dimension: products?.dimension || order.dimension,
+        specs: products?.specs || order.specs,
+        specification: products?.specifications?.name || order.specification,
+        ink: products?.ink || order.ink,
+        plate_no: products?.plate_no || order.plate_no,
+        coating: products?.coating || order.coating,
+        pasting_type: products?.pasting?.name || order.pasting_type,
+        construction_type: products?.constructions?.name || order.construction_type,
+        gsm_value: products?.gsm?.name || order.gsm_value,
+        paper_type_name: products?.paper_types?.name || order.paper_type_name,
+        artwork_pdf: products?.artwork_pdf || order.artwork_pdf,
+        artwork_cdr: products?.artwork_cdr || order.artwork_cdr,
+        print_size: products?.sizes?.name || order.print_size
+    };
+
     const generateDoc = (type: string, orderId: number) => {
         if (type === 'COA') {
             console.log('Generating COA for order:', orderId);
@@ -241,14 +261,11 @@ Plate No   : ${order.plate_no || '-'}`;
                         />
                     </div>
                     <div className="flex-1">
-                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                            {order.products?.artwork_code || order.artwork_code || '-'}
-                        </div>
-                        <div className="text-sm font-semibold text-slate-900 line-clamp-2">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled'}</div>
+                        <div className="text-sm font-semibold text-slate-900 line-clamp-2">{live.product_name || order.product_sku || 'Untitled'}</div>
 
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase">
-                                {order.specs || order.dimension || '-'}
+                                {live.specs || live.dimension || '-'}
                             </span>
                             {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                                 <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
@@ -376,10 +393,10 @@ Plate No   : ${order.plate_no || '-'}`;
                     />
                 </td>
                 <td className="px-3 py-2 w-1/4">
-                    <div className="text-sm font-semibold text-slate-900 line-clamp-1">{order.products?.product_name || order.product_name || order.product_sku || 'Untitled Product'}</div>
+                    <div className="text-sm font-semibold text-slate-900 line-clamp-1">{live.product_name || order.product_sku || 'Untitled Product'}</div>
                     <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] font-normal text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase">
-                            {order.products?.artwork_code || order.artwork_code || '-'}
+                            {live.artwork_code || '-'}
                         </span>
                         {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                             <span className="text-[10px] font-normal text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-0.5 shadow-sm">
@@ -406,8 +423,8 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 flex-1 min-w-[300px]">
-                    <div className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={order.specs || ''}>
-                        {order.specs || '-'}
+                    <div className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={live.specs || ''}>
+                        {live.specs || '-'}
                     </div>
                 </td>
 
@@ -457,13 +474,13 @@ Plate No   : ${order.plate_no || '-'}`;
                                     <PaperwalaWhatsAppLogo className="w-4 h-4" />
                                 </button>
                             )}
-                            {order.artwork_pdf && (
-                                <a href={order.artwork_pdf} aria-label="View PDF Artwork" target="_blank" rel="noopener noreferrer" title="View PDF">
+                            {live.artwork_pdf && (
+                                <a href={live.artwork_pdf} aria-label="View PDF Artwork" target="_blank" rel="noopener noreferrer" title="View PDF">
                                     <PdfLogo className="w-4 h-4" />
                                 </a>
                             )}
-                            {order.artwork_cdr && (
-                                <a href={order.artwork_cdr} aria-label="Download CDR Artwork" target="_blank" rel="noopener noreferrer" title="View CDR">
+                            {live.artwork_cdr && (
+                                <a href={live.artwork_cdr} aria-label="Download CDR Artwork" target="_blank" rel="noopener noreferrer" title="View CDR">
                                     <CdrLogo className="w-4 h-4" />
                                 </a>
                             )}
@@ -565,19 +582,19 @@ Plate No   : ${order.plate_no || '-'}`;
                                     <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
                                     <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
                                         <div className="space-y-2">
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Plate No:</span> <span className="font-bold text-red-600">{order.plate_no || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Ink Group:</span> <span className="font-bold text-slate-900">{order.ink || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Coating:</span> <span className="font-bold text-slate-900">{order.coating || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Pasting:</span> <span className="font-bold text-slate-900">{order.pasting_type || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Construction:</span> <span className="font-bold text-slate-900">{order.construction_type || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Specification:</span> <span className="font-bold text-slate-900">{order.specification || '-'}</span></div>
-                                            <div className="flex justify-between pb-0.5 text-[12px]"><span className="text-slate-500 font-bold uppercase tracking-wider">Dim:</span> <span className="font-mono font-bold text-indigo-700">{order.dimension || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Plate No:</span> <span className="font-bold text-red-600">{live.plate_no || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Ink Group:</span> <span className="font-bold text-slate-900">{live.ink || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Coating:</span> <span className="font-bold text-slate-900">{live.coating || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Pasting:</span> <span className="font-bold text-slate-900">{live.pasting_type || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Construction:</span> <span className="font-bold text-slate-900">{live.construction_type || '-'}</span></div>
+                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Specification:</span> <span className="font-bold text-slate-900">{live.specification || '-'}</span></div>
+                                            <div className="flex justify-between pb-0.5 text-[12px]"><span className="text-slate-500 font-bold uppercase tracking-wider">Dim:</span> <span className="font-mono font-bold text-indigo-700">{live.dimension || '-'}</span></div>
                                         </div>
                                     </div>
-                                    {order.specs && (
+                                    {live.specs && (
                                         <div className="bg-indigo-50 p-3.5 rounded-xl border border-indigo-200 mt-2">
                                             <div className="text-[12px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5 opacity-70">Full Specifications Detail</div>
-                                            <div className="text-[12px] text-slate-700 font-mono leading-relaxed font-semibold">{order.specs}</div>
+                                            <div className="text-[12px] text-slate-700 font-mono leading-relaxed font-semibold">{live.specs}</div>
                                         </div>
                                     )}
                                     <div className="flex flex-wrap gap-3 pt-1.5">
@@ -687,15 +704,27 @@ function OrdersList() {
             .select(`
                 *,
                 products (
+                    id,
                     product_name, 
                     artwork_code, 
                     dimension,
+                    ink,
+                    plate_no,
+                    coating,
+                    special_effects,
                     artwork_pdf, 
                     artwork_cdr, 
                     category_id,
                     paper_type_id,
                     gsm_id,
-                    actual_gsm_used
+                    actual_gsm_used,
+                    specs,
+                    specifications!specification_id (name),
+                    pasting!pasting_id (name),
+                    constructions!construction_id (name),
+                    gsm!gsm_id (name),
+                    paper_types!paper_type_id (name),
+                    sizes!size_id (name)
                 )
             `)
             .order('created_at', { ascending: false });

@@ -31,9 +31,15 @@ function PunchingSummaryContent() {
                 .select(`
                     *,
                     products (
+                        id,
                         product_name,
                         artwork_code,
-                        specs
+                        specs,
+                        special_effects,
+                        dimension,
+                        specifications!specification_id (name),
+                        pasting!pasting_id (name),
+                        sizes!size_id (name)
                     )
                 `);
 
@@ -328,7 +334,7 @@ function PunchingSummaryContent() {
                                         </div>
                                     )}
                                 </td>
-                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.print_size || '-'}</td>
+                                <td style={{ borderRight: '1px solid #f8fafc', color: '#334155', padding: '8px 4px' }} className="text-[11px] text-center">{order.products?.sizes?.name || order.products?.dimension || order.print_size || '-'}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', color: '#0f172a', padding: '8px 4px' }} className="text-[11px] font-bold text-center">{(Number(order.total_print_qty) || 0).toLocaleString()}</td>
                                 <td style={{ borderRight: '1px solid #f8fafc', padding: '8px 4px' }} className="text-center">
                                     <span
@@ -339,10 +345,10 @@ function PunchingSummaryContent() {
                                     </span>
                                 </td>
                                 <td
-                                    style={String(order.pasting_type || '').toLowerCase().includes('lock bottom') ? { backgroundColor: '#fef9c3', borderRight: '1px solid #f1f5f9', padding: '8px 4px' } : { color: '#475569', borderRight: '1px solid #f1f5f9', padding: '8px 4px' }}
+                                    style={String(order.products?.pasting?.name || order.pasting_type || '').toLowerCase().includes('lock bottom') ? { backgroundColor: '#fef9c3', borderRight: '1px solid #f1f5f9', padding: '8px 4px' } : { color: '#475569', borderRight: '1px solid #f1f5f9', padding: '8px 4px' }}
                                     className="text-[10px] text-center"
                                 >
-                                    {order.pasting_type === 'Lock Bottom Pasting' ? 'Lock Bot' : (order.pasting_type || '-')}
+                                    {(order.products?.pasting?.name || order.pasting_type) === 'Lock Bottom Pasting' ? 'Lock Bot' : (order.products?.pasting?.name || order.pasting_type || '-')}
                                 </td>
                                 <td style={{ backgroundColor: 'rgba(255, 241, 242, 0.4)', color: '#be123c', padding: '8px 8px', fontWeight: 700 }} className="text-xs text-center">
                                     {calculateMaxQty(order.quantity || 0).toLocaleString()}

@@ -30,10 +30,13 @@ export default function OfflineOrdersPage() {
                 .select(`
                     *,
                     products (
+                        id,
                         product_name,
                         artwork_code,
                         specs,
-                        category_id
+                        dimension,
+                        category_id,
+                        categories!category_id (name)
                     )
                 `)
                 .not('status', 'ilike', '%complete%')
@@ -154,7 +157,7 @@ export default function OfflineOrdersPage() {
                         const matchesStep = prog.toLowerCase() === step.toLowerCase();
                         if (selectedCategory === 'All') return matchesStep;
 
-                        const catName = o.category_name || (o as any).products?.category_name || '';
+                        const catName = o.products?.categories?.name || o.category_name || (o as any).products?.category_name || '';
                         const target = selectedCategory.toLowerCase();
                         const isMatch = catName.toLowerCase().includes(target.slice(0, -1));
 
@@ -230,14 +233,14 @@ export default function OfflineOrdersPage() {
                                                         {order.products?.product_name || order.product_name || 'Anonymous Job'}
                                                     </span>
                                                     <span className="text-[11px] text-black/60 truncate uppercase font-bold tracking-tight border-l border-black/20 pl-4">
-                                                        {order.specs || order.dimension || '-'}
+                                                        {order.products?.specs || order.products?.dimension || order.specs || order.dimension || '-'}
                                                     </span>
                                                 </div>
 
                                                 {/* Mobile View Specs (Only mobile) */}
                                                 <div className="md:hidden">
                                                     <span className="text-[10px] text-black/60 truncate uppercase font-bold tracking-tight">
-                                                        {order.specs || order.dimension || '-'}
+                                                        {order.products?.specs || order.products?.dimension || order.specs || order.dimension || '-'}
                                                     </span>
                                                 </div>
 

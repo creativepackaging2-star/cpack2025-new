@@ -45,45 +45,56 @@ export default function ShadeCardPage() {
                 } else {
                     let { data: orderData, error: sbError } = await supabase
                         .from('orders')
-                        .select('*')
+                        .select(`
+                            *,
+                            products (
+                                id,
+                                product_name,
+                                artwork_code,
+                                dimension,
+                                specs,
+                                delivery_address_id,
+                                specifications!specification_id (name),
+                                pasting!pasting_id (name),
+                                constructions!construction_id (name),
+                                gsm!gsm_id (name),
+                                paper_types!paper_type_id (name),
+                                categories!category_id (name)
+                            )
+                        `)
                         .eq('id', id)
                         .single();
 
                     if (sbError) throw sbError;
 
-                    // Fallback logic for missing data
-                    if (orderData.product_id) {
-                        const { data: productData, error: pError } = await supabase
-                            .from('products')
-                            .select(`
-                                *,
-                                pasting:pasting_types(name),
-                                construction:construction_types(name),
-                                category:categories(name)
-                            `)
-                            .eq('id', orderData.product_id)
-                            .single();
+                    // LIVE OVERRIDES from Product Master
+                    if (orderData.products) {
+                        const p = orderData.products;
 
-                        if (productData) {
-                            // Map construction and pasting if missing in order
-                            if (!orderData.construction_type) orderData.construction_type = productData.construction?.name;
-                            if (!orderData.pasting_type) orderData.pasting_type = productData.pasting?.name;
-                            if (!orderData.category_name) orderData.category_name = productData.category?.name;
-                            if (!orderData.artwork_code) orderData.artwork_code = productData.artwork_code;
-                            if (!orderData.gsm_value) orderData.gsm_value = productData.gsm_value; // fallback
-                            if (!orderData.dimension) orderData.dimension = productData.dimension; // fallback
+                        // Technical Specs
+                        if (p.product_name) orderData.product_name = p.product_name;
+                        if (p.dimension) orderData.dimension = p.dimension;
+                        if (p.artwork_code) orderData.artwork_code = p.artwork_code;
+                        if (p.specs) orderData.specs = p.specs;
 
-                            // Fill missing delivery address
-                            if (!orderData.delivery_address && productData.delivery_address_id) {
-                                const { data: addressData } = await supabase
-                                    .from('delivery_addresses')
-                                    .select('name')
-                                    .eq('id', productData.delivery_address_id)
-                                    .single();
+                        // Linked Tables
+                        if (p.specifications?.name) orderData.specification = p.specifications.name;
+                        if (p.pasting?.name) orderData.pasting_type = p.pasting.name;
+                        if (p.constructions?.name) orderData.construction_type = p.constructions.name;
+                        if (p.gsm?.name) orderData.gsm_value = p.gsm.name;
+                        if (p.paper_types?.name) orderData.paper_type_name = p.paper_types.name;
+                        if (p.categories?.name) orderData.category_name = p.categories.name;
 
-                                if (addressData) {
-                                    orderData.delivery_address = addressData.name;
-                                }
+                        // Fill missing delivery address
+                        if (!orderData.delivery_address && p.delivery_address_id) {
+                            const { data: addressData } = await supabase
+                                .from('delivery_addresses')
+                                .select('name')
+                                .eq('id', p.delivery_address_id)
+                                .single();
+
+                            if (addressData) {
+                                orderData.delivery_address = addressData.name;
                             }
                         }
                     }
