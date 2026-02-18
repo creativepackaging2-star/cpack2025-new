@@ -41,9 +41,10 @@ function PrinterSummaryContent() {
                         plate_no,
                         coating,
                         actual_gsm_used,
-                        paper_types!paper_type_id (name),
-                        gsm!gsm_id (name),
-                        sizes!size_id (name)
+                        actual_gsm_used,
+                        paper_types!fk_paper_type (name),
+                        gsm!fk_gsm (name),
+                        sizes!fk_size (name)
                     )
                 `);
 

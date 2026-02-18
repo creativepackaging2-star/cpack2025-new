@@ -36,9 +36,9 @@ function PaperSummaryContent() {
                         id,
                         product_name,
                         actual_gsm_used,
-                        gsm!gsm_id (name),
-                        paper_types!paper_type_id (name),
-                        sizes!size_id (name)
+                        gsm!fk_gsm (name),
+                        paper_types!fk_paper_type (name),
+                        sizes!fk_size (name)
                     )
                 `);
 

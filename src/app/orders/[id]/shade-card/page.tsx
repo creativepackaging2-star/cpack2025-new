@@ -54,12 +54,12 @@ export default function ShadeCardPage() {
                                 dimension,
                                 specs,
                                 delivery_address_id,
-                                specifications!specification_id (name),
-                                pasting!pasting_id (name),
-                                constructions!construction_id (name),
-                                gsm!gsm_id (name),
-                                paper_types!paper_type_id (name),
-                                categories!category_id (name)
+                                specifications!fk_specification (name),
+                                pasting!fk_pasting (name),
+                                constructions!fk_construction (name),
+                                gsm!fk_gsm (name),
+                                paper_types!fk_paper_type (name),
+                                category!fk_category (name)
                             )
                         `)
                         .eq('id', id)
@@ -83,7 +83,7 @@ export default function ShadeCardPage() {
                         if (p.constructions?.name) orderData.construction_type = p.constructions.name;
                         if (p.gsm?.name) orderData.gsm_value = p.gsm.name;
                         if (p.paper_types?.name) orderData.paper_type_name = p.paper_types.name;
-                        if (p.categories?.name) orderData.category_name = p.categories.name;
+                        if (p.category?.name) orderData.category_name = p.category.name;
 
                         // Fill missing delivery address
                         if (!orderData.delivery_address && p.delivery_address_id) {

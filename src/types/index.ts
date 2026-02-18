@@ -111,7 +111,7 @@ export type Order = {
         gsm?: { name: string } | null,
         paper_types?: { name: string } | null,
         sizes?: { name: string } | null,
-        categories?: { name: string } | null
+        category?: { name: string } | null
     } | null
     created_at: string
     updated_at: string

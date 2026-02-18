@@ -36,7 +36,7 @@ export default function OfflineOrdersPage() {
                         specs,
                         dimension,
                         category_id,
-                        categories!category_id (name)
+                        category!fk_category (name)
                     )
                 `)
                 .not('status', 'ilike', '%complete%')
@@ -157,7 +157,7 @@ export default function OfflineOrdersPage() {
                         const matchesStep = prog.toLowerCase() === step.toLowerCase();
                         if (selectedCategory === 'All') return matchesStep;
 
-                        const catName = o.products?.categories?.name || o.category_name || (o as any).products?.category_name || '';
+                        const catName = o.products?.category?.name || o.category_name || (o as any).products?.category_name || '';
                         const target = selectedCategory.toLowerCase();
                         const isMatch = catName.toLowerCase().includes(target.slice(0, -1));
 

@@ -719,12 +719,12 @@ function OrdersList() {
                     gsm_id,
                     actual_gsm_used,
                     specs,
-                    specifications!specification_id (name),
-                    pasting!pasting_id (name),
-                    constructions!construction_id (name),
-                    gsm!gsm_id (name),
-                    paper_types!paper_type_id (name),
-                    sizes!size_id (name)
+                    specifications!fk_specification (name),
+                    pasting!fk_pasting (name),
+                    constructions!fk_construction (name),
+                    gsm!fk_gsm (name),
+                    paper_types!fk_paper_type (name),
+                    sizes!fk_size (name)
                 )
             `)
             .order('created_at', { ascending: false });

@@ -37,9 +37,9 @@ function PunchingSummaryContent() {
                         specs,
                         special_effects,
                         dimension,
-                        specifications!specification_id (name),
-                        pasting!pasting_id (name),
-                        sizes!size_id (name)
+                        specifications!fk_specification (name),
+                        pasting!fk_pasting (name),
+                        sizes!fk_size (name)
                     )
                 `);
 
