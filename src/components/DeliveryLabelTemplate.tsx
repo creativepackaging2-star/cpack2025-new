@@ -153,10 +153,7 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                             </div>
                             <div className="border-b border-black flex items-center justify-center font-bold" style={{ flex: 1 }}>
                                 <div className="text-sm font-black">
-                                    {(order.qty_delivered || order.quantity || 0).toLocaleString()}
-                                    {(order.order_id?.includes('-P') || order.order_id?.includes('SPLIT-')) && (
-                                        <span className="text-[9px] font-black border-2 border-black ml-2 px-1 rounded uppercase whitespace-nowrap">LOT</span>
-                                    )}
+                                    {/* Quantity value hidden as per request */}
                                 </div>
                             </div>
                             <div className="border-b border-black flex items-center justify-center" style={{ flex: 1 }}>
