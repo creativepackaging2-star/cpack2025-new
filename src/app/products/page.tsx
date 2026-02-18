@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, memo } from 'react';
+import { useEffect, useState, useCallback, memo, useDeferredValue, useMemo } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -175,56 +175,58 @@ export default function ProductsPage() {
     } = useDataStore();
 
     const [searchQuery, setSearchQuery] = useState('');
+    const deferredSearchQuery = useDeferredValue(searchQuery);
     const [showArchived, setShowArchived] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    // Client-side filtering
-    const filteredProducts = products.filter(product => {
-        if (!showArchived && product.status === 'archived') return false;
-        if (!searchQuery) return true;
+    // Client-side filtering - Memoized and using deferred value for responsiveness
+    const filteredProducts = useMemo(() => {
+        return products.filter(product => {
+            if (!showArchived && product.status === 'archived') return false;
+            if (!deferredSearchQuery) return true;
 
-        // Split by comma to support AND logic (e.g. "carton, side, 65x23x55")
-        // All terms must match for the product to be included.
-        const searchTerms = searchQuery.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+            // Split by comma to support AND logic (e.g. "carton, side, 65x23x55")
+            const searchTerms = deferredSearchQuery.split(',').map((t: string) => t.trim().toLowerCase()).filter((t: string) => t.length > 0);
 
-        return searchTerms.every(term => {
-            // 1. Dimension Tolerance Search logic per term
-            const dimMatch = term.match(/^(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)$/);
+            return searchTerms.every((term: string) => {
+                // 1. Dimension Tolerance Search logic per term
+                // Optimized: Simple check before regex
+                const hasX = term.includes('x');
+                if (hasX && product.dimension) {
+                    const dimMatch = term.match(/^(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)$/);
+                    if (dimMatch) {
+                        const [, tL, tB, tH] = dimMatch;
+                        const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)].sort((a, b) => a - b);
 
-            if (dimMatch && product.dimension) {
-                const [, tL, tB, tH] = dimMatch;
-                // SORT target dims numerically for order-independent matching
-                const targetDims = [parseFloat(tL), parseFloat(tB), parseFloat(tH)].sort((a, b) => a - b);
+                        const prodDimMatch = product.dimension.toLowerCase().match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
+                        if (prodDimMatch) {
+                            const [, pL, pB, pH] = prodDimMatch;
+                            const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)].sort((a, b) => a - b);
 
-                const prodDimMatch = product.dimension.toLowerCase().match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
-                if (prodDimMatch) {
-                    const [, pL, pB, pH] = prodDimMatch;
-                    // SORT product dims numerically
-                    const prodDims = [parseFloat(pL), parseFloat(pB), parseFloat(pH)].sort((a, b) => a - b);
-
-                    // Tolerance +/- 2
-                    const isMatch = targetDims.every((target, idx) => Math.abs(target - prodDims[idx]) <= 2);
-                    if (isMatch) return true;
+                            const isMatch = targetDims.every((target, idx) => Math.abs(target - prodDims[idx]) <= 2);
+                            if (isMatch) return true;
+                        }
+                    }
                 }
-            }
 
-            // 2. Normal Text Search
-            const nameMatch = product.product_name?.toLowerCase().includes(term);
-            const skuMatch = product.sku?.toLowerCase().includes(term);
-            const codeMatch = product.artwork_code?.toLowerCase().includes(term);
-            const dimTextMatch = product.dimension?.toLowerCase().includes(term);
-            const specsMatch = product.specs?.toLowerCase().includes(term);
+                // 2. Normal Text Search
+                const nameMatch = product.product_name?.toLowerCase().includes(term);
+                const skuMatch = product.sku?.toLowerCase().includes(term);
+                const codeMatch = product.artwork_code?.toLowerCase().includes(term);
+                const dimTextMatch = product.dimension?.toLowerCase().includes(term);
+                const specsMatch = product.specs?.toLowerCase().includes(term);
 
-            // 3. Lookup Search (Category, Pasting)
-            const catName = product.category_id ? categories[product.category_id]?.toLowerCase() : '';
-            const catMatch = catName.includes(term);
+                // 3. Lookup Search (Category, Pasting)
+                const catName = product.category_id ? categories[product.category_id]?.toLowerCase() : '';
+                const catMatch = catName?.includes(term);
 
-            const pastingName = product.pasting_id ? pastingsMap[product.pasting_id]?.toLowerCase() : '';
-            const pastingMatch = pastingName.includes(term);
+                const pastingName = product.pasting_id ? (pastingsMap as any)[product.pasting_id]?.toLowerCase() : '';
+                const pastingMatch = pastingName?.includes(term);
 
-            return nameMatch || skuMatch || codeMatch || dimTextMatch || specsMatch || catMatch || pastingMatch;
+                return nameMatch || skuMatch || codeMatch || dimTextMatch || specsMatch || catMatch || pastingMatch;
+            });
         });
-    });
+    }, [products, deferredSearchQuery, showArchived, categories, pastingsMap]);
 
     const handleDelete = useCallback(async (id: string, name: string) => {
         setDeletingId(id);
@@ -371,7 +373,7 @@ export default function ProductsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredProducts.map((product) => (
+                                filteredProducts.map((product: Product) => (
                                     <ProductRow
                                         key={product.id}
                                         product={product}
@@ -397,7 +399,7 @@ export default function ProductsPage() {
                         No products found matching your active filters.
                     </div>
                 ) : (
-                    filteredProducts.map((product) => (
+                    filteredProducts.map((product: Product) => (
                         <MobileProductCard
                             key={product.id}
                             product={product}

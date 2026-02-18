@@ -103,6 +103,44 @@ export default function ProductionBoardGrid() {
         }
     };
 
+    const getCategoryStyles = (order: Order) => {
+        const catName = (order.products?.category?.name || order.category_name || '').toLowerCase();
+
+        if (catName.includes('carton')) {
+            return {
+                bg: 'bg-blue-50',
+                border: 'border-blue-200',
+                text: 'text-blue-900',
+                badge: 'bg-blue-100 text-blue-700',
+                hover: 'hover:border-blue-400 hover:shadow-md'
+            };
+        } else if (catName.includes('insert')) {
+            return {
+                bg: 'bg-pink-50',
+                border: 'border-pink-200',
+                text: 'text-pink-900',
+                badge: 'bg-pink-100 text-pink-700',
+                hover: 'hover:border-pink-400 hover:shadow-md'
+            };
+        } else if (catName.includes('label')) {
+            return {
+                bg: 'bg-emerald-50',
+                border: 'border-emerald-200',
+                text: 'text-emerald-900',
+                badge: 'bg-emerald-100 text-emerald-700',
+                hover: 'hover:border-emerald-400 hover:shadow-md'
+            };
+        }
+        // Default
+        return {
+            bg: 'bg-white',
+            border: 'border-slate-200',
+            text: 'text-slate-900',
+            badge: 'bg-slate-100 text-slate-700',
+            hover: 'hover:border-indigo-400 hover:shadow-md'
+        };
+    };
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
@@ -184,41 +222,44 @@ export default function ProductionBoardGrid() {
                                 </div>
 
                                 <div className="p-1.5 flex-1 overflow-y-auto space-y-1 no-scrollbar min-h-0">
-                                    {stepOrders.length > 0 && stepOrders.map(order => (
-                                        <div
-                                            key={order.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, order.id)}
-                                            onDragEnd={handleDragEnd}
-                                            className={`
-                                                p-2 rounded-md transition-all cursor-grab active:cursor-grabbing group relative
-                                                bg-blue-50 border border-blue-200 hover:border-blue-400 hover:shadow-md
+                                    {stepOrders.length > 0 && stepOrders.map(order => {
+                                        const styles = getCategoryStyles(order);
+                                        return (
+                                            <div
+                                                key={order.id}
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, order.id)}
+                                                onDragEnd={handleDragEnd}
+                                                className={`
+                                                p-2 rounded-md transition-all cursor-grab active:cursor-grabbing group relative border
+                                                ${styles.bg} ${styles.border} ${styles.hover}
                                                 ${updatingId === order.id ? 'bg-indigo-50 border-indigo-100' : ''}
                                                 ${draggedOrderId === order.id ? 'opacity-20 translate-x-1' : ''}
                                             `}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <span className="text-[11px] font-medium text-slate-900 leading-tight block truncate uppercase tracking-tight">
-                                                        {order.products?.product_name || order.product_name || 'Job'}
-                                                    </span>
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className={`text-[11px] font-medium leading-tight block truncate uppercase tracking-tight ${styles.text}`}>
+                                                            {order.products?.product_name || order.product_name || 'Job'} | {order.quantity || 0} | {order.total_print_qty || 0}
+                                                        </span>
+                                                    </div>
+                                                    <Link
+                                                        href={`/orders?q=${encodeURIComponent(order.order_id || '')}`}
+                                                        className="p-1 text-slate-300 hover:text-indigo-600 transition-all shrink-0"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <ShoppingCart className="w-3 h-3" />
+                                                    </Link>
                                                 </div>
-                                                <Link
-                                                    href={`/orders?q=${encodeURIComponent(order.order_id || '')}`}
-                                                    className="p-1 text-slate-300 hover:text-indigo-600 transition-all shrink-0"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <ShoppingCart className="w-3 h-3" />
-                                                </Link>
-                                            </div>
 
-                                            {updatingId === order.id && (
-                                                <div className="absolute inset-0 rounded-md bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
-                                                    <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                                {updatingId === order.id && (
+                                                    <div className="absolute inset-0 rounded-md bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
+                                                        <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </section>
                         );

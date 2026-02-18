@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, memo } from 'react';
+import { useState, memo, useCallback, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, ShoppingCart, ClipboardList, User, LogOut, FileText, Menu, X, Tally2 } from 'lucide-react';
@@ -44,9 +44,19 @@ export function TopBar() {
     const { user, signOut } = useAuth();
     const { toggleNavStyle } = useLayout();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
-    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-    const closeMenu = () => setIsMenuOpen(false);
+    const toggleMenu = useCallback(() => {
+        startTransition(() => {
+            setIsMenuOpen(prev => !prev);
+        });
+    }, []);
+
+    const closeMenu = useCallback(() => {
+        startTransition(() => {
+            setIsMenuOpen(false);
+        });
+    }, []);
 
     return (
         <>

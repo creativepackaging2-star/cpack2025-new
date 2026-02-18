@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useTransition } from 'react';
 
 type NavigationStyle = 'sidebar' | 'topbar';
 
@@ -8,12 +8,14 @@ interface LayoutContextType {
     navStyle: NavigationStyle;
     setNavStyle: (style: NavigationStyle) => void;
     toggleNavStyle: () => void;
+    isPending: boolean;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
-    const [navStyle, setNavStyle] = useState<NavigationStyle>('topbar'); // Default to the new topbar
+    const [navStyle, setNavStyle] = useState<NavigationStyle>('topbar');
+    const [isPending, startTransition] = useTransition();
 
     // Persist preference
     useEffect(() => {
@@ -24,7 +26,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const handleSetStyle = (style: NavigationStyle) => {
-        setNavStyle(style);
+        startTransition(() => {
+            setNavStyle(style);
+        });
         localStorage.setItem('cpack_nav_style', style);
     };
 
@@ -34,7 +38,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <LayoutContext.Provider value={{ navStyle, setNavStyle: handleSetStyle, toggleNavStyle }}>
+        <LayoutContext.Provider value={{ navStyle, setNavStyle: handleSetStyle, toggleNavStyle, isPending }}>
             {children}
         </LayoutContext.Provider>
     );
