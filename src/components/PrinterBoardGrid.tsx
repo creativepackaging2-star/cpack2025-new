@@ -231,17 +231,17 @@ export default function PrinterBoardGrid() {
                                         : 'bg-slate-50/50 border-slate-200 border-dashed opacity-70 hover:opacity-100 hover:bg-white'}
                                 `}
                             >
-                                <div className={`px-4 py-3 border-b flex items-center justify-between shrink-0 ${isUnassigned ? 'bg-amber-50 border-amber-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                                <div className={`px-4 py-3 border-b flex items-center justify-between shrink-0 ${isUnassigned ? 'bg-amber-50 border-amber-100' : 'bg-slate-900 border-slate-800'}`}>
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center shadow-sm shrink-0 ${isUnassigned ? 'bg-amber-100 border-amber-200' : 'bg-indigo-50 border-indigo-100'}`}>
-                                            {isUnassigned ? <AlertCircle className="w-4 h-4 text-amber-600" /> : <User className="w-4 h-4 text-indigo-600" />}
+                                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center shadow-sm shrink-0 ${isUnassigned ? 'bg-amber-100 border-amber-200' : 'bg-indigo-600 border-indigo-500'}`}>
+                                            {isUnassigned ? <AlertCircle className="w-4 h-4 text-amber-600" /> : <User className="w-4 h-4 text-white" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <h3 className={`font-bold text-[13px] uppercase tracking-tight truncate ${isUnassigned ? 'text-amber-700' : 'text-slate-900'}`}>{isUnassigned ? printer : printer.split('').reverse().join('')}</h3>
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{isUnassigned ? 'Requires Assignment' : 'Manufacturing Partner'}</p>
+                                            <h3 className={`font-bold text-[13px] uppercase tracking-tight truncate ${isUnassigned ? 'text-amber-700' : 'text-white'}`}>{printer}</h3>
+                                            <p className={`text-[9px] font-bold uppercase tracking-tighter ${isUnassigned ? 'text-amber-500' : 'text-slate-400'}`}>{isUnassigned ? 'Requires Assignment' : 'Manufacturing Partner'}</p>
                                         </div>
                                     </div>
-                                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm ${printerOrders.length > 0 ? (isUnassigned ? 'bg-amber-500 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
+                                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg shadow-sm ${printerOrders.length > 0 ? (isUnassigned ? 'bg-amber-500 text-white' : 'bg-indigo-500 text-white') : 'bg-slate-700 text-slate-400'}`}>
                                         {printerOrders.length}
                                     </span>
                                 </div>
