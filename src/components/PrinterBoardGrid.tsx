@@ -237,7 +237,7 @@ export default function PrinterBoardGrid() {
                                             {isUnassigned ? <AlertCircle className="w-4 h-4 text-amber-600" /> : <User className="w-4 h-4 text-indigo-600" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <h3 className={`font-bold text-[13px] uppercase tracking-tight truncate ${isUnassigned ? 'text-amber-700' : 'text-slate-900'}`}>{printer}</h3>
+                                            <h3 className={`font-bold text-[13px] uppercase tracking-tight truncate ${isUnassigned ? 'text-amber-700' : 'text-slate-900'}`}>{isUnassigned ? printer : printer.split('').reverse().join('')}</h3>
                                             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{isUnassigned ? 'Requires Assignment' : 'Manufacturing Partner'}</p>
                                         </div>
                                     </div>
