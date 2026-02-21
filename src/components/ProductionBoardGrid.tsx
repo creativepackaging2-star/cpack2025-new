@@ -202,21 +202,19 @@ export default function ProductionBoardGrid() {
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, step)}
                                 className={`
-                                    flex flex-col min-h-[200px] lg:h-[calc((100vh-140px)/3)] rounded-lg border transition-all duration-300
-                                    flex-1
-                                    ${stepOrders.length > 0
-                                        ? 'bg-white border-slate-200 shadow-sm'
-                                        : 'bg-slate-50 border-slate-200 opacity-95 hover:opacity-100'}
+                                    flex flex-col min-h-[200px] lg:h-[calc((100vh-140px)/3)] border transition-all duration-300
+                                    flex-1 bg-white shadow-sm border-slate-200 opacity-100 hover:shadow-md
+                                    rounded-xl overflow-hidden
                                 `}
                             >
-                                <div className="px-2 py-2 border-b border-slate-100 flex items-center justify-between bg-white shrink-0 rounded-t-lg">
+                                <div className="px-3 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900 shrink-0 rounded-t-lg">
                                     <div className="flex items-center gap-2 min-w-0">
-                                        <Layers className={`w-4 h-4 ${step === 'Ready' ? 'text-emerald-500' :
-                                            step === 'Hold' ? 'text-rose-500' : 'text-indigo-500'
+                                        <Layers className={`w-4 h-4 ${step === 'Ready' ? 'text-emerald-400' :
+                                            step === 'Hold' ? 'text-rose-400' : 'text-blue-300'
                                             }`} />
-                                        <h3 className="font-semibold text-slate-800 text-[13px] uppercase tracking-tight truncate">{step}</h3>
+                                        <h3 className="font-semibold text-white text-[13px] uppercase tracking-tight truncate">{step}</h3>
                                     </div>
-                                    <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded shrink-0">
+                                    <span className="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded shrink-0 shadow-inner">
                                         {stepOrders.length}
                                     </span>
                                 </div>
