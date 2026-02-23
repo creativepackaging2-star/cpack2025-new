@@ -112,7 +112,7 @@ export default function DeliveryLabelPage() {
     if (!order) return <div className="p-20 text-center text-gray-500">Order not found.</div>;
 
     return (
-        <div className="min-h-screen bg-slate-100 py-4 md:py-10 print:p-0 print:bg-white flex flex-col items-center">
+        <div className="min-h-screen bg-slate-100 py-4 md:py-10 print:p-0 print:bg-white flex flex-col items-center print:block">
             {/* Action Bar */}
             <div className="mb-6 flex flex-wrap justify-center gap-3 md:gap-4 print:hidden items-center px-4 max-w-full">
                 {/* Company Selector */}

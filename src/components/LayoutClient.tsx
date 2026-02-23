@@ -15,13 +15,14 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
     const router = useRouter();
 
     const isCoaPage = pathname?.includes('/coa');
+    const isDeliveryLabelsPage = pathname?.includes('/delivery-label');
     const isLoginPage = pathname === '/login';
 
     useEffect(() => {
-        if (!loading && !user && !isLoginPage && !isCoaPage) {
+        if (!loading && !user && !isLoginPage && !isCoaPage && !isDeliveryLabelsPage) {
             router.push('/login');
         }
-    }, [user, loading, isLoginPage, isCoaPage, router]);
+    }, [user, loading, isLoginPage, isCoaPage, isDeliveryLabelsPage, router]);
 
     if (loading) {
         return (
@@ -40,7 +41,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         );
     }
 
-    if (isLoginPage || isCoaPage) {
+    if (isLoginPage || isCoaPage || isDeliveryLabelsPage) {
         return <>{children}</>;
     }
 

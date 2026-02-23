@@ -78,29 +78,21 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                 
                 @media print {
                     @page {
-                        size: 5.6in 4in landscape;
+                        size: A4;
                         margin: 0mm;
                     }
                     body {
-                        visibility: hidden;
                         background: white;
                     }
                     .label-container {
-                        visibility: visible;
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        z-index: 9999;
-                        width: 5.6in !important;
-                        height: 4in !important;
                         margin: 0 !important;
+                        margin-left: -3mm !important;
                         padding: 0.25in !important;
                         background: white;
                         box-shadow: none !important;
                         transform: none !important;
-                    }
-                    .label-container * {
-                        visibility: visible;
+                        width: 5.6in !important;
+                        height: 4in !important;
                     }
                 }
                 .label-container {
@@ -109,13 +101,11 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
             `}} />
 
             <div
-                className="print:p-0"
+                className="print:p-0 print:block flex justify-center"
                 style={{
                     width: scale < 1 ? '100vw' : 'auto',
                     height: scale < 1 ? `calc(4in * ${scale})` : 'auto',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    justifyContent: 'center'
+                    overflow: 'hidden'
                 }}
             >
                 <div
@@ -124,8 +114,8 @@ const DeliveryLabelTemplate: React.FC<DeliveryLabelTemplateProps> = ({ order, co
                         width: '5.6in',
                         height: '4in',
                         transform: scale < 1 ? `scale(${scale})` : 'none',
-                        transformOrigin: 'top center',
-                        margin: '0 auto',
+                        transformOrigin: 'top left',
+                        margin: '0',
                         display: 'flex',
                         flexDirection: 'column'
                     }}

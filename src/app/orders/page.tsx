@@ -1167,30 +1167,32 @@ function OrdersList() {
 
                         {/* Floating Selection Bar */}
                         {selectedIds.length > 0 && (
-                            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in">
-                                <div className="bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl border border-slate-700 flex flex-col md:flex-row items-center gap-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-500/20">
-                                            {selectedIds.length}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Selected Orders</p>
-                                            <button
-                                                onClick={() => setSelectedIds([])}
-                                                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase underline"
-                                            >
-                                                Clear Selection
-                                            </button>
+                            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in w-[95%] max-w-fit">
+                                <div className="bg-slate-900 text-white px-4 md:px-6 py-4 rounded-3xl shadow-2xl border border-slate-700 flex flex-col md:flex-row items-center gap-4 md:gap-6 overflow-hidden">
+                                    <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-500/20">
+                                                {selectedIds.length}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Selected</p>
+                                                <button
+                                                    onClick={() => setSelectedIds([])}
+                                                    className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase underline"
+                                                >
+                                                    Clear Selection
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="h-10 w-[1px] bg-slate-700 hidden md:block"></div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-row flex-wrap items-center justify-center gap-2 md:gap-3 w-full">
                                         <Link
                                             href={`/orders/summary/printer?ids=${selectedIds.join(',')}`}
-                                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-3 md:px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
                                         >
                                             <Printer className="w-4 h-4" />
-                                            Printer Summary
+                                            <span className="hidden sm:inline">Printer</span>
                                         </Link>
                                         <Link
                                             href={`/orders/summary/paper?ids=${selectedIds.join(',')}`}
@@ -1205,6 +1207,20 @@ function OrdersList() {
                                         >
                                             <Palette className="w-4 h-4" />
                                             Punching
+                                        </Link>
+                                        <Link
+                                            href={`/orders/summary/coa?ids=${selectedIds.join(',')}`}
+                                            className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            COAs
+                                        </Link>
+                                        <Link
+                                            href={`/orders/summary/delivery-labels?ids=${selectedIds.join(',')}`}
+                                            className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                                        >
+                                            <Truck className="w-4 h-4" />
+                                            Labels
                                         </Link>
                                     </div>
                                 </div>

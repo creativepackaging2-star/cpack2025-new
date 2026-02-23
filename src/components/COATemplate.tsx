@@ -88,26 +88,14 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
                         size: A4;
                         margin: 0mm;
                     }
-                    body {
-                        visibility: hidden;
-                        background: white;
-                    }
                     .coa-container {
-                        visibility: visible;
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        z-index: 9999;
                         width: 210mm !important;
-                        height: 297mm !important;
+                        min-height: 296mm !important;
                         margin: 0 !important;
                         padding: 15mm !important;
                         background: white;
                         box-shadow: none !important;
                         transform: none !important;
-                    }
-                    .coa-container * {
-                        visibility: visible;
                     }
                 }
                 .font-signature {
@@ -119,7 +107,7 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
             `}} />
 
             <div
-                className="print:p-0"
+                className="print:p-0 print:block"
                 style={{
                     width: scale < 1 ? '100vw' : 'auto',
                     height: scale < 1 ? `calc(297mm * ${scale})` : 'auto',
