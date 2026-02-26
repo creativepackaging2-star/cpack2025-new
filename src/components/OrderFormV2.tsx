@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { WhatsAppLogo, PaperwalaWhatsAppLogo, PdfLogo, CdrLogo } from '@/components/FileLogos';
 import { useDataStore } from './DataStoreProvider';
+import ProductForm from './ProductForm';
 
 type Props = {
     initialData?: Order | null;
@@ -84,8 +85,9 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
     const [product, setProduct] = useState<any>(null);
     const [productSearch, setProductSearch] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
+    const [showProductModal, setShowProductModal] = useState(false);
 
-    const { products: productList, sizes, printers, paperwalas, loading: storeLoading } = useDataStore();
+    const { products: productList, sizes, printers, paperwalas, loading: storeLoading, refreshData } = useDataStore();
 
     const [formData, setFormData] = useState<Partial<Order>>(
         initialData || { ...DEFAULT_ORDER, product_id: productId || '' }
@@ -166,33 +168,43 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
                 prod.delivery_address_id ? supabase.from('delivery_addresses').select('name').eq('id', prod.delivery_address_id).single() : Promise.resolve({ data: null })
             ]);
             setProduct(prod);
+
+            const liveSpecs = {
+                product_name: prod.product_name || '',
+                category_name: cat.data?.name || '',
+                paper_type_name: paper.data?.name || '',
+                gsm_value: gsm.data?.name || '',
+                print_size: sz.data?.name || '',
+                ups: prod.ups || null,
+                artwork_code: prod.artwork_code || '',
+                plate_no: prod.plate_no || '',
+                ink: prod.ink || '',
+                paper_order_size: sz.data?.name || '',
+                paper_order_size_id: prod.size_id || null,
+                dimension: prod.dimension || '',
+                artwork_pdf: prod.artwork_pdf || '',
+                artwork_cdr: prod.artwork_cdr || '',
+                coating: prod.coating || '',
+                special_effects: prod.special_effects || '',
+                pasting_type: past.data?.name || '',
+                construction_type: cons.data?.name || '',
+                specification: spec.data?.name || '',
+                specs: prod.specs || '',
+            };
+
             if (!initialData) {
                 setFormData(prev => ({
                     ...prev,
                     product_id: prod.id,
-                    product_name: prod.product_name || '',
-                    category_name: cat.data?.name || '',
-                    paper_type_name: paper.data?.name || '',
-                    gsm_value: gsm.data?.name || '',
-                    print_size: sz.data?.name || '',
                     customer_name: cust.data?.name || '',
                     delivery_address: addr.data?.name || '',
-                    ups: prod.ups || null,
                     rate: prod.last_rate || 0,
-                    artwork_code: prod.artwork_code || '',
-                    plate_no: prod.plate_no || '',
-                    ink: prod.ink || '',
-                    paper_order_size: sz.data?.name || '',
-                    paper_order_size_id: prod.size_id || null,
-                    dimension: prod.dimension || '',
-                    artwork_pdf: prod.artwork_pdf || '',
-                    artwork_cdr: prod.artwork_cdr || '',
-                    coating: prod.coating || '',
-                    special_effects: prod.special_effects || '',
-                    pasting_type: past.data?.name || '',
-                    construction_type: cons.data?.name || '',
-                    specification: spec.data?.name || '',
-                    specs: prod.specs || '',
+                    ...liveSpecs
+                }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    ...liveSpecs
                 }));
             }
         } catch (err: any) { alert(err.message); } finally { setLoading(false); }
@@ -295,304 +307,315 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
     if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto text-indigo-600" /></div>;
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden mb-20">
-            {/* Header */}
-            <div className="bg-slate-900 px-6 py-4 flex justify-between items-center">
-                <h1 className="text-xl font-bold text-white uppercase tracking-tight">
-                    {initialData ? "Update Order" : "New Order Entry"}
-                </h1>
-                <Link href="/orders" className="text-white/70 hover:text-white transition-colors">
-                    <X className="w-5 h-5" />
-                </Link>
-            </div>
+        <>
+            <form onSubmit={handleSubmit} className="max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden mb-20">
+                {/* Header */}
+                <div className="bg-slate-900 px-6 py-4 flex justify-between items-center">
+                    <h1 className="text-xl font-bold text-white uppercase tracking-tight">
+                        {initialData ? "Update Order" : "New Order Entry"}
+                    </h1>
+                    <Link href="/orders" className="text-white/70 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
+                    </Link>
+                </div>
 
-            {/* Body */}
-            <div className="p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {/* Body */}
+                <div className="p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
 
-                {/* 1. Product Selection */}
-                <div className="bg-slate-50/50 p-2 rounded-xl">
-                    <SectionHeader icon={Search} title="Product Selection" />
-                    <div className="space-y-1">
-                        <div className="relative">
-                            <label className="label">Search Product</label>
-                            <input
-                                name="product_name"
-                                className="input-field mb-0 bg-blue-100"
-                                style={{ color: '#1d4ed8', fontWeight: 'bold' }}
-                                value={productSearch || formData.product_name || ''}
-                                onChange={(e) => { setProductSearch(e.target.value); setShowProductDropdown(true); }}
-                                onFocus={() => setShowProductDropdown(true)}
-                                placeholder="Name / Code"
-                                readOnly={!!initialData}
-                            />
-                            {!initialData && showProductDropdown && filteredProducts.length > 0 && (
-                                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                                    {filteredProducts.map(p => (
-                                        <div key={p.id} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm" onClick={() => { setProductSearch(p.product_name || ''); setShowProductDropdown(false); fetchProduct(p.id); }}>
-                                            <span className="font-bold">{p.product_name}</span>
-                                            <div className="text-[10px] text-slate-400">Code: {p.artwork_code}</div>
-                                        </div>
-                                    ))}
+                    {/* 1. Product Selection */}
+                    <div className="bg-slate-50/50 p-2 rounded-xl">
+                        <SectionHeader icon={Search} title="Product Selection" />
+                        <div className="space-y-1">
+                            <div className="relative">
+                                <label className="label">Search Product</label>
+                                <input
+                                    name="product_name"
+                                    className="input-field mb-0 bg-blue-100"
+                                    style={{ color: '#1d4ed8', fontWeight: 'bold' }}
+                                    value={productSearch || formData.product_name || ''}
+                                    onChange={(e) => { setProductSearch(e.target.value); setShowProductDropdown(true); }}
+                                    onFocus={() => setShowProductDropdown(true)}
+                                    placeholder="Name / Code"
+                                    readOnly={!!initialData}
+                                />
+                                {formData.product_id && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowProductModal(true)}
+                                        className="absolute right-2 top-[26px] p-1 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors shadow-sm"
+                                        title="Edit Product Master"
+                                    >
+                                        <Edit3 className="w-4 h-4 text-indigo-600" />
+                                    </button>
+                                )}
+                                {!initialData && showProductDropdown && filteredProducts.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                        {filteredProducts.map(p => (
+                                            <div key={p.id} className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm" onClick={() => { setProductSearch(p.product_name || ''); setShowProductDropdown(false); fetchProduct(p.id); }}>
+                                                <span className="font-bold">{p.product_name}</span>
+                                                <div className="text-[10px] text-slate-400">Code: {p.artwork_code}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <label className="label">Artwork Code</label>
+                                <input name="artwork_code" className="input-field mb-0 bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.artwork_code || ''} onChange={handleChange} placeholder="Code" />
+                            </div>
+                            <div>
+                                <label className="label text-red-600">Order Quantity</label>
+                                <input name="quantity" type="number" className="input-field mb-0 text-base bg-red-50 border-red-200" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.quantity || ''} onChange={handleNumberChange} placeholder="Qty" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. Order Metrics */}
+                    <div className="bg-slate-50/50 p-2 rounded-xl">
+                        <SectionHeader icon={FileText} title="Order Metrics" />
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="label">Order Date</label>
+                                <input name="order_date" type="date" className="input-field cursor-pointer" value={formData.order_date || ''} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="label">Rate</label>
+                                <input name="rate" type="number" step="0.01" className="input-field" value={formData.rate || ''} onChange={handleNumberChange} placeholder="Rate" />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="label">Total Value</label>
+                                <input name="value" type="number" className="input-field bg-slate-100 text-emerald-600 text-base" value={formData.value || 0} readOnly />
+                            </div>
+                            <div>
+                                <label className="label">Status</label>
+                                <select name="status" className="input-field" value={formData.status || ''} onChange={handleChange}>
+                                    <option value="In Production">In Production</option>
+                                    <option value="Complete">Complete</option>
+                                    <option value="Hold">Hold</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Progress</label>
+                                <select name="progress" className="input-field" value={formData.progress || ''} onChange={handleChange}>
+                                    {['Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'].map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. Customer */}
+                    <div className="bg-slate-50/50 p-2 rounded-xl">
+                        <SectionHeader icon={User} title="Customer" />
+                        <label className="label">Customer Name</label>
+                        <input name="customer_name" className="input-field bg-blue-100" style={{ color: '#1d4ed8' }} value={formData.customer_name || ''} onChange={handleChange} placeholder="Customer" />
+                        <label className="label">Delivery Address</label>
+                        <textarea name="delivery_address" className="input-field h-14 text-xs italic bg-blue-100" style={{ color: '#1d4ed8' }} value={formData.delivery_address || ''} onChange={handleChange} placeholder="Address" />
+                    </div>
+
+                    {/* 4. Manufacturing & Logistics - FULL WIDTH */}
+                    <div className="lg:col-span-3 bg-indigo-50/20 border border-indigo-100 p-2 rounded-xl">
+                        <SectionHeader icon={Briefcase} title="Manufacturing & Logistics" />
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-3 gap-y-2">
+
+                            {/* Manufacturing Line 1 */}
+                            <div>
+                                <label className="label">Order Qty</label>
+                                <input type="number" className="input-field bg-white text-xs" value={formData.quantity || 0} readOnly />
+                            </div>
+                            <div>
+                                <label className="label">UPS</label>
+                                <input name="ups" type="number" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.ups || 1} onChange={handleNumberChange} />
+                            </div>
+                            <div>
+                                <label className="label">Print Size</label>
+                                <input name="print_size" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.print_size || ''} onChange={handleChange} placeholder="Size" />
+                            </div>
+                            <div>
+                                <label className="label text-slate-400">Gross</label>
+                                <input type="number" className="input-field bg-slate-50 text-xs" value={formData.gross_print_qty || 0} readOnly />
+                            </div>
+                            <div>
+                                <label className="label">Extra</label>
+                                <input name="extra" type="number" className="input-field text-xs" value={formData.extra || 0} onChange={handleNumberChange} />
+                            </div>
+                            <div>
+                                <label className="label text-red-600">Total Print</label>
+                                <input type="number" className="input-field bg-red-50 text-xs" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.total_print_qty || 0} readOnly />
+                            </div>
+
+                            {/* Logistics Line 1 */}
+                            <div>
+                                <label className="label">Paper Size</label>
+                                <select name="paper_order_size_id" className="input-field text-xs" value={formData.paper_order_size_id || ''} onChange={(e) => {
+                                    const m = sizes.find(s => s.id === parseInt(e.target.value));
+                                    setFormData(prev => ({ ...prev, paper_order_size_id: m?.id || null, paper_order_size: m?.name || '' }));
+                                }}>
+                                    <option value="">Select...</option>
+                                    {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Paper UPS</label>
+                                <input name="paper_ups" type="number" className="input-field text-xs" value={formData.paper_ups || 1} onChange={handleNumberChange} />
+                            </div>
+                            <div>
+                                <label className="label text-indigo-600">Paper Req</label>
+                                <input type="number" className="input-field bg-slate-50 text-indigo-700 text-xs" value={formData.paper_required || 0} readOnly />
+                            </div>
+                            <div>
+                                <label className="label">Paper Order</label>
+                                <input name="paper_order_qty" type="number" className="input-field border-amber-200 text-xs" value={formData.paper_order_qty || 0} onChange={handleNumberChange} />
+                            </div>
+
+                            {/* Printer Line */}
+                            <div>
+                                <label className="label">Printer</label>
+                                <select name="printer_id" className="input-field text-xs" value={formData.printer_id || ''} onChange={(e) => {
+                                    const m = printers.find(p => p.id === parseInt(e.target.value));
+                                    setFormData(prev => ({ ...prev, printer_id: m?.id || null, printer_name: m?.name || '', printer_mobile: m?.phone || '' }));
+                                }}>
+                                    <option value="">Select...</option>
+                                    {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Printer Phone</label>
+                                <input name="printer_mobile" className="input-field text-xs" value={formData.printer_mobile || ''} onChange={handleChange} placeholder="Phone" />
+                            </div>
+                            <div>
+                                <label className="label">Paperwala</label>
+                                <select name="paperwala_id" className="input-field text-xs" value={formData.paperwala_id || ''} onChange={(e) => {
+                                    const m = paperwalas.find(p => p.id === parseInt(e.target.value));
+                                    setFormData(prev => ({ ...prev, paperwala_id: m?.id || null, paperwala_name: m?.name || '', paperwala_mobile: m?.phone || '' }));
+                                }}>
+                                    <option value="">Select...</option>
+                                    {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Paperwala Phone</label>
+                                <input name="paperwala_mobile" className="input-field text-xs" value={formData.paperwala_mobile || ''} onChange={handleChange} placeholder="Phone" />
+                            </div>
+                            <div>
+                                <label className="label">Plate No</label>
+                                <input name="plate_no" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.plate_no || ''} onChange={handleChange} placeholder="Plate" />
+                            </div>
+                            <div>
+                                <label className="label">GSM</label>
+                                <input name="gsm_value" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.gsm_value || ''} onChange={handleChange} placeholder="GSM" />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="label">Ink Spec</label>
+                                <input name="ink" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.ink || ''} onChange={handleChange} placeholder="Ink" />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="label">Paper Type</label>
+                                <input name="paper_type_name" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.paper_type_name || ''} onChange={handleChange} placeholder="Paper" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 5. Delivery & Production Tools */}
+                    <div className="lg:col-span-2 bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                        <SectionHeader icon={Truck} title="Delivery & Dispatch" />
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div>
+                                <label className="label">Ready Date</label>
+                                <input name="ready_date" type="date" className="input-field" value={formData.ready_date || ''} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="label">Delivery Date</label>
+                                <input name="delivery_date" type="date" className="input-field" value={formData.delivery_date || ''} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="label">Qty Delivered</label>
+                                <input name="qty_delivered" type="number" className="input-field text-indigo-600" value={formData.qty_delivered || ''} onChange={handleNumberChange} placeholder="Qty" />
+                            </div>
+                            <div>
+                                <label className="label">Invoice No</label>
+                                <input name="invoice_no" className="input-field" value={formData.invoice_no || ''} onChange={handleChange} placeholder="Inv" />
+                            </div>
+                            <div>
+                                <label className="label">Invoicing Unit</label>
+                                <select name="from_our_company" className="input-field" value={formData.from_our_company || ''} onChange={handleChange}>
+                                    <option value="Packaging">Packaging</option>
+                                    <option value="Printers">Printers</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Batch No</label>
+                                <input name="batch_no" className="input-field bg-slate-50 font-mono text-[10px]" value={formData.batch_no || ''} placeholder="Auto" readOnly />
+                            </div>
+                        </div>
+
+                        {/* Production Tools */}
+                        <div className="pt-2 border-t border-slate-200">
+                            <h4 className="text-[9px] font-black text-slate-400 uppercase mb-2 text-center">Production Tools</h4>
+                            <div className="grid grid-cols-6 gap-2">
+                                <button type="button" onClick={sendToPaperwala} className="action-btn-compact bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600" title="WA Paper">
+                                    <PaperwalaWhatsAppLogo className="w-6 h-6" />
+                                    <span className="text-[9px] font-bold uppercase whitespace-nowrap">WA Paper</span>
+                                </button>
+                                <button type="button" onClick={sendToPrinter} className="action-btn-compact bg-blue-500/10 hover:bg-blue-500/20 text-blue-600" title="WA Print">
+                                    <WhatsAppLogo className="w-6 h-6" />
+                                    <span className="text-[9px] font-bold uppercase whitespace-nowrap">WA Print</span>
+                                </button>
+                                <button type="button" onClick={handleSplitOrder} className="action-btn-compact bg-amber-500/10 hover:bg-amber-500/20 text-amber-600" title="Split">
+                                    <Split className="w-6 h-6" />
+                                    <span className="text-[9px] font-bold uppercase whitespace-nowrap">Split</span>
+                                </button>
+                                <button type="button" onClick={() => generateDoc('COA')} className="action-btn-compact bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600" title="COA">
+                                    <FileText className="w-6 h-6" />
+                                    <span className="text-[9px] font-bold uppercase whitespace-nowrap">COA</span>
+                                </button>
+                                <button type="button" onClick={() => generateDoc('Delivery Label')} className="action-btn-compact bg-rose-500/10 hover:bg-rose-500/20 text-rose-600" title="Label">
+                                    <Truck className="w-6 h-6" />
+                                    <span className="text-[9px] font-bold uppercase whitespace-nowrap">Label</span>
+                                </button>
+                                <button type="button" onClick={() => generateDoc('Shade Card')} className="action-btn-compact bg-violet-500/10 hover:bg-violet-500/20 text-violet-600" title="Shade">
+                                    <Palette className="w-6 h-6" />
+                                    <span className="text-[9px] font-bold uppercase whitespace-nowrap">Shade</span>
+                                </button>
+                            </div>
+                            {(formData.artwork_pdf || formData.artwork_cdr) && (
+                                <div className="flex gap-2 mt-2">
+                                    {formData.artwork_pdf && <a href={formData.artwork_pdf} target="_blank" className="flex-1 flex items-center justify-center gap-1 bg-red-500/10 text-red-500 py-2 rounded text-xs font-bold border border-red-500/20"><PdfLogo className="w-4 h-4" />PDF</a>}
+                                    {formData.artwork_cdr && <a href={formData.artwork_cdr} target="_blank" className="flex-1 flex items-center justify-center gap-1 bg-orange-500/10 text-orange-500 py-2 rounded text-xs font-bold border border-orange-500/20"><CdrLogo className="w-4 h-4" />CDR</a>}
                                 </div>
                             )}
                         </div>
-                        <div>
-                            <label className="label">Artwork Code</label>
-                            <input name="artwork_code" className="input-field mb-0 bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.artwork_code || ''} onChange={handleChange} placeholder="Code" />
-                        </div>
-                        <div>
-                            <label className="label text-red-600">Order Quantity</label>
-                            <input name="quantity" type="number" className="input-field mb-0 text-base bg-red-50 border-red-200" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.quantity || ''} onChange={handleNumberChange} placeholder="Qty" required />
-                        </div>
-                    </div>
-                </div>
-
-                {/* 2. Order Metrics */}
-                <div className="bg-slate-50/50 p-2 rounded-xl">
-                    <SectionHeader icon={FileText} title="Order Metrics" />
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="label">Order Date</label>
-                            <input name="order_date" type="date" className="input-field cursor-pointer" value={formData.order_date || ''} onChange={handleChange} />
-                        </div>
-                        <div>
-                            <label className="label">Rate</label>
-                            <input name="rate" type="number" step="0.01" className="input-field" value={formData.rate || ''} onChange={handleNumberChange} placeholder="Rate" />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="label">Total Value</label>
-                            <input name="value" type="number" className="input-field bg-slate-100 text-emerald-600 text-base" value={formData.value || 0} readOnly />
-                        </div>
-                        <div>
-                            <label className="label">Status</label>
-                            <select name="status" className="input-field" value={formData.status || ''} onChange={handleChange}>
-                                <option value="In Production">In Production</option>
-                                <option value="Complete">Complete</option>
-                                <option value="Hold">Hold</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Progress</label>
-                            <select name="progress" className="input-field" value={formData.progress || ''} onChange={handleChange}>
-                                {['Paper', 'Plate', 'Print', 'Varnish', 'Foil', 'Pasting', 'Folding', 'Ready', 'Hold'].map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Customer */}
-                <div className="bg-slate-50/50 p-2 rounded-xl">
-                    <SectionHeader icon={User} title="Customer" />
-                    <label className="label">Customer Name</label>
-                    <input name="customer_name" className="input-field bg-blue-100" style={{ color: '#1d4ed8' }} value={formData.customer_name || ''} onChange={handleChange} placeholder="Customer" />
-                    <label className="label">Delivery Address</label>
-                    <textarea name="delivery_address" className="input-field h-14 text-xs italic bg-blue-100" style={{ color: '#1d4ed8' }} value={formData.delivery_address || ''} onChange={handleChange} placeholder="Address" />
-                </div>
-
-                {/* 4. Manufacturing & Logistics - FULL WIDTH */}
-                <div className="lg:col-span-3 bg-indigo-50/20 border border-indigo-100 p-2 rounded-xl">
-                    <SectionHeader icon={Briefcase} title="Manufacturing & Logistics" />
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-3 gap-y-2">
-
-                        {/* Manufacturing Line 1 */}
-                        <div>
-                            <label className="label">Order Qty</label>
-                            <input type="number" className="input-field bg-white text-xs" value={formData.quantity || 0} readOnly />
-                        </div>
-                        <div>
-                            <label className="label">UPS</label>
-                            <input name="ups" type="number" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.ups || 1} onChange={handleNumberChange} />
-                        </div>
-                        <div>
-                            <label className="label">Print Size</label>
-                            <input name="print_size" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.print_size || ''} onChange={handleChange} placeholder="Size" />
-                        </div>
-                        <div>
-                            <label className="label text-slate-400">Gross</label>
-                            <input type="number" className="input-field bg-slate-50 text-xs" value={formData.gross_print_qty || 0} readOnly />
-                        </div>
-                        <div>
-                            <label className="label">Extra</label>
-                            <input name="extra" type="number" className="input-field text-xs" value={formData.extra || 0} onChange={handleNumberChange} />
-                        </div>
-                        <div>
-                            <label className="label text-red-600">Total Print</label>
-                            <input type="number" className="input-field bg-red-50 text-xs" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.total_print_qty || 0} readOnly />
-                        </div>
-
-                        {/* Logistics Line 1 */}
-                        <div>
-                            <label className="label">Paper Size</label>
-                            <select name="paper_order_size_id" className="input-field text-xs" value={formData.paper_order_size_id || ''} onChange={(e) => {
-                                const m = sizes.find(s => s.id === parseInt(e.target.value));
-                                setFormData(prev => ({ ...prev, paper_order_size_id: m?.id || null, paper_order_size: m?.name || '' }));
-                            }}>
-                                <option value="">Select...</option>
-                                {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Paper UPS</label>
-                            <input name="paper_ups" type="number" className="input-field text-xs" value={formData.paper_ups || 1} onChange={handleNumberChange} />
-                        </div>
-                        <div>
-                            <label className="label text-indigo-600">Paper Req</label>
-                            <input type="number" className="input-field bg-slate-50 text-indigo-700 text-xs" value={formData.paper_required || 0} readOnly />
-                        </div>
-                        <div>
-                            <label className="label">Paper Order</label>
-                            <input name="paper_order_qty" type="number" className="input-field border-amber-200 text-xs" value={formData.paper_order_qty || 0} onChange={handleNumberChange} />
-                        </div>
-
-                        {/* Printer Line */}
-                        <div>
-                            <label className="label">Printer</label>
-                            <select name="printer_id" className="input-field text-xs" value={formData.printer_id || ''} onChange={(e) => {
-                                const m = printers.find(p => p.id === parseInt(e.target.value));
-                                setFormData(prev => ({ ...prev, printer_id: m?.id || null, printer_name: m?.name || '', printer_mobile: m?.phone || '' }));
-                            }}>
-                                <option value="">Select...</option>
-                                {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Printer Phone</label>
-                            <input name="printer_mobile" className="input-field text-xs" value={formData.printer_mobile || ''} onChange={handleChange} placeholder="Phone" />
-                        </div>
-                        <div>
-                            <label className="label">Paperwala</label>
-                            <select name="paperwala_id" className="input-field text-xs" value={formData.paperwala_id || ''} onChange={(e) => {
-                                const m = paperwalas.find(p => p.id === parseInt(e.target.value));
-                                setFormData(prev => ({ ...prev, paperwala_id: m?.id || null, paperwala_name: m?.name || '', paperwala_mobile: m?.phone || '' }));
-                            }}>
-                                <option value="">Select...</option>
-                                {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Paperwala Phone</label>
-                            <input name="paperwala_mobile" className="input-field text-xs" value={formData.paperwala_mobile || ''} onChange={handleChange} placeholder="Phone" />
-                        </div>
-                        <div>
-                            <label className="label">Plate No</label>
-                            <input name="plate_no" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.plate_no || ''} onChange={handleChange} placeholder="Plate" />
-                        </div>
-                        <div>
-                            <label className="label">GSM</label>
-                            <input name="gsm_value" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.gsm_value || ''} onChange={handleChange} placeholder="GSM" />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="label">Ink Spec</label>
-                            <input name="ink" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.ink || ''} onChange={handleChange} placeholder="Ink" />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="label">Paper Type</label>
-                            <input name="paper_type_name" className="input-field text-xs bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.paper_type_name || ''} onChange={handleChange} placeholder="Paper" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* 5. Delivery & Production Tools */}
-                <div className="lg:col-span-2 bg-slate-50 border border-slate-100 p-2 rounded-xl">
-                    <SectionHeader icon={Truck} title="Delivery & Dispatch" />
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div>
-                            <label className="label">Ready Date</label>
-                            <input name="ready_date" type="date" className="input-field" value={formData.ready_date || ''} onChange={handleChange} />
-                        </div>
-                        <div>
-                            <label className="label">Delivery Date</label>
-                            <input name="delivery_date" type="date" className="input-field" value={formData.delivery_date || ''} onChange={handleChange} />
-                        </div>
-                        <div>
-                            <label className="label">Qty Delivered</label>
-                            <input name="qty_delivered" type="number" className="input-field text-indigo-600" value={formData.qty_delivered || ''} onChange={handleNumberChange} placeholder="Qty" />
-                        </div>
-                        <div>
-                            <label className="label">Invoice No</label>
-                            <input name="invoice_no" className="input-field" value={formData.invoice_no || ''} onChange={handleChange} placeholder="Inv" />
-                        </div>
-                        <div>
-                            <label className="label">Invoicing Unit</label>
-                            <select name="from_our_company" className="input-field" value={formData.from_our_company || ''} onChange={handleChange}>
-                                <option value="Packaging">Packaging</option>
-                                <option value="Printers">Printers</option>
-                                <option value="Enterprise">Enterprise</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="label">Batch No</label>
-                            <input name="batch_no" className="input-field bg-slate-50 font-mono text-[10px]" value={formData.batch_no || ''} placeholder="Auto" readOnly />
-                        </div>
                     </div>
 
-                    {/* Production Tools */}
-                    <div className="pt-2 border-t border-slate-200">
-                        <h4 className="text-[9px] font-black text-slate-400 uppercase mb-2 text-center">Production Tools</h4>
-                        <div className="grid grid-cols-6 gap-2">
-                            <button type="button" onClick={sendToPaperwala} className="action-btn-compact bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600" title="WA Paper">
-                                <PaperwalaWhatsAppLogo className="w-6 h-6" />
-                                <span className="text-[9px] font-bold uppercase whitespace-nowrap">WA Paper</span>
-                            </button>
-                            <button type="button" onClick={sendToPrinter} className="action-btn-compact bg-blue-500/10 hover:bg-blue-500/20 text-blue-600" title="WA Print">
-                                <WhatsAppLogo className="w-6 h-6" />
-                                <span className="text-[9px] font-bold uppercase whitespace-nowrap">WA Print</span>
-                            </button>
-                            <button type="button" onClick={handleSplitOrder} className="action-btn-compact bg-amber-500/10 hover:bg-amber-500/20 text-amber-600" title="Split">
-                                <Split className="w-6 h-6" />
-                                <span className="text-[9px] font-bold uppercase whitespace-nowrap">Split</span>
-                            </button>
-                            <button type="button" onClick={() => generateDoc('COA')} className="action-btn-compact bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600" title="COA">
-                                <FileText className="w-6 h-6" />
-                                <span className="text-[9px] font-bold uppercase whitespace-nowrap">COA</span>
-                            </button>
-                            <button type="button" onClick={() => generateDoc('Delivery Label')} className="action-btn-compact bg-rose-500/10 hover:bg-rose-500/20 text-rose-600" title="Label">
-                                <Truck className="w-6 h-6" />
-                                <span className="text-[9px] font-bold uppercase whitespace-nowrap">Label</span>
-                            </button>
-                            <button type="button" onClick={() => generateDoc('Shade Card')} className="action-btn-compact bg-violet-500/10 hover:bg-violet-500/20 text-violet-600" title="Shade">
-                                <Palette className="w-6 h-6" />
-                                <span className="text-[9px] font-bold uppercase whitespace-nowrap">Shade</span>
-                            </button>
-                        </div>
-                        {(formData.artwork_pdf || formData.artwork_cdr) && (
-                            <div className="flex gap-2 mt-2">
-                                {formData.artwork_pdf && <a href={formData.artwork_pdf} target="_blank" className="flex-1 flex items-center justify-center gap-1 bg-red-500/10 text-red-500 py-2 rounded text-xs font-bold border border-red-500/20"><PdfLogo className="w-4 h-4" />PDF</a>}
-                                {formData.artwork_cdr && <a href={formData.artwork_cdr} target="_blank" className="flex-1 flex items-center justify-center gap-1 bg-orange-500/10 text-orange-500 py-2 rounded text-xs font-bold border border-orange-500/20"><CdrLogo className="w-4 h-4" />CDR</a>}
+                    {/* 6. Specs & Remarks */}
+                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <SectionHeader icon={Ruler} title="Specs & Remarks" />
+                        <div className="space-y-2">
+                            <div>
+                                <label className="label">Master Specs</label>
+                                <textarea value={formData.specs || ''} readOnly className="input-field h-14 text-[10px] bg-white" placeholder="Product specs..." />
                             </div>
-                        )}
+                            <div>
+                                <label className="label">Order Remarks</label>
+                                <textarea name="remarks" className="input-field h-14 text-xs italic" value={formData.remarks || ''} onChange={handleChange} placeholder="Instructions..." />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Footer */}
+                <div className="sticky bottom-0 bg-white px-6 py-2 flex justify-between items-center border-t border-slate-200 z-50">
+                    <Link href="/orders" className="btn-secondary">Discard & Exit</Link>
+                    <div className="flex gap-4">
+                        <button type="submit" disabled={saving} className="btn-primary flex items-center gap-3 shadow-xl shadow-indigo-100 active:scale-95 transition-all min-w-[200px] justify-center text-sm font-black">
+                            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                            {saving ? "SAVING DATA..." : initialData ? "UPDATE ORDER" : "CREATE NEW ORDER"}
+                        </button>
                     </div>
                 </div>
 
-                {/* 6. Specs & Remarks */}
-                <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    <SectionHeader icon={Ruler} title="Specs & Remarks" />
-                    <div className="space-y-2">
-                        <div>
-                            <label className="label">Master Specs</label>
-                            <textarea value={formData.specs || ''} readOnly className="input-field h-14 text-[10px] bg-white" placeholder="Product specs..." />
-                        </div>
-                        <div>
-                            <label className="label">Order Remarks</label>
-                            <textarea name="remarks" className="input-field h-14 text-xs italic" value={formData.remarks || ''} onChange={handleChange} placeholder="Instructions..." />
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-white px-6 py-2 flex justify-between items-center border-t border-slate-200 z-50">
-                <Link href="/orders" className="btn-secondary">Discard & Exit</Link>
-                <div className="flex gap-4">
-                    <button type="submit" disabled={saving} className="btn-primary flex items-center gap-3 shadow-xl shadow-indigo-100 active:scale-95 transition-all min-w-[200px] justify-center text-sm font-black">
-                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-                        {saving ? "SAVING DATA..." : initialData ? "UPDATE ORDER" : "CREATE NEW ORDER"}
-                    </button>
-                </div>
-            </div>
-
-            <style jsx>{`
+                <style jsx>{`
         .label { font-size: 0.6rem; font-weight: 800; color: #94a3b8; display: block; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .input-field { width: 100%; border-radius: 0.5rem; border: 1px solid #cbd5e1; padding: 0.3rem 0.5rem; font-size: 0.8125rem; background-color: #f8fafc; margin-bottom: 0.35rem; transition: all 0.2s; color: #1e293b; }
         .input-field:focus { outline: none; border-color: #4f46e5; background-color: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08); }
@@ -604,6 +627,26 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
         .action-btn-compact { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s; border: 1px solid transparent; gap: 0.25rem; text-align: center; }
         .action-btn-compact:hover { border-color: currentColor; transform: scale(1.05); background-color: rgba(255, 255, 255, 0.5); }
       `}</style>
-        </form>
+            </form>
+
+            {/* Product Edit Modal */}
+            {showProductModal && product && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="w-full max-w-6xl my-auto">
+                        <ProductForm
+                            initialData={product}
+                            onSuccess={async () => {
+                                setShowProductModal(false);
+                                await refreshData();
+                                if (formData.product_id) {
+                                    await fetchProduct(formData.product_id);
+                                }
+                            }}
+                            onCancel={() => setShowProductModal(false)}
+                        />
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

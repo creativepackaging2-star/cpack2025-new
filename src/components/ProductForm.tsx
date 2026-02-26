@@ -11,9 +11,11 @@ import SearchableSelect from '@/components/SearchableSelect';
 
 type Props = {
     initialData?: Product | null;
+    onSuccess?: () => void;
+    onCancel?: () => void;
 };
 
-export default function ProductForm({ initialData }: Props) {
+export default function ProductForm({ initialData, onSuccess, onCancel }: Props) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -281,20 +283,25 @@ export default function ProductForm({ initialData }: Props) {
             const payload = { ...formData };
             payload.special_effects = selectedEffects.join('|');
 
-            // Exclude generated columns
-            delete payload.specs;
-
             if (initialData?.id) {
-                const { error } = await supabase.from('products').update(payload).eq('id', initialData.id);
+                // Remove immutable or generated fields
+                const { id, created_at, updated_at, ...cleanPayload } = payload;
+
+                const { error } = await supabase.from('products').update(cleanPayload).eq('id', initialData.id);
                 if (error) throw error;
-                console.log('Product updated successfully. Sync handled by SQL Trigger.');
+                console.log('Product updated successfully.');
             } else {
                 const { error } = await supabase.from('products').insert([payload]);
                 if (error) throw error;
                 console.log('Product created successfully.');
             }
-            router.refresh();
-            router.push('/products');
+            alert('Changes saved successfully!');
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                router.refresh();
+                router.push('/products');
+            }
         } catch (error: any) {
             console.error('Error saving:', error);
             alert(`Failed to save: ${error.message}`);
@@ -313,9 +320,9 @@ export default function ProductForm({ initialData }: Props) {
                         {initialData ? 'Edit Product' : 'New Product'}
                     </h2>
                 </div>
-                <Link href="/products" className="text-slate-400 hover:text-white transition-colors">
+                <button type="button" onClick={onCancel || (() => router.push('/products'))} className="text-slate-400 hover:text-white transition-colors">
                     <X className="h-6 w-6" />
-                </Link>
+                </button>
             </div>
 
             <div className="p-4 md:p-8 pt-0 md:pt-0 space-y-6 md:space-y-8">
@@ -614,7 +621,7 @@ export default function ProductForm({ initialData }: Props) {
             </div>
 
             <div className="flex justify-end pt-5 bg-slate-50 p-4 md:p-8 border-t border-slate-200">
-                <Link href="/products" className="btn-secondary mr-3">Cancel</Link>
+                <button type="button" onClick={onCancel || (() => router.push('/products'))} className="btn-secondary mr-3">Cancel</button>
                 <button type="submit" disabled={saving} className="btn-primary">
                     {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save Product</>}
                 </button>
