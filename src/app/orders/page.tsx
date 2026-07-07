@@ -267,6 +267,24 @@ Plate No   : ${order.plate_no || '-'}`;
                             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase">
                                 {live.specs || live.dimension || '-'}
                             </span>
+                            {live.pasting_type && (() => {
+                                const p = live.pasting_type.toLowerCase();
+                                const isLock = p.includes('lock');
+                                const isSide = p.includes('side');
+                                if (!isLock && !isSide) return null;
+                                return (
+                                    <span
+                                        title={live.pasting_type}
+                                        className={`text-[10px] font-black px-1.5 py-0.5 rounded border uppercase ${
+                                            isLock
+                                                ? 'bg-amber-100 text-amber-700 border-amber-300'
+                                                : 'bg-indigo-100 text-indigo-700 border-indigo-300'
+                                        }`}
+                                    >
+                                        {isLock ? 'L' : 'S'}
+                                    </span>
+                                );
+                            })()}
                             {((order.parent_id && order.parent_id !== order.id) || order.order_id?.endsWith('-P') || order.order_id?.includes('SPLIT-')) && (
                                 <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase flex items-center gap-1">
                                     <Split className="w-2 h-2" />
@@ -423,8 +441,28 @@ Plate No   : ${order.plate_no || '-'}`;
                 </td>
 
                 <td className="px-3 py-2 flex-1 min-w-[300px]">
-                    <div className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={live.specs || ''}>
-                        {live.specs || '-'}
+                    <div className="flex items-start gap-1.5">
+                        <div className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={live.specs || ''}>
+                            {live.specs || '-'}
+                        </div>
+                        {live.pasting_type && (() => {
+                            const p = live.pasting_type.toLowerCase();
+                            const isLock = p.includes('lock');
+                            const isSide = p.includes('side');
+                            if (!isLock && !isSide) return null;
+                            return (
+                                <span
+                                    title={live.pasting_type}
+                                    className={`shrink-0 mt-0.5 inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-black uppercase leading-none ${
+                                        isLock
+                                            ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                                            : 'bg-indigo-100 text-indigo-700 border border-indigo-300'
+                                    }`}
+                                >
+                                    {isLock ? 'L' : 'S'}
+                                </span>
+                            );
+                        })()}
                     </div>
                 </td>
 

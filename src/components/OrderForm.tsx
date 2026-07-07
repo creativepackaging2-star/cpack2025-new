@@ -339,8 +339,20 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                 const { error: updErr } = await supabase.from('orders').update(payload).eq('id', initialData.id);
                 if (updErr) throw updErr;
             } else {
-                const { error: insErr } = await supabase.from('orders').insert([payload]);
+                const { data: inserted, error: insErr } = await supabase
+                    .from('orders')
+                    .insert([payload])
+                    .select('id')
+                    .single();
                 if (insErr) throw insErr;
+                // Auto-generate to-do checklist for the new order (fire and forget)
+                if (inserted?.id) {
+                    fetch('/api/todos/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_id: inserted.id }),
+                    }).catch(() => {}); // non-blocking
+                }
             }
             router.push('/orders');
             router.refresh();

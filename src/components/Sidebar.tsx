@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2, CheckSquare } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
+import { supabase } from '@/utils/supabase/client';
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -15,13 +16,14 @@ const navigation = [
     { name: 'Production', href: '/production', icon: LayoutDashboard },
     { name: 'Quotations', href: '/quotations', icon: FileText },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },
+    { name: 'To-Do', href: '/todos', icon: CheckSquare },
 ];
 
-const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
+const NavItem = memo(({ item, isActive, isCollapsed, badge }: any) => (
     <Link
         href={item.href}
         className={twMerge(
-            'group flex items-center rounded-xl transition-colors duration-200',
+            'group flex items-center rounded-xl transition-colors duration-200 relative',
             isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
             isActive
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
@@ -37,6 +39,16 @@ const NavItem = memo(({ item, isActive, isCollapsed }: any) => (
             )}
         />
         {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap">{item.name}</span>}
+        {badge > 0 && (
+            <span className={twMerge(
+                'absolute flex items-center justify-center rounded-full text-[9px] font-black bg-rose-500 text-white leading-none',
+                isCollapsed
+                    ? 'w-4 h-4 top-1 right-1'
+                    : 'min-w-[18px] h-[18px] px-1 -top-1 -right-1'
+            )}>
+                {badge > 99 ? '99+' : badge}
+            </span>
+        )}
     </Link>
 ));
 NavItem.displayName = 'NavItem';
@@ -54,6 +66,24 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     const pathname = usePathname();
     const { user, signOut } = useAuth();
     const { toggleNavStyle } = useLayout();
+    const [todoBadge, setTodoBadge] = useState(0);
+
+    useEffect(() => {
+        async function fetchTodoBadge() {
+            try {
+                const { count } = await supabase
+                    .from('order_todos')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('done', false)
+                    .eq('skipped', false);
+                setTodoBadge(count || 0);
+            } catch {}
+        }
+        fetchTodoBadge();
+        // Refresh every 60s
+        const interval = setInterval(fetchTodoBadge, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className={twMerge(
@@ -113,6 +143,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                                 item={item}
                                 isActive={isActive}
                                 isCollapsed={isCollapsed}
+                                badge={item.href === '/todos' ? todoBadge : 0}
                             />
                         );
                     })}
