@@ -14,6 +14,55 @@ import { WhatsAppLogo, PaperwalaWhatsAppLogo, PdfLogo, CdrLogo } from '@/compone
 import { useDataStore } from './DataStoreProvider';
 import ProductForm from './ProductForm';
 
+// ── Todo Generation (runs client-side with auth session) ──────────────────────
+function inkNeedsCheck(ink: string | null | undefined): boolean {
+    if (!ink) return false;
+    const clean = ink.trim();
+    if (/^(CMYK|4C|4\s*COLOU?R)$/i.test(clean)) return false;
+    if (/\d/.test(clean)) return true;
+    return true;
+}
+
+async function generateOrderTodos(orderId: number, ink: string | null, plateNo: string | null, printerName: string | null) {
+    // Check if todos already exist
+    const { data: existing } = await supabase
+        .from('order_todos')
+        .select('id')
+        .eq('order_id', orderId)
+        .limit(1);
+    if (existing && existing.length > 0) return;
+
+    const printer = printerName || 'Printer';
+    const needsInkCheck = inkNeedsCheck(ink);
+    const todos: Record<string, any>[] = [];
+    let sort = 1;
+
+    todos.push({ order_id: orderId, task_key: 'send_artwork',    label: 'Send artwork for approval',            sort_order: sort++, parent_key: null,          meta: {} });
+    todos.push({ order_id: orderId, task_key: 'order_paper',     label: 'Order paper',                          sort_order: sort++, parent_key: null,          meta: {} });
+
+    if (needsInkCheck) {
+        todos.push({ order_id: orderId, task_key: 'check_ink',   label: 'Check ink availability',               sort_order: sort++, parent_key: null,          meta: { ink, is_check: true, check_type: 'ink' } });
+        todos.push({ order_id: orderId, task_key: 'order_ink',   label: 'Order ink',                            sort_order: sort++, parent_key: 'check_ink',   meta: { hidden: true } });
+        todos.push({ order_id: orderId, task_key: 'followup_ink',label: 'Follow up for ink',                    sort_order: sort++, parent_key: 'check_ink',   meta: { hidden: true } });
+        todos.push({ order_id: orderId, task_key: 'rec_ink',     label: 'Rec ink',                              sort_order: sort++, parent_key: 'check_ink',   meta: { hidden: true } });
+    }
+
+    todos.push({ order_id: orderId, task_key: 'rec_artwork',     label: 'Rec artwork approval',                 sort_order: sort++, parent_key: null,          meta: {} });
+    todos.push({ order_id: orderId, task_key: 'check_plate',     label: 'Plate there?',                         sort_order: sort++, parent_key: null,          meta: { plate_no: plateNo, is_check: true, check_type: 'plate' } });
+    todos.push({ order_id: orderId, task_key: 'send_for_plate',  label: 'Send for plate',                       sort_order: sort++, parent_key: 'check_plate', meta: { hidden: true } });
+    todos.push({ order_id: orderId, task_key: 'rec_plate',       label: 'Rec plate',                            sort_order: sort++, parent_key: 'check_plate', meta: { hidden: true } });
+    todos.push({ order_id: orderId, task_key: 'send_to_printer', label: `Send order details to ${printer}`,     sort_order: sort++, parent_key: null,          meta: { printer_name: printer } });
+    todos.push({ order_id: orderId, task_key: 'send_to_punching',label: 'Send qty to punching/pasting vendor',  sort_order: sort++, parent_key: null,          meta: {} });
+    todos.push({ order_id: orderId, task_key: 'check_punch',     label: 'Check if punch there',                 sort_order: sort++, parent_key: null,          meta: { is_check: true, check_type: 'punch' } });
+    todos.push({ order_id: orderId, task_key: 'send_for_punch',  label: 'Send for punch',                       sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
+    todos.push({ order_id: orderId, task_key: 'followup_punch',  label: 'Follow up for punch',                  sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
+    todos.push({ order_id: orderId, task_key: 'rec_punch',       label: 'Rec punch',                            sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
+
+    await supabase.from('order_todos').insert(todos);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 type Props = {
     initialData?: Order | null;
     productId?: string | null;
@@ -345,13 +394,14 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                     .select('id')
                     .single();
                 if (insErr) throw insErr;
-                // Auto-generate to-do checklist for the new order (fire and forget)
+                // Auto-generate to-do checklist directly (client-side, uses auth session → bypasses RLS)
                 if (inserted?.id) {
-                    fetch('/api/todos/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ order_id: inserted.id }),
-                    }).catch(() => {}); // non-blocking
+                    generateOrderTodos(
+                        inserted.id,
+                        payload.ink || null,
+                        payload.plate_no || null,
+                        payload.printer_name || null
+                    ).catch(() => {}); // non-blocking
                 }
             }
             router.push('/orders');
