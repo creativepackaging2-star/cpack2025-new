@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { CheckSquare, Loader2, CheckCircle2, Circle, AlertCircle, ChevronDown, ChevronRight, RefreshCw, Package, Plus, Zap } from 'lucide-react';
+import { CheckSquare, Loader2, CheckCircle2, Circle, AlertCircle, ChevronDown, ChevronRight, RefreshCw, Package, Plus, Zap, LayoutList, ListChecks } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
 
@@ -114,7 +114,95 @@ async function generateOrderTodos(orderId: number, ink: string | null, plateNo: 
     await restFetch('order_todos', { method: 'POST', body: JSON.stringify(todos) });
 }
 
-// ─── TodoCheckItem ────────────────────────────────────────────────────────────
+// ─── By Task View ─────────────────────────────────────────────────────────────
+
+// Canonical task order for display
+const TASK_ORDER = [
+    'send_artwork', 'order_paper', 'check_ink', 'order_ink', 'followup_ink', 'rec_ink',
+    'rec_artwork', 'check_plate', 'send_for_plate', 'rec_plate',
+    'send_to_printer', 'send_to_punching',
+    'check_punch', 'send_for_punch', 'followup_punch', 'rec_punch',
+];
+
+function ByTaskView({ todos, onToggleDone }: {
+    todos: TodoItem[];
+    onToggleDone: (id: number, done: boolean) => void;
+}) {
+    // Only show top-level (non-child) pending tasks
+    const pendingTopLevel = todos.filter(t => !t.parent_key && !t.done && !t.skipped);
+
+    // Group by task_key
+    const byTask = useMemo(() => {
+        const map = new Map<string, { label: string; items: TodoItem[] }>();
+        pendingTopLevel.forEach(t => {
+            if (!map.has(t.task_key)) map.set(t.task_key, { label: t.label, items: [] });
+            map.get(t.task_key)!.items.push(t);
+        });
+        // Sort by canonical order
+        const sorted: [string, { label: string; items: TodoItem[] }][] = [];
+        TASK_ORDER.forEach(key => { if (map.has(key)) sorted.push([key, map.get(key)!]); });
+        // Any extra keys not in TASK_ORDER
+        map.forEach((val, key) => { if (!TASK_ORDER.includes(key)) sorted.push([key, val]); });
+        return sorted;
+    }, [pendingTopLevel]);
+
+    if (byTask.length === 0) {
+        return (
+            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
+                <p className="text-base font-semibold text-slate-500">All caught up! No pending tasks.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {byTask.map(([taskKey, { label, items }]) => (
+                <div key={taskKey} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    {/* Task header */}
+                    <div className="px-5 py-3 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <ListChecks className="w-4 h-4 text-indigo-500 shrink-0" />
+                            <span className="text-sm font-bold text-slate-800">{label}</span>
+                        </div>
+                        <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+                            {items.length} order{items.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    {/* Products list */}
+                    <div className="divide-y divide-slate-50">
+                        {items.map(item => {
+                            const productName = item.orders?.products?.product_name
+                                || item.orders?.product_name
+                                || `Order #${item.order_id}`;
+                            const orderId = item.orders?.order_id || item.order_id;
+                            return (
+                                <div key={item.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 transition-colors">
+                                    <button
+                                        onClick={() => onToggleDone(item.id, !item.done)}
+                                        className="shrink-0 hover:scale-110 transition-transform"
+                                    >
+                                        <Circle className="w-4 h-4 text-slate-300 hover:text-indigo-400" />
+                                    </button>
+                                    <span className="flex-1 text-[13px] text-slate-700 font-medium">{productName}</span>
+                                    {orderId && (
+                                        <Link
+                                            href={`/orders/${item.order_id}`}
+                                            className="text-[10px] font-bold text-indigo-500 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded hover:bg-indigo-100 transition-colors shrink-0"
+                                        >
+                                            {typeof orderId === 'string' ? orderId : `#${orderId}`}
+                                        </Link>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 
 function TodoCheckItem({ item, checkAnswer, onToggleDone, onSetCheck, isChild }: {
     item: TodoItem;
@@ -336,6 +424,7 @@ export default function TodosPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
+    const [view, setView] = useState<'order' | 'task'>('order');
     const [checkAnswers, setCheckAnswers] = useState<Record<string, 'yes' | 'no'>>({});
     const [showGenerateModal, setShowGenerateModal] = useState(false);
 
@@ -451,21 +540,45 @@ export default function TodosPage() {
                 }
             />
 
-            {/* Filter tabs */}
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-fit">
-                {(['pending', 'all', 'done'] as const).map(f => (
-                    <button key={f} onClick={() => setFilter(f)}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${filter === f ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
-                        {f}
+            {/* View toggle + Filter tabs */}
+            <div className="flex flex-wrap items-center gap-3">
+                {/* View toggle */}
+                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+                    <button
+                        onClick={() => setView('order')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                            view === 'order' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                    >
+                        <Package className="w-3.5 h-3.5" /> By Order
                     </button>
-                ))}
+                    <button
+                        onClick={() => setView('task')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                            view === 'task' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        }`}
+                    >
+                        <ListChecks className="w-3.5 h-3.5" /> By Task
+                    </button>
+                </div>
+
+                {/* Filter tabs — only shown in By Order view */}
+                {view === 'order' && (
+                    <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+                        {(['pending', 'all', 'done'] as const).map(f => (
+                            <button key={f} onClick={() => setFilter(f)}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${filter === f ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Error */}
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-semibold">
                     ❌ Error loading todos: {error}
-                    <br /><span className="text-[11px] font-normal text-red-500">Make sure you ran: ALTER TABLE order_todos DISABLE ROW LEVEL SECURITY;</span>
                 </div>
             )}
 
@@ -475,6 +588,8 @@ export default function TodosPage() {
                     <Loader2 className="animate-spin w-8 h-8 text-indigo-400" />
                     <span className="text-sm font-medium">Loading tasks...</span>
                 </div>
+            ) : view === 'task' ? (
+                <ByTaskView todos={todos} onToggleDone={handleToggleDone} />
             ) : filteredGroups.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400">
                     <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
