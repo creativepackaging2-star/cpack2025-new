@@ -343,16 +343,28 @@ export default function TodosPage() {
         setLoading(true);
         setError(null);
         try {
-            // Use raw REST fetch to bypass schema cache issues
-            const todosData = await restFetch(
-                `order_todos?select=*,orders(id,order_id,product_name,printer_name,ink,plate_no,quantity,progress,products(product_name,ink,plate_no))&order=order_id.desc,sort_order.asc`
-            );
-            setTodos((todosData || []) as TodoItem[]);
+            // Fetch todos and orders separately to avoid FK relationship schema cache issue
+            const [todosData, ordersData] = await Promise.all([
+                restFetch(`order_todos?select=*&order=order_id.desc,sort_order.asc`),
+                restFetch(`orders?select=id,order_id,product_name,printer_name,ink,plate_no,quantity,progress,product_id`),
+            ]);
+
+            // Merge orders into todos client-side
+            const ordersMap = new Map<number, any>();
+            (ordersData || []).forEach((o: any) => ordersMap.set(o.id, o));
+
+            const merged = (todosData || []).map((t: any) => ({
+                ...t,
+                orders: ordersMap.get(t.order_id) || null,
+            }));
+
+            setTodos(merged as TodoItem[]);
         } catch (err: any) {
             setError(err.message);
         }
         setLoading(false);
     }, []);
+
 
     useEffect(() => { fetchTodos(); }, [fetchTodos]);
 
