@@ -24,13 +24,17 @@ function inkNeedsCheck(ink: string | null | undefined): boolean {
 }
 
 async function generateOrderTodos(orderId: number, ink: string | null, plateNo: string | null, printerName: string | null) {
-    // Check if todos already exist
-    const { data: existing } = await supabase
-        .from('order_todos')
-        .select('id')
-        .eq('order_id', orderId)
-        .limit(1);
-    if (existing && existing.length > 0) return;
+    const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supaKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || supaKey;
+
+    const headers: Record<string, string> = {
+        'apikey': supaKey,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+    };
 
     const printer = printerName || 'Printer';
     const needsInkCheck = inkNeedsCheck(ink);
@@ -58,7 +62,11 @@ async function generateOrderTodos(orderId: number, ink: string | null, plateNo: 
     todos.push({ order_id: orderId, task_key: 'followup_punch',  label: 'Follow up for punch',                  sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
     todos.push({ order_id: orderId, task_key: 'rec_punch',       label: 'Rec punch',                            sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
 
-    await supabase.from('order_todos').insert(todos);
+    await fetch(`${supaUrl}/rest/v1/order_todos`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(todos),
+    });
 }
 // ─────────────────────────────────────────────────────────────────────────────
 

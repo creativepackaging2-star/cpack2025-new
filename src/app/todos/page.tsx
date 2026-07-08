@@ -6,6 +6,31 @@ import { CheckSquare, Loader2, CheckCircle2, Circle, AlertCircle, ChevronDown, C
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
 
+const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPA_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Direct REST fetch — bypasses PostgREST schema cache entirely
+async function restFetch(path: string, options: RequestInit = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || SUPA_KEY;
+    const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+            'apikey': SUPA_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation',
+            ...(options.headers || {}),
+        },
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TodoItem {
@@ -52,11 +77,13 @@ function inkNeedsCheck(ink: string | null | undefined): boolean {
 }
 
 async function generateOrderTodos(orderId: number, ink: string | null, plateNo: string | null, printerName: string | null) {
-    const { data: existing } = await supabase.from('order_todos').select('id').eq('order_id', orderId).limit(1);
-    if (existing && existing.length > 0) {
-        // Delete and regenerate
-        await supabase.from('order_todos').delete().eq('order_id', orderId);
-    }
+    // Check existing
+    try {
+        const existing = await restFetch(`order_todos?order_id=eq.${orderId}&select=id&limit=1`);
+        if (existing && existing.length > 0) {
+            await restFetch(`order_todos?order_id=eq.${orderId}`, { method: 'DELETE' });
+        }
+    } catch {}
 
     const printer = printerName || 'Printer';
     const needsInkCheck = inkNeedsCheck(ink);
@@ -84,8 +111,7 @@ async function generateOrderTodos(orderId: number, ink: string | null, plateNo: 
     todos.push({ order_id: orderId, task_key: 'followup_punch',   label: 'Follow up for punch',                 sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
     todos.push({ order_id: orderId, task_key: 'rec_punch',        label: 'Rec punch',                           sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
 
-    const { error } = await supabase.from('order_todos').insert(todos);
-    if (error) throw error;
+    await restFetch('order_todos', { method: 'POST', body: JSON.stringify(todos) });
 }
 
 // ─── TodoCheckItem ────────────────────────────────────────────────────────────
@@ -316,16 +342,14 @@ export default function TodosPage() {
     const fetchTodos = useCallback(async () => {
         setLoading(true);
         setError(null);
-        const { data, error: err } = await supabase
-            .from('order_todos')
-            .select(`*, orders (id, order_id, product_name, printer_name, ink, plate_no, quantity, progress, products (product_name, ink, plate_no))`)
-            .order('order_id', { ascending: false })
-            .order('sort_order', { ascending: true });
-
-        if (err) {
+        try {
+            // Use raw REST fetch to bypass schema cache issues
+            const todosData = await restFetch(
+                `order_todos?select=*,orders(id,order_id,product_name,printer_name,ink,plate_no,quantity,progress,products(product_name,ink,plate_no))&order=order_id.desc,sort_order.asc`
+            );
+            setTodos((todosData || []) as TodoItem[]);
+        } catch (err: any) {
             setError(err.message);
-        } else {
-            setTodos((data || []) as TodoItem[]);
         }
         setLoading(false);
     }, []);
@@ -334,7 +358,10 @@ export default function TodosPage() {
 
     const handleToggleDone = useCallback(async (id: number, done: boolean) => {
         setTodos(prev => prev.map(t => t.id === id ? { ...t, done } : t));
-        await supabase.from('order_todos').update({ done, updated_at: new Date().toISOString() }).eq('id', id);
+        await restFetch(`order_todos?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ done, updated_at: new Date().toISOString() }),
+        });
     }, []);
 
     const handleSetCheck = useCallback(async (orderId: number, taskKey: string, answer: 'yes' | 'no') => {
@@ -344,7 +371,10 @@ export default function TodosPage() {
         if (checkTodo) {
             const skipped = answer === 'yes';
             setTodos(prev => prev.map(t => t.id === checkTodo.id ? { ...t, skipped, done: false } : t));
-            await supabase.from('order_todos').update({ skipped, done: false, updated_at: new Date().toISOString() }).eq('id', checkTodo.id);
+            await restFetch(`order_todos?id=eq.${checkTodo.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ skipped, done: false, updated_at: new Date().toISOString() }),
+            });
         }
     }, [todos]);
 
