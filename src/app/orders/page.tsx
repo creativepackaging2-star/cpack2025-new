@@ -382,18 +382,6 @@ Plate No   : ${order.plate_no || '-'}`;
                         </Link>
                     </div>
                 </div>
-
-                {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 gap-2 animate-in fade-in slide-in-from-top-2">
-                        <div className="text-[12px] font-medium text-slate-500">
-                            {order.specs}
-                        </div>
-                        <div className="flex justify-between items-center text-[12px] text-slate-400 pt-2">
-                            <span>ID: {order.order_id}</span>
-                            <span>Date: {order.order_date}</span>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     }
@@ -577,14 +565,128 @@ Plate No   : ${order.plate_no || '-'}`;
                         <Link href={`/orders/${order.id}`} aria-label="Edit Order Details" className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors" title="Edit Full Details">
                             <Edit className="w-3 h-3" />
                         </Link>
+                        <button
+                            onClick={() => toggleRow(order.id)}
+                            aria-label="View Order Slider"
+                            className={`p-1 rounded-full transition-colors ${isExpanded ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                            title="Slide-over Details"
+                        >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                 </td>
             </tr>
-            {isExpanded && (
-                <tr className="bg-slate-50/50">
-                    <td colSpan={8} className="px-6 py-10">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 animate-in fade-in slide-in-from-top-2">
-                            <div className="md:col-span-2">
+        </Fragment >
+    );
+});
+OrderRow.displayName = 'OrderRow';
+
+const OrderDetailDrawer = memo(({ order, isOpen, onClose }: { order: any; isOpen: boolean; onClose: () => void }) => {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        if (isOpen) {
+            window.addEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [isOpen, onClose]);
+
+    if (!isOpen || !order) return null;
+
+    const products = order.products;
+    const live = {
+        product_name: products?.product_name || order.product_name,
+        artwork_code: products?.artwork_code || order.artwork_code,
+        dimension: products?.dimension || order.dimension,
+        specs: products?.specs || order.specs,
+        specification: products?.specifications?.name || order.specification,
+        ink: products?.ink || order.ink,
+        plate_no: products?.plate_no || order.plate_no,
+        coating: products?.coating || order.coating,
+        pasting_type: products?.pasting?.name || order.pasting_type,
+        construction_type: products?.constructions?.name || order.construction_type,
+        gsm_value: products?.gsm?.name || order.gsm_value,
+        paper_type_name: products?.paper_types?.name || order.paper_type_name,
+        artwork_pdf: products?.artwork_pdf || order.artwork_pdf,
+        artwork_cdr: products?.artwork_cdr || order.artwork_cdr,
+        print_size: products?.sizes?.name || order.print_size
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+            {/* Backdrop with blur */}
+            <div
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200"
+                onClick={onClose}
+                aria-label="Close drawer"
+            />
+
+            {/* Slider Panel Sliding in from Right */}
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+                <div className="w-screen max-w-2xl bg-white shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-300">
+                    
+                    {/* Header */}
+                    <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)}`}>
+                                    {order.progress || 'Pending'}
+                                </span>
+                                <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 px-2 py-0.5 rounded">
+                                    ID: {order.order_id || `#${order.id}`}
+                                </span>
+                                {order.order_date && (
+                                    <span className="text-xs text-slate-400">
+                                        Date: {new Date(order.order_date).toLocaleDateString()}
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="text-lg font-bold text-slate-900 leading-snug">
+                                {live.product_name || order.product_sku || 'Untitled Product'}
+                            </h2>
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <span className="font-mono text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded font-medium">
+                                    {live.artwork_code || '-'}
+                                </span>
+                                <span>•</span>
+                                <span className="font-semibold text-slate-800">
+                                    {(order.quantity || 0).toLocaleString()} Qty
+                                </span>
+                                {order.value && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="font-bold text-emerald-700">
+                                            ₹{order.value.toLocaleString()}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                onClick={onClose}
+                                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 rounded-full transition-colors cursor-pointer"
+                                title="Close (ESC)"
+                                aria-label="Close"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Scrollable Content Body */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        
+                        {/* 4 Cards Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Logistics */}
+                            <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200">
                                 <DetailGroup title="Logistics" items={[
                                     { label: 'Printer', value: order.printer_name },
                                     { label: 'Printer Mob', value: order.printer_mobile },
@@ -592,14 +694,18 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'Invoice', value: order.invoice_no },
                                 ]} />
                             </div>
-                            <div className="md:col-span-2">
+
+                            {/* Rates & Costing */}
+                            <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200">
                                 <DetailGroup title="Rates & Costing" items={[
                                     { label: 'Basic Rate', value: `₹${order.rate || 0}` },
-                                    { label: 'Total Qty', value: order.quantity },
+                                    { label: 'Total Qty', value: (order.quantity || 0).toLocaleString() },
                                     { label: 'Total Value', value: `₹${(order.value || 0).toLocaleString()}` },
                                 ]} />
                             </div>
-                            <div className="md:col-span-2">
+
+                            {/* Paper Details */}
+                            <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200">
                                 <DetailGroup title="Paper Details" items={[
                                     { label: 'Paper Wala', value: order.paperwala_name },
                                     { label: 'Paper Size', value: order.paper_order_size },
@@ -607,7 +713,9 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'GSM / Type', value: `${order.gsm_value || '-'} / ${order.paper_type_name || '-'}` },
                                 ]} />
                             </div>
-                            <div className="md:col-span-2">
+
+                            {/* Production */}
+                            <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200">
                                 <DetailGroup title="Production" items={[
                                     { label: 'Gross Print', value: order.gross_print_qty },
                                     { label: 'Total Print', value: order.total_print_qty },
@@ -615,40 +723,91 @@ Plate No   : ${order.plate_no || '-'}`;
                                     { label: 'Batch No', value: order.batch_no },
                                 ]} />
                             </div>
-                            <div className="md:col-span-6 text-left">
-                                <div className="space-y-4">
-                                    <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Technical Specs</h4>
-                                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Plate No:</span> <span className="font-bold text-red-600">{live.plate_no || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Ink Group:</span> <span className="font-bold text-slate-900">{live.ink || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Coating:</span> <span className="font-bold text-slate-900">{live.coating || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Pasting:</span> <span className="font-bold text-slate-900">{live.pasting_type || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Construction:</span> <span className="font-bold text-slate-900">{live.construction_type || '-'}</span></div>
-                                            <div className="flex justify-between border-b pb-1 text-[12px]"><span className="text-slate-500 font-medium">Specification:</span> <span className="font-bold text-slate-900">{live.specification || '-'}</span></div>
-                                            <div className="flex justify-between pb-0.5 text-[12px]"><span className="text-slate-500 font-bold uppercase tracking-wider">Dim:</span> <span className="font-mono font-bold text-indigo-700">{live.dimension || '-'}</span></div>
-                                        </div>
-                                    </div>
-                                    {live.specs && (
-                                        <div className="bg-indigo-50 p-3.5 rounded-xl border border-indigo-200 mt-2">
-                                            <div className="text-[12px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5 opacity-70">Full Specifications Detail</div>
-                                            <div className="text-[12px] text-slate-700 font-mono leading-relaxed font-semibold">{live.specs}</div>
-                                        </div>
-                                    )}
-                                    <div className="flex flex-wrap gap-3 pt-1.5">
-                                        {order.artwork_pdf && <a href={order.artwork_pdf} target="_blank" rel="noopener noreferrer" title="Open PDF" className="hover:scale-110 transition-all"><PdfLogo className="w-9 h-9" /></a>}
-                                        {order.artwork_cdr && <a href={order.artwork_cdr} target="_blank" rel="noopener noreferrer" title="Open CDR" className="hover:scale-110 transition-all"><CdrLogo className="w-9 h-9" /></a>}
-                                    </div>
+                        </div>
+
+                        {/* Technical Specs */}
+                        <div>
+                            <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
+                                Technical Specs
+                            </h4>
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2.5 text-xs">
+                                <div className="flex justify-between border-b pb-1.5">
+                                    <span className="text-slate-500 font-medium">Plate No:</span>
+                                    <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                                        {live.plate_no || '-'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between border-b pb-1.5">
+                                    <span className="text-slate-500 font-medium">Ink Group:</span>
+                                    <span className="font-bold text-slate-900">{live.ink || '-'}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-1.5">
+                                    <span className="text-slate-500 font-medium">Coating:</span>
+                                    <span className="font-bold text-slate-900">{live.coating || '-'}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-1.5">
+                                    <span className="text-slate-500 font-medium">Pasting:</span>
+                                    <span className="font-bold text-slate-900">{live.pasting_type || '-'}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-1.5">
+                                    <span className="text-slate-500 font-medium">Construction:</span>
+                                    <span className="font-bold text-slate-900">{live.construction_type || '-'}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-1.5">
+                                    <span className="text-slate-500 font-medium">Specification:</span>
+                                    <span className="font-bold text-slate-900">{live.specification || '-'}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-0.5">
+                                    <span className="text-slate-500 font-bold uppercase tracking-wider">Dimension (DIM):</span>
+                                    <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                                        {live.dimension || '-'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                    </td>
-                </tr>
-            )}
-        </Fragment >
+
+                        {/* Full Specifications Detail */}
+                        {live.specs && (
+                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                                <div className="text-[12px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5 opacity-80">
+                                    Full Specifications Detail
+                                </div>
+                                <div className="text-xs text-slate-800 font-mono leading-relaxed font-semibold">
+                                    {live.specs}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <span className="text-xs text-slate-400">
+                            Press <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px] text-slate-600">ESC</kbd> or click outside to close
+                        </span>
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href={`/orders/${order.id}`}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition shadow-sm"
+                            >
+                                <Edit className="w-3.5 h-3.5" />
+                                <span>Edit Order</span>
+                            </Link>
+                            <button
+                                onClick={onClose}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     );
 });
-OrderRow.displayName = 'OrderRow';
+OrderDetailDrawer.displayName = 'OrderDetailDrawer';
 
 export default function OrdersPage() {
     return (
@@ -990,6 +1149,17 @@ function OrdersList() {
         });
     }, []);
 
+    const activeDrawerOrder = useMemo(() => {
+        if (!expandedOrderId) return null;
+        return orders.find(o => o.id === expandedOrderId) || null;
+    }, [expandedOrderId, orders]);
+
+    const closeDrawer = useCallback(() => {
+        startToggleTransition(() => {
+            setExpandedOrderId(null);
+        });
+    }, []);
+
     const sortedOrders = useMemo(() => {
         const list = [...orders];
         list.sort((a, b) => {
@@ -1313,6 +1483,13 @@ function OrdersList() {
                     </>
                 )}
             </div>
+
+            {/* Right Slide-over Detail Drawer */}
+            <OrderDetailDrawer
+                order={activeDrawerOrder}
+                isOpen={Boolean(activeDrawerOrder)}
+                onClose={closeDrawer}
+            />
         </div >
     );
 }
