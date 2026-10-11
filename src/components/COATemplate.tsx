@@ -96,6 +96,8 @@ const COATemplate: React.FC<COATemplateProps> = ({ order, companyType }) => {
                         background: white;
                         box-shadow: none !important;
                         transform: none !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
                     }
                 }
                 .font-signature {
