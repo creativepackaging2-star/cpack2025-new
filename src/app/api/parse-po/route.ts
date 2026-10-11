@@ -165,12 +165,19 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 7. Auto-match items against existing Orders in Supabase
-        const { data: recentOrders } = await supabase
+        // 7. Auto-match items against existing OPEN Orders in Supabase
+        const { data: allOrders } = await supabase
             .from('orders')
-            .select('id, order_id, product_name, artwork_code, quantity, rate, customer_name, from_our_company, packing_detail, delivery_address')
+            .select('id, order_id, product_name, artwork_code, quantity, rate, customer_name, from_our_company, packing_detail, delivery_address, status')
+            .neq('status', 'Complete')
+            .neq('status', 'Delivered')
             .order('id', { ascending: false })
-            .limit(150);
+            .limit(200);
+
+        const recentOrders = (allOrders || []).filter(o => {
+            const s = (o.status || '').toLowerCase().trim();
+            return !s.includes('complete') && s !== 'delivered';
+        });
 
         if (recentOrders && recentOrders.length > 0) {
             for (const item of items) {

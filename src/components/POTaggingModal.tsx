@@ -53,18 +53,24 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
     const [availableOrders, setAvailableOrders] = useState<OrderOption[]>([]);
     const [taggedOrders, setTaggedOrders] = useState<Record<number, string | number>>({}); // index -> orderId
 
-    // Pre-fetch available orders from Supabase as soon as modal opens
+    // Pre-fetch ONLY OPEN orders from Supabase as soon as modal opens
     useEffect(() => {
         if (!isOpen) return;
         (async () => {
             const { data } = await supabase
                 .from('orders')
-                .select('id, order_id, product_name, artwork_code, quantity, rate, packing_detail, customer_name, from_our_company, remarks')
+                .select('id, order_id, product_name, artwork_code, quantity, rate, packing_detail, customer_name, from_our_company, remarks, status')
+                .neq('status', 'Complete')
+                .neq('status', 'Delivered')
                 .order('id', { ascending: false })
-                .limit(200);
+                .limit(250);
 
             if (data && data.length > 0) {
-                setAvailableOrders(data);
+                const openOnly = data.filter(o => {
+                    const s = (o.status || '').toLowerCase().trim();
+                    return !s.includes('complete') && s !== 'delivered';
+                });
+                setAvailableOrders(openOnly);
             }
         })();
     }, [isOpen]);
@@ -115,7 +121,11 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
 
                 setItems(data.items || []);
                 if (json.availableOrders && json.availableOrders.length > 0) {
-                    setAvailableOrders(json.availableOrders);
+                    const openOnly = json.availableOrders.filter((o: any) => {
+                        const s = (o.status || '').toLowerCase().trim();
+                        return !s.includes('complete') && s !== 'delivered';
+                    });
+                    setAvailableOrders(openOnly);
                 }
 
                 // Initial auto-matched map
