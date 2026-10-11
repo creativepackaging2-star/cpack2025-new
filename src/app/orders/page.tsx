@@ -266,6 +266,7 @@ Plate No   : ${order.plate_no || '-'}`;
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase">
                                 {live.specs || live.dimension || '-'}
+                                {order.total_print_qty ? ` | Total Print: ${Number(order.total_print_qty).toLocaleString()}` : ''}
                             </span>
                             {live.pasting_type && (() => {
                                 const p = live.pasting_type.toLowerCase();
@@ -430,8 +431,16 @@ Plate No   : ${order.plate_no || '-'}`;
 
                 <td className="px-3 py-2 flex-1 min-w-[300px]">
                     <div className="flex items-start gap-1.5">
-                        <div className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2" title={live.specs || ''}>
-                            {live.specs || '-'}
+                        <div
+                            className="text-[12px] text-slate-700 leading-relaxed font-medium line-clamp-2"
+                            title={`${live.specs || ''}${order.total_print_qty ? ` | Total Print: ${Number(order.total_print_qty).toLocaleString()}` : ''}`}
+                        >
+                            <span>{live.specs || '-'}</span>
+                            {order.total_print_qty ? (
+                                <span className="font-bold text-rose-600">
+                                    {' | '}Total Print: {Number(order.total_print_qty).toLocaleString()}
+                                </span>
+                            ) : null}
                         </div>
                         {live.pasting_type && (() => {
                             const p = live.pasting_type.toLowerCase();
@@ -867,7 +876,12 @@ const OrderDetailDrawer = memo(({
                                     Full Specifications Detail
                                 </div>
                                 <div className="text-xs text-slate-800 font-mono leading-relaxed font-semibold">
-                                    {live.specs}
+                                    <span>{live.specs}</span>
+                                    {order.total_print_qty ? (
+                                        <span className="font-bold text-rose-600">
+                                            {' | '}Total Print: {Number(order.total_print_qty).toLocaleString()}
+                                        </span>
+                                    ) : null}
                                 </div>
                             </div>
                         )}
