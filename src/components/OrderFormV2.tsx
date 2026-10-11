@@ -365,12 +365,15 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="label text-red-600">Order Quantity</label>
+                                    <label className="label text-red-600 font-bold">Order Quantity</label>
                                     <input name="quantity" type="number" className="input-field mb-0 text-base bg-red-50 border-red-200" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.quantity || ''} onChange={handleNumberChange} placeholder="Qty" required />
                                 </div>
-                                <div>
-                                    <label className="label text-slate-700">Packing Details</label>
-                                    <input name="packing_detail" type="text" className="input-field mb-0 text-sm font-semibold bg-white" value={formData.packing_detail || ''} onChange={handleChange} placeholder="e.g. 50 x 32 x 32" />
+                                <div className="bg-amber-50/60 p-1 rounded-lg border border-amber-200">
+                                    <label className="label text-amber-800 font-bold flex items-center justify-between">
+                                        <span>Packing Details</span>
+                                        <span className="text-[9px] text-amber-600 font-normal">Box / Ctn</span>
+                                    </label>
+                                    <input name="packing_detail" type="text" className="input-field mb-0 text-sm font-semibold bg-white border-amber-300 focus:border-amber-500" value={formData.packing_detail || ''} onChange={handleChange} placeholder="e.g. 50 x 32 x 32" />
                                 </div>
                             </div>
                         </div>
@@ -524,7 +527,7 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
                     {/* 5. Delivery & Production Tools */}
                     <div className="lg:col-span-2 bg-slate-50 border border-slate-100 p-2 rounded-xl">
                         <SectionHeader icon={Truck} title="Delivery & Dispatch" />
-                        <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                             <div>
                                 <label className="label">Ready Date</label>
                                 <input name="ready_date" type="date" className="input-field" value={formData.ready_date || ''} onChange={handleChange} />
@@ -534,8 +537,22 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
                                 <input name="delivery_date" type="date" className="input-field" value={formData.delivery_date || ''} onChange={handleChange} />
                             </div>
                             <div>
-                                <label className="label">Qty Delivered</label>
-                                <input name="qty_delivered" type="number" className="input-field text-indigo-600" value={formData.qty_delivered || ''} onChange={handleNumberChange} placeholder="Qty" />
+                                <label className="label font-bold text-indigo-700">Qty Delivered</label>
+                                <input name="qty_delivered" type="number" className="input-field text-indigo-600 font-bold" value={formData.qty_delivered || ''} onChange={handleNumberChange} placeholder="Qty" />
+                            </div>
+                            <div className="bg-amber-50/70 p-1 rounded-lg border border-amber-200">
+                                <label className="label font-bold text-amber-900 flex items-center justify-between">
+                                    <span>Packing Details</span>
+                                    <span className="text-[9px] text-amber-600 font-normal">For Invoice</span>
+                                </label>
+                                <input
+                                    name="packing_detail"
+                                    type="text"
+                                    className="input-field bg-white font-semibold text-slate-800 border-amber-300 focus:border-amber-500 text-xs"
+                                    value={formData.packing_detail || ''}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 50 x 32 x 32"
+                                />
                             </div>
                             <div>
                                 <label className="label">Invoice No</label>
@@ -549,7 +566,7 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
                                     <option value="Enterprise">Enterprise</option>
                                 </select>
                             </div>
-                            <div>
+                            <div className="sm:col-span-2">
                                 <label className="label">Batch No</label>
                                 <input name="batch_no" className="input-field bg-slate-50 font-mono text-[10px]" value={formData.batch_no || ''} placeholder="Auto" readOnly />
                             </div>
