@@ -18,6 +18,26 @@ function getIndianFormattedDate(date = new Date()): string {
     return `${day}-${month}-${year}`;
 }
 
+function getCleanBrandName(rawName?: string | null): string {
+    if (!rawName) return 'Product';
+    const cleaned = rawName
+        .replace(/\b(cartons?|labels?|leaflets?|inserts?|boxes?|box|foil|blister)\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return cleaned || rawName;
+}
+
+const DEFAULT_APPROVAL_MESSAGE = `Dear Team,
+
+PFA Artwork for approval.
+Request you to check the artwork, text matter & specifications (GSM, size, board, special effects) mentioned in attached file thoroughly.
+
+This will be the final file & specifications (GSM, size, board, special effects) used for all further processes. If any error, kindly point out before approval. Else it will be printed as per this file.
+also please check order & artwork both & confirm  
+
+Regards,
+Creative Packaging - Artwork Dept`;
+
 async function detectDateLocations(doc: PDFDocument): Promise<{ pageIdx: number; x: number; y: number }[]> {
     const locations: { pageIdx: number; x: number; y: number }[] = [];
     const pages = doc.getPages();
@@ -230,30 +250,25 @@ export async function POST(req: NextRequest) {
 <body>
   <div class="card">
     <div class="header">
-      <h1>Artwork Sent for Approval</h1>
+      <h1>Artwork for Approval</h1>
       <p>Creative Packaging</p>
     </div>
     <div class="content">
       <div class="meta-box">
         <div class="meta-row">
-          <span class="meta-label">Product Name:</span>
-          <span class="meta-val">${productName || '-'}</span>
+          <span class="meta-label">Product:</span>
+          <span class="meta-val">${getCleanBrandName(productName)}</span>
         </div>
-        ${artworkCode ? `
         <div class="meta-row">
-          <span class="meta-label">Artwork Code:</span>
-          <span class="meta-val">${artworkCode}</span>
-        </div>` : ''}
-        <div class="meta-row">
-          <span class="meta-label">Approval Date:</span>
+          <span class="meta-label">Date:</span>
           <span class="meta-val">${todayStr}</span>
         </div>
       </div>
 
-      <div class="message-box">${message || 'Please find attached the artwork PDF for your review and approval.'}</div>
+      <div class="message-box">${message || DEFAULT_APPROVAL_MESSAGE}</div>
 
       <div>
-        <span class="attach-badge">📎 Attached: ${attachmentFilename} (Dated: ${todayStr})</span>
+        <span class="attach-badge">📎 Attached: ${attachmentFilename}</span>
       </div>
     </div>
     <div class="footer">
@@ -264,12 +279,16 @@ export async function POST(req: NextRequest) {
 </html>
 `;
 
+        const cleanBrand = getCleanBrandName(productName);
+        const finalSubject = subject || `Artwork for Approval - ${cleanBrand}`;
+        const finalBody = message || DEFAULT_APPROVAL_MESSAGE;
+
         // 6. Send Email with dated PDF attachment
         const info = await transporter.sendMail({
             from: `"Creative Packaging" <${gmailUser}>`,
             to: recipients,
-            subject: subject || `Artwork Approval Request: ${productName || 'Product'} ${artworkCode ? `(${artworkCode})` : ''}`,
-            text: `${message || 'Please find attached the artwork PDF for your review and approval.'}\n\nProduct: ${productName}\nCode: ${artworkCode || '-'}\nApproval Date: ${todayStr}\nAttached: ${attachmentFilename}`,
+            subject: finalSubject,
+            text: `${finalBody}\n\nAttached: ${attachmentFilename} (Dated: ${todayStr})`,
             html: htmlContent,
             attachments: [
                 {

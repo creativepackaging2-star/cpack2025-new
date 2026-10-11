@@ -46,13 +46,32 @@ export default function SendArtworkModal({ isOpen, onClose, product }: SendArtwo
         }
     }, []);
 
+function getCleanBrandName(rawName?: string | null): string {
+    if (!rawName) return 'Product';
+    const cleaned = rawName
+        .replace(/\b(cartons?|labels?|leaflets?|inserts?|boxes?|box|foil|blister)\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return cleaned || rawName;
+}
+
     // Set initial subject and body when product opens
     useEffect(() => {
         if (product) {
-            const pName = product.product_name || 'Product';
-            const pCode = product.artwork_code ? ` (${product.artwork_code})` : '';
-            setSubject(`Artwork Approval Request: ${pName}${pCode}`);
-            setMessage(`Dear Team,\n\nPlease find attached the artwork for "${pName}" for your review and approval.\n\nKindly verify and revert with your approval.\n\nRegards,\nCreative Packaging`);
+            const cleanBrand = getCleanBrandName(product.product_name);
+            setSubject(`Artwork for Approval - ${cleanBrand}`);
+            setMessage(
+`Dear Team,
+
+PFA Artwork for approval.
+Request you to check the artwork, text matter & specifications (GSM, size, board, special effects) mentioned in attached file thoroughly.
+
+This will be the final file & specifications (GSM, size, board, special effects) used for all further processes. If any error, kindly point out before approval. Else it will be printed as per this file.
+also please check order & artwork both & confirm  
+
+Regards,
+Creative Packaging - Artwork Dept`
+            );
             setSentSuccess(false);
             setErrorMessage(null);
         }
@@ -163,7 +182,7 @@ export default function SendArtworkModal({ isOpen, onClose, product }: SendArtwo
                             <Mail className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold uppercase tracking-tight">Send Artwork for Approval</h3>
+                            <h3 className="text-base font-bold uppercase tracking-tight">Artwork for Approval</h3>
                             <p className="text-xs text-slate-400">Sent from creativepackaging2@gmail.com with PDF attachment</p>
                         </div>
                     </div>
