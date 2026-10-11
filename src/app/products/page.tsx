@@ -4,18 +4,20 @@ import { useEffect, useState, useCallback, memo, useDeferredValue, useMemo } fro
 import { supabase } from '@/utils/supabase/client';
 import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database, Copy, Package } from 'lucide-react';
+import { Search, Loader2, Plus, Edit2, Eye, ShoppingCart, Trash2, Archive, Filter, Database, Copy, Package, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo } from '@/components/FileLogos';
 import PageHeader from '@/components/PageHeader';
 import { useDataStore } from '@/components/DataStoreProvider';
+import SendArtworkModal from '@/components/SendArtworkModal';
 
 // Memoized Product Row Component to prevent unnecessary re-renders
-const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
+const ProductRow = memo(({ product, categories, onDelete, isDeleting, onSendArtwork }: {
     product: Product,
     categories: Record<number, string>,
     onDelete: (id: string, name: string) => void,
-    isDeleting: boolean
+    isDeleting: boolean,
+    onSendArtwork: (product: Product) => void
 }) => {
     const [confirming, setConfirming] = useState(false);
 
@@ -89,15 +91,26 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
             <td className="px-6 py-2 whitespace-nowrap text-center">
                 <div className="flex items-center justify-center gap-2">
                     {product.artwork_pdf ? (
-                        <a
-                            href={product.artwork_pdf}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative"
-                            title="View PDF"
-                        >
-                            <PdfLogo className="w-7 h-7" />
-                        </a>
+                        <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-2 py-1 shadow-sm">
+                            <a
+                                href={product.artwork_pdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative hover:scale-105 transition-transform"
+                                title="View PDF Artwork"
+                            >
+                                <PdfLogo className="w-7 h-7" />
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => onSendArtwork(product)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold transition shadow-xs cursor-pointer active:scale-95"
+                                title="Send Artwork for Approval (Email PDF Attachment)"
+                            >
+                                <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Send</span>
+                            </button>
+                        </div>
                     ) : <span className="w-7 h-7 invisible" />}
 
                     {product.artwork_cdr ? (
@@ -105,7 +118,7 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting }: {
                             href={product.artwork_cdr}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group relative"
+                            className="group relative hover:scale-105 transition-transform"
                             title="View CDR"
                         >
                             <CdrLogo className="w-7 h-7" />
@@ -178,6 +191,7 @@ export default function ProductsPage() {
     const deferredSearchQuery = useDeferredValue(searchQuery);
     const [showArchived, setShowArchived] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [selectedArtworkProduct, setSelectedArtworkProduct] = useState<Product | null>(null);
 
     // Client-side filtering - Memoized and using deferred value for responsiveness
     const filteredProducts = useMemo(() => {
@@ -380,6 +394,7 @@ export default function ProductsPage() {
                                         categories={categories}
                                         onDelete={handleDelete}
                                         isDeleting={deletingId === product.id}
+                                        onSendArtwork={setSelectedArtworkProduct}
                                     />
                                 ))
                             )}
@@ -406,20 +421,29 @@ export default function ProductsPage() {
                             categories={categories}
                             onDelete={handleDelete}
                             isDeleting={deletingId === product.id}
+                            onSendArtwork={setSelectedArtworkProduct}
                         />
                     ))
                 )}
             </div>
+
+            {/* Send Artwork Approval Modal */}
+            <SendArtworkModal
+                isOpen={Boolean(selectedArtworkProduct)}
+                onClose={() => setSelectedArtworkProduct(null)}
+                product={selectedArtworkProduct}
+            />
         </div>
     );
 }
 
 // Extracted Mobile Card Component
-const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
+const MobileProductCard = memo(({ product, categories, onDelete, isDeleting, onSendArtwork }: {
     product: Product,
     categories: Record<number, string>,
     onDelete: (id: string, name: string) => void,
-    isDeleting: boolean
+    isDeleting: boolean,
+    onSendArtwork: (product: Product) => void
 }) => {
     const [confirming, setConfirming] = useState(false);
 
@@ -477,15 +501,26 @@ const MobileProductCard = memo(({ product, categories, onDelete, isDeleting }: {
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-1">
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                     {product.artwork_pdf && (
-                        <a href={product.artwork_pdf} target="_blank" rel="noopener noreferrer" className="p-1 hover:scale-105 transition-transform">
-                            <PdfLogo className="w-10 h-10" />
-                        </a>
+                        <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-2 py-1 shadow-sm">
+                            <a href={product.artwork_pdf} target="_blank" rel="noopener noreferrer" className="p-0.5 hover:scale-105 transition-transform" title="View PDF">
+                                <PdfLogo className="w-8 h-8" />
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => onSendArtwork(product)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[10px] font-bold transition shadow-xs cursor-pointer active:scale-95"
+                                title="Send Artwork for Approval (Email PDF attachment)"
+                            >
+                                <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Send</span>
+                            </button>
+                        </div>
                     )}
                     {product.artwork_cdr && (
-                        <a href={product.artwork_cdr} target="_blank" rel="noopener noreferrer" className="p-1 hover:scale-105 transition-transform">
-                            <CdrLogo className="w-10 h-10" />
+                        <a href={product.artwork_cdr} target="_blank" rel="noopener noreferrer" className="p-1 hover:scale-105 transition-transform" title="View CDR">
+                            <CdrLogo className="w-8 h-8" />
                         </a>
                     )}
                 </div>
