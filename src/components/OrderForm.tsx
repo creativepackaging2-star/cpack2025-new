@@ -600,9 +600,15 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                                 <label className="label">Artwork Code</label>
                                 <input name="artwork_code" className="input-field mb-0 bg-blue-100" style={{ color: '#1d4ed8', fontWeight: 'bold' }} value={formData.artwork_code || ''} onChange={handleChange} placeholder="Code" />
                             </div>
-                            <div>
-                                <label className="label text-red-600">Order Quantity</label>
-                                <input name="quantity" type="number" className="input-field mb-0 text-base bg-red-50 border-red-200" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.quantity || ''} onChange={handleNumberChange} placeholder="Qty" required />
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="label text-red-600">Order Quantity</label>
+                                    <input name="quantity" type="number" className="input-field mb-0 text-base bg-red-50 border-red-200" style={{ color: '#dc2626', fontWeight: 'bold' }} value={formData.quantity || ''} onChange={handleNumberChange} placeholder="Qty" required />
+                                </div>
+                                <div>
+                                    <label className="label text-slate-700">Packing Details</label>
+                                    <input name="packing_detail" type="text" className="input-field mb-0 text-sm font-semibold bg-white" value={formData.packing_detail || ''} onChange={handleChange} placeholder="e.g. 50 x 32 x 32" />
+                                </div>
                             </div>
                         </div>
                     </div>

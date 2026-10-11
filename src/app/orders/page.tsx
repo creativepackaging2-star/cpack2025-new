@@ -823,6 +823,7 @@ const OrderDetailDrawer = memo(({
                                     { label: 'Gross Print', value: order.gross_print_qty },
                                     { label: 'Total Print', value: order.total_print_qty },
                                     { label: 'Qty Delivered', value: order.qty_delivered },
+                                    { label: 'Packing Details', value: order.packing_detail },
                                     { label: 'Batch No', value: order.batch_no },
                                 ]} />
                             </div>
