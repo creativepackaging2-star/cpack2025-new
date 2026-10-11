@@ -4,10 +4,11 @@ import { useEffect, useState, useMemo, Fragment, useTransition, useDeferredValue
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer, ShoppingCart } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer, ShoppingCart, UploadCloud } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/components/FileLogos';
 import PageHeader from '@/components/PageHeader';
+import POTaggingModal from '@/components/POTaggingModal';
 
 // --- Memoized Components for Performance ---
 
@@ -973,6 +974,7 @@ function OrdersList() {
 
     // Multi-select State
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showPoModal, setShowPoModal] = useState(false);
 
     const toggleSelect = useCallback((id: number, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
@@ -1459,6 +1461,17 @@ function OrdersList() {
                                 </label>
                             </div>
 
+                            {/* Upload PO Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowPoModal(true)}
+                                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 w-8 h-8 md:w-auto md:h-auto md:px-3.5 md:py-2 text-white transition-colors shadow-sm shrink-0 cursor-pointer"
+                                title="Upload & Parse Purchase Order"
+                            >
+                                <UploadCloud className="h-4 w-4 md:mr-1.5" />
+                                <span className="hidden md:inline text-xs font-bold">Upload PO</span>
+                            </button>
+
                             {/* New Order Button */}
                             <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-2 text-white hover:bg-indigo-500 transition-colors shadow-sm shrink-0">
                                 <Plus className="h-4 w-4 md:mr-2" />
@@ -1571,6 +1584,13 @@ function OrdersList() {
                                             <Truck className="w-4 h-4" />
                                             Labels
                                         </Link>
+                                        <Link
+                                            href={`/orders/invoice?ids=${selectedIds.join(',')}`}
+                                            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-md shadow-purple-900/30"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            <span>Create Invoice</span>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>
@@ -1631,6 +1651,13 @@ function OrdersList() {
                 isOpen={Boolean(activeDrawerOrder)}
                 onClose={closeDrawer}
                 onUpdateRate={handleUpdateOrderRate}
+            />
+
+            {/* PO Upload & Tagging Modal */}
+            <POTaggingModal
+                isOpen={showPoModal}
+                onClose={() => setShowPoModal(false)}
+                onSuccess={() => { fetchOrders(); }}
             />
         </div >
     );
