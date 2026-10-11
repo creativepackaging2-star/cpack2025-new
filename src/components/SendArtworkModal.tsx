@@ -124,6 +124,7 @@ export default function SendArtworkModal({ isOpen, onClose, product }: SendArtwo
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    productId: product.id,
                     recipients: selectedRecipients,
                     subject,
                     message,
