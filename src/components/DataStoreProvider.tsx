@@ -88,7 +88,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
                 pastRes,
                 sizeRes,
                 printRes,
-                paperRes
+                paperRes,
+                metaRes
             ] = await Promise.all([
                 supabase.from('products').select('*').order('created_at', { ascending: false }),
                 supabase.from('category').select('id, name'),
@@ -96,7 +97,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
                 supabase.from('pasting').select('id, name'),
                 supabase.from('sizes').select('id, name').order('name'),
                 supabase.from('printers').select('id, name, phone').order('name'),
-                supabase.from('paperwala').select('id, name, phone').order('name')
+                supabase.from('paperwala').select('id, name, phone').order('name'),
+                supabase.from('paper_transactions').select('id, reference, notes').eq('tx_type', 'META')
             ]);
 
             const newCategories: Record<number, string> = {};
@@ -108,14 +110,45 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
             const newPastings: Record<number, string> = {};
             pastRes.data?.forEach(p => { newPastings[p.id] = p.name; });
 
+            const mergedSizes: any[] = [...(sizeRes.data || [])];
+            const mergedPrinters: any[] = [...(printRes.data || [])];
+            const mergedPaperwalas: any[] = [...(paperRes.data || [])];
+
+            (metaRes.data || []).forEach(m => {
+                try {
+                    const parsed = JSON.parse(m.notes || '{}');
+                    if (!parsed.name) return;
+                    const cleanName = String(parsed.name).trim();
+                    if (m.reference === 'CUSTOM_VENDOR') {
+                        if (!mergedPaperwalas.some(v => v.name?.toLowerCase() === cleanName.toLowerCase())) {
+                            mergedPaperwalas.push({ id: `custom-${m.id}`, name: cleanName, phone: parsed.phone || '', isCustom: true });
+                        }
+                    } else if (m.reference === 'CUSTOM_PRINTER') {
+                        if (!mergedPrinters.some(p => p.name?.toLowerCase() === cleanName.toLowerCase())) {
+                            mergedPrinters.push({ id: `custom-${m.id}`, name: cleanName, phone: parsed.phone || '', isCustom: true });
+                        }
+                    } else if (m.reference === 'CUSTOM_SIZE') {
+                        if (!mergedSizes.some(s => s.name?.toLowerCase() === cleanName.toLowerCase())) {
+                            mergedSizes.push({ id: `custom-${m.id}`, name: cleanName, isCustom: true });
+                        }
+                    }
+                } catch {
+                    // ignore malformed meta notes
+                }
+            });
+
+            mergedSizes.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            mergedPrinters.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            mergedPaperwalas.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
             const freshData = {
                 products: prodRes.data || [],
                 categories: newCategories,
                 specialEffects: newFx,
                 pastings: newPastings,
-                sizes: sizeRes.data || [],
-                printers: printRes.data || [],
-                paperwalas: paperRes.data || []
+                sizes: mergedSizes,
+                printers: mergedPrinters,
+                paperwalas: mergedPaperwalas
             };
 
             setProducts(freshData.products);

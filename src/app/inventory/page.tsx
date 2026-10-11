@@ -32,6 +32,7 @@ interface PaperPurchaseItem {
     order_code?: string;
     created_at: string;
     vendor: string;
+    printer: string;
     purchase_qty: number;
     gsm: string;
     actual_gsm?: string;
@@ -62,6 +63,7 @@ function parseMetaJson(raw: string | null | undefined): {
     bill_no?: string;
     paper_rate?: string;
     vendor?: string;
+    printer?: string;
     product_name?: string;
     used_qty?: number;
 } {
@@ -82,8 +84,8 @@ export default function InventoryPage() {
 
     // Purchases Ledger State
     const [purchases, setPurchases] = useState<PaperPurchaseItem[]>([]);
-    // Local edits map: uid -> { bill_no, paper_rate, vendor, used_qty }
-    const [edits, setEdits] = useState<Record<string, { bill_no: string; paper_rate: string; vendor: string; used_qty: string }>>({});
+    // Local edits map: uid -> { bill_no, paper_rate, vendor, printer, used_qty }
+    const [edits, setEdits] = useState<Record<string, { bill_no: string; paper_rate: string; vendor: string; printer: string; used_qty: string }>>({});
     const [savingUid, setSavingUid] = useState<string | null>(null);
     const [savedUid, setSavedUid] = useState<string | null>(null);
 
@@ -97,6 +99,7 @@ export default function InventoryPage() {
     // New Purchase Entry Form State
     const [entryData, setEntryData] = useState({
         vendor: '',
+        printer: '',
         gsm_id: '',
         paper_type_id: '',
         paper_order_size_id: '',
@@ -129,11 +132,11 @@ export default function InventoryPage() {
                 supabase.from('paper_types').select('id, name'),
                 supabase.from('gsm').select('id, name'),
                 supabase.from('sizes').select('id, name'),
-                supabase.from('printers').select('id, name'),
-                supabase.from('paperwala').select('id, name'),
+                supabase.from('printers').select('id, name, phone').order('name'),
+                supabase.from('paperwala').select('id, name, phone').order('name'),
                 supabase
                     .from('orders')
-                    .select('id, order_id, product_name, paperwala_name, paper_order_qty, paper_required, total_print_qty, gsm_value, actual_gsm_used, paper_type_name, paper_order_size, file_no, created_at, order_date')
+                    .select('id, order_id, product_name, paperwala_name, printer_name, printer_id, paper_order_qty, paper_required, total_print_qty, gsm_value, actual_gsm_used, paper_type_name, paper_order_size, file_no, created_at, order_date')
                     .gte('id', PURCHASE_ORDER_CUTOFF_ID)
                     .order('id', { ascending: false })
             ]);
@@ -149,12 +152,40 @@ export default function InventoryPage() {
             const sizeMap = Object.fromEntries((sizeRes.data || []).map(i => [i.id, i.name]));
             const printerMap = Object.fromEntries((printerRes.data || []).map(i => [i.id, i.name]));
 
+            // Merge custom vendors & printers stored in paper_transactions META rows
+            const mergedVendors: any[] = [...(vendorRes.data || [])];
+            const mergedPrinters: any[] = [...(printerRes.data || [])];
+
+            transactions.forEach(tx => {
+                if (tx.tx_type === 'META') {
+                    try {
+                        const parsed = JSON.parse(tx.notes || '{}');
+                        if (!parsed.name) return;
+                        const cleanName = String(parsed.name).trim();
+                        if (tx.reference === 'CUSTOM_VENDOR') {
+                            if (!mergedVendors.some(v => v.name?.toLowerCase() === cleanName.toLowerCase())) {
+                                mergedVendors.push({ id: `custom-${tx.id}`, name: cleanName, phone: parsed.phone || '', isCustom: true });
+                            }
+                        } else if (tx.reference === 'CUSTOM_PRINTER') {
+                            if (!mergedPrinters.some(p => p.name?.toLowerCase() === cleanName.toLowerCase())) {
+                                mergedPrinters.push({ id: `custom-${tx.id}`, name: cleanName, phone: parsed.phone || '', isCustom: true });
+                            }
+                        }
+                    } catch {
+                        // ignore malformed notes
+                    }
+                }
+            });
+
+            mergedVendors.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            mergedPrinters.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
             setResources({
                 gsms: gsmRes.data || [],
                 paperTypes: ptRes.data || [],
                 sizes: sizeRes.data || [],
-                printers: printerRes.data || [],
-                vendors: vendorRes.data || [],
+                printers: mergedPrinters,
+                vendors: mergedVendors,
             });
 
             // 1. Build Paper Purchases Ledger (From cutoff onwards, even if completely used)
@@ -178,6 +209,7 @@ export default function InventoryPage() {
                         order_code: ord.order_id,
                         created_at: ord.order_date || ord.created_at,
                         vendor: meta.vendor !== undefined ? meta.vendor : (ord.paperwala_name || ''),
+                        printer: meta.printer !== undefined ? meta.printer : (ord.printer_name || ''),
                         purchase_qty: pQty,
                         gsm: ord.gsm_value || '-',
                         actual_gsm: ord.actual_gsm_used || '',
@@ -211,6 +243,7 @@ export default function InventoryPage() {
                         record_id: tx.id,
                         created_at: tx.created_at,
                         vendor: meta.vendor || '',
+                        printer: meta.printer || printerMap[tx.printer_id] || '',
                         purchase_qty: pQty,
                         gsm: gsmMap[tx.gsm_id] || '-',
                         size: sizeMap[tx.paper_order_size_id] || '-',
@@ -225,12 +258,13 @@ export default function InventoryPage() {
             });
 
             // Initialize local edit state
-            const initialEdits: Record<string, { bill_no: string; paper_rate: string; vendor: string; used_qty: string }> = {};
+            const initialEdits: Record<string, { bill_no: string; paper_rate: string; vendor: string; printer: string; used_qty: string }> = {};
             purchaseList.forEach(item => {
                 initialEdits[item.uid] = {
                     bill_no: item.bill_no,
                     paper_rate: item.paper_rate,
                     vendor: item.vendor,
+                    printer: item.printer,
                     used_qty: String(item.used_qty),
                 };
             });
@@ -240,6 +274,7 @@ export default function InventoryPage() {
             // 2. Build Aggregate Stock Summary
             const grouping: Record<string, StockItem> = {};
             transactions.forEach(tx => {
+                if (tx.tx_type !== 'IN' && tx.tx_type !== 'OUT') return;
                 const key = `${tx.gsm_id}-${tx.paper_type_id}-${tx.paper_order_size_id}-${tx.printer_id}`;
                 if (!grouping[key]) {
                     grouping[key] = {
@@ -282,47 +317,64 @@ export default function InventoryPage() {
         fetchInventoryData();
     }, [fetchInventoryData]);
 
-    const handleEditChange = (uid: string, field: 'bill_no' | 'paper_rate' | 'vendor' | 'used_qty', value: string) => {
+    const handleEditChange = (uid: string, field: 'bill_no' | 'paper_rate' | 'vendor' | 'printer' | 'used_qty', value: string) => {
         setEdits(prev => ({
             ...prev,
             [uid]: {
-                ...(prev[uid] || { bill_no: '', paper_rate: '', vendor: '', used_qty: '0' }),
+                ...(prev[uid] || { bill_no: '', paper_rate: '', vendor: '', printer: '', used_qty: '0' }),
                 [field]: value
             }
         }));
     };
 
-    const handleSaveRow = async (item: PaperPurchaseItem) => {
-        const rowEdit = edits[item.uid];
+    const handleSaveRow = async (
+        item: PaperPurchaseItem,
+        overrideEdit?: { bill_no: string; paper_rate: string; vendor: string; printer: string; used_qty: string }
+    ) => {
+        const rowEdit = overrideEdit || edits[item.uid];
         if (!rowEdit) return;
 
         setSavingUid(item.uid);
         try {
             const usedQtyNum = Number(rowEdit.used_qty) || 0;
+            const cleanVendor = rowEdit.vendor.trim();
+            const cleanPrinter = rowEdit.printer.trim();
+
             const metaPayload = JSON.stringify({
                 bill_no: rowEdit.bill_no.trim(),
                 paper_rate: rowEdit.paper_rate.trim(),
-                vendor: rowEdit.vendor.trim(),
+                vendor: cleanVendor,
+                printer: cleanPrinter,
                 product_name: item.product_name,
                 used_qty: usedQtyNum,
             });
 
             if (item.source === 'order') {
+                const matchedVendor = resources.vendors.find(v => v.name === cleanVendor);
+                const matchedPrinter = resources.printers.find(p => p.name === cleanPrinter);
+
+                const updatePayload: Record<string, any> = {
+                    file_no: metaPayload,
+                    paperwala_name: cleanVendor,
+                    printer_name: cleanPrinter,
+                    paper_required: usedQtyNum,
+                    paperwala_id: typeof matchedVendor?.id === 'number' ? matchedVendor.id : null,
+                    printer_id: typeof matchedPrinter?.id === 'number' ? matchedPrinter.id : null,
+                };
+
                 const { error: updErr } = await supabase
                     .from('orders')
-                    .update({
-                        file_no: metaPayload,
-                        paperwala_name: rowEdit.vendor.trim(),
-                        paper_required: usedQtyNum
-                    })
+                    .update(updatePayload)
                     .eq('id', item.record_id);
 
                 if (updErr) throw updErr;
             } else {
+                const matchedPrinter = resources.printers.find(p => p.name === cleanPrinter);
                 const { error: updErr } = await supabase
                     .from('paper_transactions')
                     .update({
-                        notes: metaPayload
+                        notes: metaPayload,
+                        printer_id: typeof matchedPrinter?.id === 'number' ? matchedPrinter.id : null,
                     })
                     .eq('id', item.record_id);
 
@@ -337,7 +389,8 @@ export default function InventoryPage() {
                               ...p,
                               bill_no: rowEdit.bill_no.trim(),
                               paper_rate: rowEdit.paper_rate.trim(),
-                              vendor: rowEdit.vendor.trim(),
+                              vendor: cleanVendor,
+                              printer: cleanPrinter,
                               used_qty: usedQtyNum,
                               balance_qty: p.purchase_qty - usedQtyNum,
                           }
@@ -356,6 +409,132 @@ export default function InventoryPage() {
         }
     };
 
+    const handleAddNewVendor = async (targetUid?: string) => {
+        const rawName = window.prompt('Enter New Vendor (Paperwala) Name:');
+        if (!rawName || !rawName.trim()) return;
+        const name = rawName.trim();
+        const rawPhone = window.prompt('Enter Vendor Phone (optional):') || '';
+        const phoneDigits = rawPhone.replace(/\D/g, '');
+        const phoneNum = phoneDigits ? Number(phoneDigits) : null;
+
+        try {
+            let newItem: any = { id: `custom-${Date.now()}`, name, phone: phoneDigits, isCustom: true };
+            const { data, error: insErr } = await supabase
+                .from('paperwala')
+                .insert([{ name, phone: phoneNum }])
+                .select()
+                .single();
+
+            if (!insErr && data) {
+                newItem = data;
+            } else {
+                const { data: metaData, error: metaErr } = await supabase
+                    .from('paper_transactions')
+                    .insert([{
+                        tx_type: 'META',
+                        qty: 0,
+                        reference: 'CUSTOM_VENDOR',
+                        notes: JSON.stringify({ name, phone: phoneDigits })
+                    }])
+                    .select('id')
+                    .single();
+                if (metaErr) throw metaErr;
+                if (metaData) newItem.id = `custom-${metaData.id}`;
+            }
+
+            setResources(prev => {
+                const exists = prev.vendors.some(v => v.name?.toLowerCase() === name.toLowerCase());
+                const updated = exists ? prev.vendors : [...prev.vendors, newItem].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                return { ...prev, vendors: updated };
+            });
+
+            if (targetUid === '__ENTRY__') {
+                setEntryData(prev => ({ ...prev, vendor: name }));
+            } else if (targetUid) {
+                const item = purchases.find(p => p.uid === targetUid);
+                const currentEdit = edits[targetUid] || (item ? {
+                    bill_no: item.bill_no,
+                    paper_rate: item.paper_rate,
+                    vendor: item.vendor,
+                    printer: item.printer,
+                    used_qty: String(item.used_qty),
+                } : null);
+                if (currentEdit && item) {
+                    const updatedEdit = { ...currentEdit, vendor: name };
+                    setEdits(prev => ({ ...prev, [targetUid]: updatedEdit }));
+                    await handleSaveRow(item, updatedEdit);
+                }
+            }
+        } catch (err: any) {
+            alert('Error adding vendor: ' + err.message);
+        }
+    };
+
+    const handleAddNewPrinter = async (targetUid?: string) => {
+        const rawName = window.prompt('Enter New Printer Name:');
+        if (!rawName || !rawName.trim()) return;
+        const name = rawName.trim();
+        const rawPhone = window.prompt('Enter Printer Phone (optional):') || '';
+        const phoneDigits = rawPhone.replace(/\D/g, '');
+        const phoneNum = phoneDigits ? Number(phoneDigits) : null;
+
+        try {
+            let newItem: any = { id: `custom-${Date.now()}`, name, phone: phoneDigits, isCustom: true };
+            const { data, error: insErr } = await supabase
+                .from('printers')
+                .insert([{ name, phone: phoneNum }])
+                .select()
+                .single();
+
+            if (!insErr && data) {
+                newItem = data;
+            } else {
+                const { data: metaData, error: metaErr } = await supabase
+                    .from('paper_transactions')
+                    .insert([{
+                        tx_type: 'META',
+                        qty: 0,
+                        reference: 'CUSTOM_PRINTER',
+                        notes: JSON.stringify({ name, phone: phoneDigits })
+                    }])
+                    .select('id')
+                    .single();
+                if (metaErr) throw metaErr;
+                if (metaData) newItem.id = `custom-${metaData.id}`;
+            }
+
+            setResources(prev => {
+                const exists = prev.printers.some(p => p.name?.toLowerCase() === name.toLowerCase());
+                const updated = exists ? prev.printers : [...prev.printers, newItem].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                return { ...prev, printers: updated };
+            });
+
+            if (targetUid === '__ENTRY__') {
+                setEntryData(prev => ({
+                    ...prev,
+                    printer: name,
+                    printer_id: typeof newItem.id === 'number' ? String(newItem.id) : ''
+                }));
+            } else if (targetUid) {
+                const item = purchases.find(p => p.uid === targetUid);
+                const currentEdit = edits[targetUid] || (item ? {
+                    bill_no: item.bill_no,
+                    paper_rate: item.paper_rate,
+                    vendor: item.vendor,
+                    printer: item.printer,
+                    used_qty: String(item.used_qty),
+                } : null);
+                if (currentEdit && item) {
+                    const updatedEdit = { ...currentEdit, printer: name };
+                    setEdits(prev => ({ ...prev, [targetUid]: updatedEdit }));
+                    await handleSaveRow(item, updatedEdit);
+                }
+            }
+        } catch (err: any) {
+            alert('Error adding printer: ' + err.message);
+        }
+    };
+
     const handleManualSubmit = async () => {
         if (!entryData.gsm_id || !entryData.paper_type_id || !entryData.paper_order_size_id || !entryData.qty) {
             alert('Please fill GSM, Colour (Paper Type), Size, and Purchase Qty');
@@ -366,9 +545,12 @@ export default function InventoryPage() {
         try {
             const pQty = parseFloat(entryData.qty) || 0;
             const uQty = parseFloat(entryData.used_qty) || 0;
+            const matchedPrinter = resources.printers.find(p => p.name === entryData.printer);
+            const resolvedPrinterId = typeof matchedPrinter?.id === 'number' ? matchedPrinter.id : (parseInt(entryData.printer_id) || null);
 
             const metaNotes = JSON.stringify({
                 vendor: entryData.vendor.trim(),
+                printer: entryData.printer.trim(),
                 product_name: entryData.used_for_product.trim() || 'General Stock',
                 used_qty: uQty,
                 bill_no: entryData.bill_no.trim(),
@@ -379,7 +561,7 @@ export default function InventoryPage() {
                 gsm_id: parseInt(entryData.gsm_id),
                 paper_type_id: parseInt(entryData.paper_type_id),
                 paper_order_size_id: parseInt(entryData.paper_order_size_id),
-                printer_id: parseInt(entryData.printer_id) || null,
+                printer_id: resolvedPrinterId,
                 qty: pQty,
                 tx_type: 'IN',
                 reference: 'Manual Purchase',
@@ -395,7 +577,7 @@ export default function InventoryPage() {
                     gsm_id: parseInt(entryData.gsm_id),
                     paper_type_id: parseInt(entryData.paper_type_id),
                     paper_order_size_id: parseInt(entryData.paper_order_size_id),
-                    printer_id: parseInt(entryData.printer_id) || null,
+                    printer_id: resolvedPrinterId,
                     qty: uQty,
                     tx_type: 'OUT',
                     reference: 'Manual Purchase Used',
@@ -406,6 +588,7 @@ export default function InventoryPage() {
             setShowEntryForm(false);
             setEntryData({
                 vendor: '',
+                printer: '',
                 gsm_id: '',
                 paper_type_id: '',
                 paper_order_size_id: '',
@@ -471,6 +654,7 @@ export default function InventoryPage() {
         const s = deferredSearchTerm.toLowerCase();
         return purchases.filter(item =>
             (item.vendor || '').toLowerCase().includes(s) ||
+            (item.printer || '').toLowerCase().includes(s) ||
             (item.product_name || '').toLowerCase().includes(s) ||
             (item.gsm || '').toLowerCase().includes(s) ||
             (item.size || '').toLowerCase().includes(s) ||
@@ -585,7 +769,7 @@ export default function InventoryPage() {
                             </div>
                             <div>
                                 <h3 className="text-base font-black text-slate-900 uppercase">Add New Paper Purchase</h3>
-                                <p className="text-xs text-slate-500 font-medium">Record vendor paper purchase, usage, bill no. & rate</p>
+                                <p className="text-xs text-slate-500 font-medium">Record vendor paper purchase, printer, usage, bill no. & rate</p>
                             </div>
                         </div>
                         <button onClick={() => setShowEntryForm(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -593,20 +777,75 @@ export default function InventoryPage() {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-4">
                         <div className="space-y-1">
                             <label className="text-[11px] font-bold text-slate-500 uppercase">Vendor (Paperwala)</label>
-                            <input
-                                type="text"
-                                list="vendor-list"
-                                placeholder="e.g. pramesh"
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
-                                value={entryData.vendor}
-                                onChange={e => setEntryData(p => ({ ...p, vendor: e.target.value }))}
-                            />
-                            <datalist id="vendor-list">
-                                {resources.vendors.map(v => <option key={v.id} value={v.name} />)}
-                            </datalist>
+                            <div className="flex gap-1.5">
+                                <select
+                                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                    value={entryData.vendor}
+                                    onChange={e => {
+                                        if (e.target.value === '__ADD_NEW__') {
+                                            handleAddNewVendor('__ENTRY__');
+                                            return;
+                                        }
+                                        setEntryData(p => ({ ...p, vendor: e.target.value }));
+                                    }}
+                                >
+                                    <option value="">Select Vendor...</option>
+                                    {entryData.vendor && !resources.vendors.some(v => v.name === entryData.vendor) && (
+                                        <option value={entryData.vendor}>{entryData.vendor}</option>
+                                    )}
+                                    {resources.vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                                    <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Vendor...</option>
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddNewVendor('__ENTRY__')}
+                                    title="Add New Vendor"
+                                    className="px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-xl flex items-center justify-center transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Printer</label>
+                            <div className="flex gap-1.5">
+                                <select
+                                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                    value={entryData.printer}
+                                    onChange={e => {
+                                        if (e.target.value === '__ADD_NEW__') {
+                                            handleAddNewPrinter('__ENTRY__');
+                                            return;
+                                        }
+                                        const val = e.target.value;
+                                        const matched = resources.printers.find(pr => pr.name === val);
+                                        setEntryData(p => ({
+                                            ...p,
+                                            printer: val,
+                                            printer_id: typeof matched?.id === 'number' ? String(matched.id) : ''
+                                        }));
+                                    }}
+                                >
+                                    <option value="">Select Printer...</option>
+                                    {entryData.printer && !resources.printers.some(p => p.name === entryData.printer) && (
+                                        <option value={entryData.printer}>{entryData.printer}</option>
+                                    )}
+                                    {resources.printers.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                    <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Printer...</option>
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddNewPrinter('__ENTRY__')}
+                                    title="Add New Printer"
+                                    className="px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-xl flex items-center justify-center transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="space-y-1">
@@ -731,24 +970,49 @@ export default function InventoryPage() {
                         <table className="w-full border-collapse text-left">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                    <th className="px-3 py-3">Date</th>
-                                    <th className="px-3 py-3">Vendor</th>
-                                    <th className="px-3 py-3 text-right">Qty</th>
-                                    <th className="px-3 py-3 text-center">GSM</th>
-                                    <th className="px-3 py-3">Size</th>
-                                    <th className="px-3 py-3">Colour</th>
-                                    <th className="px-3 py-3 min-w-[200px]">Used For Product</th>
-                                    <th className="px-3 py-3 text-right">Used Qty</th>
-                                    <th className="px-3 py-3 text-right bg-indigo-50/40">Balance Qty</th>
-                                    <th className="px-3 py-3 w-36">Bill No.</th>
-                                    <th className="px-3 py-3 w-28">Rate (₹)</th>
-                                    <th className="px-3 py-3 text-center w-16">Save</th>
+                                    <th className="px-2.5 py-3">Date</th>
+                                    <th className="px-2.5 py-3">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Vendor</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddNewVendor()}
+                                                title="Add New Vendor"
+                                                className="p-0.5 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-colors"
+                                            >
+                                                <Plus className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    </th>
+                                    <th className="px-2.5 py-3">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Printer</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddNewPrinter()}
+                                                title="Add New Printer"
+                                                className="p-0.5 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-colors"
+                                            >
+                                                <Plus className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    </th>
+                                    <th className="px-2.5 py-3 text-right">Qty</th>
+                                    <th className="px-2.5 py-3 text-center">GSM</th>
+                                    <th className="px-2.5 py-3">Size</th>
+                                    <th className="px-2.5 py-3">Colour</th>
+                                    <th className="px-2.5 py-3 min-w-[180px]">Used For Product</th>
+                                    <th className="px-2.5 py-3 text-right">Used Qty</th>
+                                    <th className="px-2.5 py-3 text-right bg-indigo-50/40">Balance Qty</th>
+                                    <th className="px-2.5 py-3 w-32">Bill No.</th>
+                                    <th className="px-2.5 py-3 w-24">Rate (₹)</th>
+                                    <th className="px-2.5 py-3 text-center w-14">Save</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 text-xs">
                                 {filteredPurchases.length === 0 ? (
                                     <tr>
-                                        <td colSpan={12} className="px-6 py-12 text-center text-slate-400 italic font-medium">
+                                        <td colSpan={13} className="px-6 py-12 text-center text-slate-400 italic font-medium">
                                             No paper purchase entries found.
                                         </td>
                                     </tr>
@@ -758,6 +1022,7 @@ export default function InventoryPage() {
                                             bill_no: item.bill_no,
                                             paper_rate: item.paper_rate,
                                             vendor: item.vendor,
+                                            printer: item.printer,
                                             used_qty: String(item.used_qty),
                                         };
                                         const liveUsedQty = Number(rowEdit.used_qty) || 0;
@@ -766,35 +1031,97 @@ export default function InventoryPage() {
                                             rowEdit.bill_no !== item.bill_no ||
                                             rowEdit.paper_rate !== item.paper_rate ||
                                             rowEdit.vendor !== item.vendor ||
+                                            rowEdit.printer !== item.printer ||
                                             liveUsedQty !== item.used_qty;
 
                                         return (
                                             <tr key={item.uid} className="hover:bg-slate-50/80 transition-colors">
                                                 {/* Date */}
-                                                <td className="px-3 py-2.5 whitespace-nowrap text-slate-500 font-medium">
+                                                <td className="px-2.5 py-2.5 whitespace-nowrap text-slate-500 font-medium">
                                                     {item.created_at ? format(new Date(item.created_at), 'dd MMM yy') : '-'}
                                                 </td>
 
-                                                {/* Vendor */}
-                                                <td className="px-3 py-2.5">
-                                                    <input
-                                                        type="text"
-                                                        list="vendor-list"
-                                                        value={rowEdit.vendor}
-                                                        placeholder="Vendor..."
-                                                        onChange={e => handleEditChange(item.uid, 'vendor', e.target.value)}
-                                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveRow(item); }}
-                                                        className="w-28 sm:w-32 px-2 py-1 text-xs font-bold text-slate-800 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-indigo-400 rounded-lg outline-none transition"
-                                                    />
+                                                {/* Vendor Dropdown + Add New */}
+                                                <td className="px-2.5 py-2.5">
+                                                    <div className="flex items-center gap-1">
+                                                        <select
+                                                            value={rowEdit.vendor}
+                                                            onChange={e => {
+                                                                const val = e.target.value;
+                                                                if (val === '__ADD_NEW__') {
+                                                                    handleAddNewVendor(item.uid);
+                                                                    return;
+                                                                }
+                                                                const updatedEdit = { ...rowEdit, vendor: val };
+                                                                setEdits(prev => ({ ...prev, [item.uid]: updatedEdit }));
+                                                                handleSaveRow(item, updatedEdit);
+                                                            }}
+                                                            className="w-28 sm:w-32 px-2 py-1 text-xs font-bold text-slate-800 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-lg outline-none transition cursor-pointer"
+                                                        >
+                                                            <option value="">Select Vendor...</option>
+                                                            {rowEdit.vendor && !resources.vendors.some(v => v.name === rowEdit.vendor) && (
+                                                                <option value={rowEdit.vendor}>{rowEdit.vendor}</option>
+                                                            )}
+                                                            {resources.vendors.map(v => (
+                                                                <option key={v.id} value={v.name}>{v.name}</option>
+                                                            ))}
+                                                            <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Vendor...</option>
+                                                        </select>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddNewVendor(item.uid)}
+                                                            title="Add New Vendor"
+                                                            className="p-1 rounded bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700 transition-colors shrink-0"
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+
+                                                {/* Printer Dropdown + Add New */}
+                                                <td className="px-2.5 py-2.5">
+                                                    <div className="flex items-center gap-1">
+                                                        <select
+                                                            value={rowEdit.printer}
+                                                            onChange={e => {
+                                                                const val = e.target.value;
+                                                                if (val === '__ADD_NEW__') {
+                                                                    handleAddNewPrinter(item.uid);
+                                                                    return;
+                                                                }
+                                                                const updatedEdit = { ...rowEdit, printer: val };
+                                                                setEdits(prev => ({ ...prev, [item.uid]: updatedEdit }));
+                                                                handleSaveRow(item, updatedEdit);
+                                                            }}
+                                                            className="w-28 sm:w-36 px-2 py-1 text-xs font-semibold text-slate-800 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-lg outline-none transition cursor-pointer"
+                                                        >
+                                                            <option value="">Select Printer...</option>
+                                                            {rowEdit.printer && !resources.printers.some(p => p.name === rowEdit.printer) && (
+                                                                <option value={rowEdit.printer}>{rowEdit.printer}</option>
+                                                            )}
+                                                            {resources.printers.map(p => (
+                                                                <option key={p.id} value={p.name}>{p.name}</option>
+                                                            ))}
+                                                            <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Printer...</option>
+                                                        </select>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddNewPrinter(item.uid)}
+                                                            title="Add New Printer"
+                                                            className="p-1 rounded bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700 transition-colors shrink-0"
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 </td>
 
                                                 {/* Purchase Qty */}
-                                                <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-900">
+                                                <td className="px-2.5 py-2.5 text-right font-mono font-bold text-slate-900">
                                                     {item.purchase_qty.toLocaleString()}
                                                 </td>
 
                                                 {/* GSM */}
-                                                <td className="px-3 py-2.5 text-center font-semibold text-slate-700 whitespace-nowrap">
+                                                <td className="px-2.5 py-2.5 text-center font-semibold text-slate-700 whitespace-nowrap">
                                                     <span>{item.gsm}</span>
                                                     {item.actual_gsm && item.actual_gsm !== item.gsm && (
                                                         <span className="ml-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded" title="Actual GSM Used">
@@ -804,19 +1131,19 @@ export default function InventoryPage() {
                                                 </td>
 
                                                 {/* Size */}
-                                                <td className="px-3 py-2.5 font-medium text-slate-700 whitespace-nowrap">
+                                                <td className="px-2.5 py-2.5 font-medium text-slate-700 whitespace-nowrap">
                                                     {item.size}
                                                 </td>
 
                                                 {/* Colour */}
-                                                <td className="px-3 py-2.5">
+                                                <td className="px-2.5 py-2.5">
                                                     <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
                                                         {item.colour}
                                                     </span>
                                                 </td>
 
                                                 {/* Used For Product */}
-                                                <td className="px-3 py-2.5">
+                                                <td className="px-2.5 py-2.5">
                                                     <div className="font-bold text-slate-900 leading-snug">
                                                         {item.product_name}
                                                     </div>
@@ -831,18 +1158,19 @@ export default function InventoryPage() {
                                                 </td>
 
                                                 {/* Used Qty */}
-                                                <td className="px-3 py-2.5 text-right font-mono">
+                                                <td className="px-2.5 py-2.5 text-right font-mono">
                                                     <input
                                                         type="number"
                                                         value={rowEdit.used_qty}
                                                         onChange={e => handleEditChange(item.uid, 'used_qty', e.target.value)}
                                                         onKeyDown={e => { if (e.key === 'Enter') handleSaveRow(item); }}
+                                                        onBlur={() => { if (isDirty) handleSaveRow(item); }}
                                                         className="w-20 px-2 py-1 text-right font-mono font-semibold text-rose-700 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-indigo-400 rounded-lg outline-none transition"
                                                     />
                                                 </td>
 
                                                 {/* Balance Qty */}
-                                                <td className="px-3 py-2.5 text-right font-mono bg-indigo-50/20">
+                                                <td className="px-2.5 py-2.5 text-right font-mono bg-indigo-50/20">
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-bold text-xs ${
                                                         liveBalance > 0
                                                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -855,7 +1183,7 @@ export default function InventoryPage() {
                                                 </td>
 
                                                 {/* Bill No. Input */}
-                                                <td className="px-3 py-2.5">
+                                                <td className="px-2.5 py-2.5">
                                                     <input
                                                         type="text"
                                                         placeholder="Bill No..."
@@ -868,7 +1196,7 @@ export default function InventoryPage() {
                                                 </td>
 
                                                 {/* Rate Input */}
-                                                <td className="px-3 py-2.5">
+                                                <td className="px-2.5 py-2.5">
                                                     <input
                                                         type="text"
                                                         placeholder="Rate..."
@@ -881,7 +1209,7 @@ export default function InventoryPage() {
                                                 </td>
 
                                                 {/* Save Button / Status */}
-                                                <td className="px-3 py-2.5 text-center">
+                                                <td className="px-2.5 py-2.5 text-center">
                                                     {savingUid === item.uid ? (
                                                         <Loader2 className="w-4 h-4 text-indigo-600 animate-spin mx-auto" />
                                                     ) : savedUid === item.uid ? (
@@ -889,7 +1217,7 @@ export default function InventoryPage() {
                                                     ) : (
                                                         <button
                                                             onClick={() => handleSaveRow(item)}
-                                                            title="Save Bill No & Rate"
+                                                            title="Save Details"
                                                             className={`p-1.5 rounded-lg transition ${
                                                                 isDirty
                                                                     ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'

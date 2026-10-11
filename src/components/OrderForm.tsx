@@ -154,46 +154,85 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
 
     // --- New Data Handlers ---
     const handleAddSize = async () => {
-        const name = window.prompt("Enter New Paper Size (e.g., 20x30):");
-        if (!name) return;
+        const rawName = window.prompt("Enter New Paper Size (e.g., 20x30):");
+        if (!rawName || !rawName.trim()) return;
+        const name = rawName.trim();
         setSaving(true);
         try {
             const { data, error } = await supabase.from('sizes').insert([{ name }]).select().single();
-            if (error) throw error;
-            await refreshData();
-            if (data) {
-                setFormData(prev => ({ ...prev, paper_order_size_id: data.id, paper_order_size: data.name }));
+            if (error) {
+                const { error: metaErr } = await supabase.from('paper_transactions').insert([{
+                    tx_type: 'META',
+                    qty: 0,
+                    reference: 'CUSTOM_SIZE',
+                    notes: JSON.stringify({ name })
+                }]);
+                if (metaErr) throw metaErr;
             }
+            await refreshData();
+            setFormData(prev => ({
+                ...prev,
+                paper_order_size_id: data?.id || null,
+                paper_order_size: name
+            }));
         } catch (err: any) { alert(err.message); } finally { setSaving(false); }
     };
 
     const handleAddPrinter = async () => {
-        const name = window.prompt("Enter New Printer Name:");
-        if (!name) return;
-        const phone = window.prompt("Enter Printer Phone (optional):") || '';
+        const rawName = window.prompt("Enter New Printer Name:");
+        if (!rawName || !rawName.trim()) return;
+        const name = rawName.trim();
+        const rawPhone = window.prompt("Enter Printer Phone (optional):") || '';
+        const phoneDigits = rawPhone.replace(/\D/g, '');
+        const phoneNum = phoneDigits ? Number(phoneDigits) : null;
         setSaving(true);
         try {
-            const { data, error } = await supabase.from('printers').insert([{ name, phone }]).select().single();
-            if (error) throw error;
-            await refreshData();
-            if (data) {
-                setFormData(prev => ({ ...prev, printer_id: data.id, printer_name: data.name, printer_mobile: data.phone }));
+            const { data, error } = await supabase.from('printers').insert([{ name, phone: phoneNum }]).select().single();
+            if (error) {
+                const { error: metaErr } = await supabase.from('paper_transactions').insert([{
+                    tx_type: 'META',
+                    qty: 0,
+                    reference: 'CUSTOM_PRINTER',
+                    notes: JSON.stringify({ name, phone: phoneDigits })
+                }]);
+                if (metaErr) throw metaErr;
             }
+            await refreshData();
+            setFormData(prev => ({
+                ...prev,
+                printer_id: data?.id || null,
+                printer_name: name,
+                printer_mobile: phoneDigits || prev.printer_mobile || ''
+            }));
         } catch (err: any) { alert(err.message); } finally { setSaving(false); }
     };
 
     const handleAddPaperwala = async () => {
-        const name = window.prompt("Enter New Paperwala Name:");
-        if (!name) return;
-        const phone = window.prompt("Enter Paperwala Phone (optional):") || '';
+        const rawName = window.prompt("Enter New Paperwala (Vendor) Name:");
+        if (!rawName || !rawName.trim()) return;
+        const name = rawName.trim();
+        const rawPhone = window.prompt("Enter Paperwala Phone (optional):") || '';
+        const phoneDigits = rawPhone.replace(/\D/g, '');
+        const phoneNum = phoneDigits ? Number(phoneDigits) : null;
         setSaving(true);
         try {
-            const { data, error } = await supabase.from('paperwala').insert([{ name, phone }]).select().single();
-            if (error) throw error;
-            await refreshData();
-            if (data) {
-                setFormData(prev => ({ ...prev, paperwala_id: data.id, paperwala_name: data.name, paperwala_mobile: data.phone }));
+            const { data, error } = await supabase.from('paperwala').insert([{ name, phone: phoneNum }]).select().single();
+            if (error) {
+                const { error: metaErr } = await supabase.from('paper_transactions').insert([{
+                    tx_type: 'META',
+                    qty: 0,
+                    reference: 'CUSTOM_VENDOR',
+                    notes: JSON.stringify({ name, phone: phoneDigits })
+                }]);
+                if (metaErr) throw metaErr;
             }
+            await refreshData();
+            setFormData(prev => ({
+                ...prev,
+                paperwala_id: data?.id || null,
+                paperwala_name: name,
+                paperwala_mobile: phoneDigits || prev.paperwala_mobile || ''
+            }));
         } catch (err: any) { alert(err.message); } finally { setSaving(false); }
     };
 
@@ -649,14 +688,36 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                             <div>
                                 <label className="label">Paper Size</label>
                                 <div className="flex gap-1">
-                                    <select name="paper_order_size_id" className="input-field text-xs flex-1" value={formData.paper_order_size_id || ''} onChange={(e) => {
-                                        const m = sizes.find(s => s.id === parseInt(e.target.value));
-                                        setFormData(prev => ({ ...prev, paper_order_size_id: m?.id || null, paper_order_size: m?.name || '' }));
-                                    }}>
+                                    <select
+                                        name="paper_order_size"
+                                        className="input-field text-xs flex-1"
+                                        value={
+                                            formData.paper_order_size ||
+                                            sizes.find(s => s.id === formData.paper_order_size_id)?.name ||
+                                            ''
+                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '__ADD_NEW__') {
+                                                handleAddSize();
+                                                return;
+                                            }
+                                            const m = sizes.find(s => s.name === val);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                paper_order_size_id: typeof m?.id === 'number' ? m.id : null,
+                                                paper_order_size: val
+                                            }));
+                                        }}
+                                    >
                                         <option value="">Select...</option>
-                                        {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        {formData.paper_order_size && !sizes.some(s => s.name === formData.paper_order_size) && (
+                                            <option value={formData.paper_order_size}>{formData.paper_order_size}</option>
+                                        )}
+                                        {sizes.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                                        <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Size...</option>
                                     </select>
-                                    <button type="button" onClick={handleAddSize} className="bg-slate-200 hover:bg-slate-300 rounded px-1 min-h-[1.5rem] flex items-center justify-center -mt-1"><Plus className="w-3 h-3 text-slate-700" /></button>
+                                    <button type="button" onClick={handleAddSize} title="Add New Paper Size" className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded px-1.5 min-h-[1.5rem] flex items-center justify-center -mt-1 transition-colors"><Plus className="w-3.5 h-3.5" /></button>
                                 </div>
                             </div>
                             <div>
@@ -676,14 +737,37 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                             <div>
                                 <label className="label">Printer</label>
                                 <div className="flex gap-1">
-                                    <select name="printer_id" className="input-field text-xs flex-1" value={formData.printer_id || ''} onChange={(e) => {
-                                        const m = printers.find(p => p.id === parseInt(e.target.value));
-                                        setFormData(prev => ({ ...prev, printer_id: m?.id || null, printer_name: m?.name || '', printer_mobile: m?.phone || '' }));
-                                    }}>
+                                    <select
+                                        name="printer_name"
+                                        className="input-field text-xs flex-1"
+                                        value={
+                                            formData.printer_name ||
+                                            printers.find(p => p.id === formData.printer_id)?.name ||
+                                            ''
+                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '__ADD_NEW__') {
+                                                handleAddPrinter();
+                                                return;
+                                            }
+                                            const m = printers.find(p => p.name === val);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                printer_id: typeof m?.id === 'number' ? m.id : null,
+                                                printer_name: val,
+                                                printer_mobile: m?.phone ? String(m.phone) : ''
+                                            }));
+                                        }}
+                                    >
                                         <option value="">Select...</option>
-                                        {printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        {formData.printer_name && !printers.some(p => p.name === formData.printer_name) && (
+                                            <option value={formData.printer_name}>{formData.printer_name}</option>
+                                        )}
+                                        {printers.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                        <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Printer...</option>
                                     </select>
-                                    <button type="button" onClick={handleAddPrinter} className="bg-slate-200 hover:bg-slate-300 rounded px-1 min-h-[1.5rem] flex items-center justify-center -mt-1"><Plus className="w-3 h-3 text-slate-700" /></button>
+                                    <button type="button" onClick={handleAddPrinter} title="Add New Printer" className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded px-1.5 min-h-[1.5rem] flex items-center justify-center -mt-1 transition-colors"><Plus className="w-3.5 h-3.5" /></button>
                                 </div>
                             </div>
                             <div>
@@ -693,14 +777,37 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
                             <div>
                                 <label className="label">Paperwala</label>
                                 <div className="flex gap-1">
-                                    <select name="paperwala_id" className="input-field text-xs flex-1" value={formData.paperwala_id || ''} onChange={(e) => {
-                                        const m = paperwalas.find(p => p.id === parseInt(e.target.value));
-                                        setFormData(prev => ({ ...prev, paperwala_id: m?.id || null, paperwala_name: m?.name || '', paperwala_mobile: m?.phone || '' }));
-                                    }}>
+                                    <select
+                                        name="paperwala_name"
+                                        className="input-field text-xs flex-1"
+                                        value={
+                                            formData.paperwala_name ||
+                                            paperwalas.find(p => p.id === formData.paperwala_id)?.name ||
+                                            ''
+                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '__ADD_NEW__') {
+                                                handleAddPaperwala();
+                                                return;
+                                            }
+                                            const m = paperwalas.find(p => p.name === val);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                paperwala_id: typeof m?.id === 'number' ? m.id : null,
+                                                paperwala_name: val,
+                                                paperwala_mobile: m?.phone ? String(m.phone) : ''
+                                            }));
+                                        }}
+                                    >
                                         <option value="">Select...</option>
-                                        {paperwalas.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        {formData.paperwala_name && !paperwalas.some(p => p.name === formData.paperwala_name) && (
+                                            <option value={formData.paperwala_name}>{formData.paperwala_name}</option>
+                                        )}
+                                        {paperwalas.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                        <option value="__ADD_NEW__" className="font-bold text-indigo-600">+ Add New Paperwala...</option>
                                     </select>
-                                    <button type="button" onClick={handleAddPaperwala} className="bg-slate-200 hover:bg-slate-300 rounded px-1 min-h-[1.5rem] flex items-center justify-center -mt-1"><Plus className="w-3 h-3 text-slate-700" /></button>
+                                    <button type="button" onClick={handleAddPaperwala} title="Add New Paperwala" className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded px-1.5 min-h-[1.5rem] flex items-center justify-center -mt-1 transition-colors"><Plus className="w-3.5 h-3.5" /></button>
                                 </div>
                             </div>
                             <div>
