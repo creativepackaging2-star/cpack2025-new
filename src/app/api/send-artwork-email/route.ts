@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Artwork PDF file URL is required.' }, { status: 400 });
         }
 
-        const gmailUser = (process.env.GMAIL_USER || 'creativepackagin2@gmail.com').trim();
+        const gmailUser = (process.env.GMAIL_USER || 'creativepackaging2@gmail.com').trim();
         const rawPass = (process.env.GMAIL_APP_PASSWORD || 'gtyhprebnhdbjghm').trim();
         const gmailPass = rawPass.replace(/\s+/g, '');
 

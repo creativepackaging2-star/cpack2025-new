@@ -163,7 +163,7 @@ export default function SendArtworkModal({ isOpen, onClose, product }: SendArtwo
                         </div>
                         <div>
                             <h3 className="text-base font-bold uppercase tracking-tight">Send Artwork for Approval</h3>
-                            <p className="text-xs text-slate-400">Sent from creativepackagin2@gmail.com with PDF attachment</p>
+                            <p className="text-xs text-slate-400">Sent from creativepackaging2@gmail.com with PDF attachment</p>
                         </div>
                     </div>
                     <button
