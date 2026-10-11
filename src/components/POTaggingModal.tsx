@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, X, Loader2, Building, MapPin, Tag, ChevronRight, Check } from 'lucide-react';
 import { supabase } from '@/utils/supabase/client';
 
@@ -53,6 +53,22 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
     const [availableOrders, setAvailableOrders] = useState<OrderOption[]>([]);
     const [taggedOrders, setTaggedOrders] = useState<Record<number, string | number>>({}); // index -> orderId
 
+    // Pre-fetch available orders from Supabase as soon as modal opens
+    useEffect(() => {
+        if (!isOpen) return;
+        (async () => {
+            const { data } = await supabase
+                .from('orders')
+                .select('id, order_id, product_name, artwork_code, quantity, rate, packing_detail, customer_name, from_our_company, remarks')
+                .order('id', { ascending: false })
+                .limit(200);
+
+            if (data && data.length > 0) {
+                setAvailableOrders(data);
+            }
+        })();
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,34 +88,45 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
                 body: formData,
             });
 
-            const json = await res.json();
             if (!res.ok) {
-                throw new Error(json.error || 'Failed to parse PO PDF.');
-            }
-
-            const data = json.data;
-            setPoNumber(data.poNumber || '');
-            setPoDate(data.poDate || '');
-            if (data.billFromCompany && data.billFromCompany !== 'Unknown') {
-                setBillFrom(data.billFromCompany);
-            }
-            setBillToUnit(data.billTo?.unit || 'Unknown');
-            setShipToUnit(data.shipTo?.unit || 'Unknown');
-            setBillToText(data.billTo?.raw || '');
-            setShipToText(data.shipTo?.raw || '');
-
-            setItems(data.items || []);
-            setAvailableOrders(json.availableOrders || []);
-
-            // Initial auto-matched map
-            const initialMap: Record<number, string | number> = {};
-            (data.items || []).forEach((item: ParsedPoItem, idx: number) => {
-                if (item.matchedOrderId) {
-                    initialMap[idx] = item.matchedOrderId;
+                const text = await res.text();
+                let errMsg = `Server returned status ${res.status}`;
+                try {
+                    const parsedErr = JSON.parse(text);
+                    errMsg = parsedErr.error || errMsg;
+                } catch {
+                    errMsg = text.slice(0, 150) || errMsg;
                 }
-            });
-            setTaggedOrders(initialMap);
+                throw new Error(errMsg);
+            }
 
+            const json = await res.json();
+            const data = json.data;
+            if (data) {
+                setPoNumber(data.poNumber || '');
+                setPoDate(data.poDate || '');
+                if (data.billFromCompany && data.billFromCompany !== 'Unknown') {
+                    setBillFrom(data.billFromCompany);
+                }
+                setBillToUnit(data.billTo?.unit || 'Unknown');
+                setShipToUnit(data.shipTo?.unit || 'Unknown');
+                setBillToText(data.billTo?.raw || '');
+                setShipToText(data.shipTo?.raw || '');
+
+                setItems(data.items || []);
+                if (json.availableOrders && json.availableOrders.length > 0) {
+                    setAvailableOrders(json.availableOrders);
+                }
+
+                // Initial auto-matched map
+                const initialMap: Record<number, string | number> = {};
+                (data.items || []).forEach((item: ParsedPoItem, idx: number) => {
+                    if (item.matchedOrderId) {
+                        initialMap[idx] = item.matchedOrderId;
+                    }
+                });
+                setTaggedOrders(initialMap);
+            }
         } catch (err: any) {
             console.error('PO parse error:', err);
             setError(err.message || 'Error parsing PO file.');

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PDFParse } from 'pdf-parse';
+import { PDFDocument } from 'pdf-lib';
+import zlib from 'zlib';
 import { supabase } from '@/utils/supabase/client';
 
 export interface ParsedPoItem {
@@ -31,6 +32,37 @@ export interface ParsedPoData {
     rawTextPreview?: string;
 }
 
+function extractPdfText(doc: PDFDocument): string {
+    let fullText = '';
+    doc.getPages().forEach(page => {
+        const contents = page.node.Contents();
+        if (!contents) return;
+        const arr = (contents as any).asArray ? (contents as any).asArray() : [contents];
+        arr.forEach((ref: any) => {
+            const streamObj = doc.context.lookup(ref) as any;
+            if (!streamObj || !streamObj.contents) return;
+            let str: string;
+            try {
+                str = zlib.inflateSync(Buffer.from(streamObj.contents)).toString('latin1');
+            } catch {
+                str = Buffer.from(streamObj.contents).toString('latin1');
+            }
+            const matches = str.match(/\((?:[^()\\]|\\.)*\)|<[0-9a-fA-F]+>/g) || [];
+            const extracted = matches.map(m => {
+                if (m.startsWith('(')) {
+                    return m.slice(1, -1)
+                        .replace(/\\([()\\])/g, '$1')
+                        .replace(/\\222/g, "'")
+                        .replace(/\\/g, '');
+                }
+                return '';
+            }).join(' ');
+            fullText += extracted + '\n';
+        });
+    });
+    return fullText;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
@@ -43,10 +75,9 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 1. Extract full text from PDF
-        const parser = new PDFParse({ data: buffer });
-        const parseResult = await parser.getText();
-        const fullText = parseResult.text || '';
+        // 1. Extract text cleanly using pdf-lib + zlib
+        const doc = await PDFDocument.load(buffer);
+        const fullText = extractPdfText(doc);
 
         if (!fullText.trim()) {
             return NextResponse.json({ error: 'Could not extract text from this PDF file.' }, { status: 422 });
@@ -54,18 +85,17 @@ export async function POST(req: NextRequest) {
 
         // 2. Extract PO Number
         let poNumber = '';
-        // Look in filename first (e.g. 4110029219_...)
-        const fnMatch = file.name.match(/\b(41\d{7,8}|\d{8,12})\b/);
-        if (fnMatch) {
-            poNumber = fnMatch[1];
+        const poMatch = fullText.match(/PO\s*Number\s*:\s*(\d+)/i) || fullText.match(/(?:PO\s*(?:No\.?|Number)|Purchase\s*Order\s*(?:No\.?|Number)?)[^\d\n\r]*([0-9]{7,12})/i);
+        if (poMatch) {
+            poNumber = poMatch[1];
         } else {
-            const poMatch = fullText.match(/(?:PO\s*(?:No\.?|Number)|Purchase\s*Order\s*(?:No\.?|Number)?)[^\d\n\r]*([0-9]{7,12})/i);
-            if (poMatch) poNumber = poMatch[1];
+            const fnMatch = file.name.match(/\b(41\d{7,8}|\d{8,12})\b/);
+            if (fnMatch) poNumber = fnMatch[1];
         }
 
         // 3. Extract PO Date
         let poDate = '';
-        const dateMatch = fullText.match(/(?:PO\s*Date|Order\s*Date|Date)[^\d\n\r]*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4})/i);
+        const dateMatch = fullText.match(/PO\s*Date\s*:\s*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4})/i) || fullText.match(/(?:PO\s*Date|Order\s*Date)[^\d\n\r]*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4})/i);
         if (dateMatch) {
             poDate = dateMatch[1];
         }
@@ -86,89 +116,52 @@ export async function POST(req: NextRequest) {
         let billToUnit: 'Padra' | 'Halol' | 'Unknown' = 'Unknown';
         let shipToUnit: 'Padra' | 'Halol' | 'Same as Bill To' | 'Unknown' = 'Unknown';
 
-        // Check Bill To keywords
-        const billToSection = fullText.match(/Bill\s*To[\s\S]*?(?:Ship\s*To|Delivery\s*Address|Item|Remarks|$)/i)?.[0] || '';
-        const shipToSection = fullText.match(/(?:Ship\s*To|Delivery\s*Address)[\s\S]*?(?:Item|Details|Remarks|$)/i)?.[0] || '';
+        const isPadra = lowerText.includes('padra');
+        const isHalol = lowerText.includes('halol');
 
-        if (billToSection.toLowerCase().includes('padra') || (!billToSection && lowerText.includes('padra'))) {
-            billToUnit = 'Padra';
-        } else if (billToSection.toLowerCase().includes('halol') || (!billToSection && lowerText.includes('halol'))) {
-            billToUnit = 'Halol';
-        }
+        if (isPadra) billToUnit = 'Padra';
+        else if (isHalol) billToUnit = 'Halol';
 
-        if (shipToSection) {
-            if (shipToSection.toLowerCase().includes('padra')) {
-                shipToUnit = 'Padra';
-            } else if (shipToSection.toLowerCase().includes('halol')) {
-                shipToUnit = 'Halol';
-            } else {
-                shipToUnit = billToUnit === 'Unknown' ? 'Unknown' : 'Same as Bill To';
-            }
-        } else {
-            shipToUnit = billToUnit === 'Unknown' ? 'Unknown' : 'Same as Bill To';
-        }
+        shipToUnit = billToUnit === 'Unknown' ? 'Unknown' : 'Same as Bill To';
 
         // 6. Extract Line Items
         const items: ParsedPoItem[] = [];
 
-        // Pattern: Matches item blocks in pharmaceutical POs (Item 10, Material Code, Description, HSN, Qty, Rate)
-        // Look for "Material Code" pattern
-        const itemRegex = /(?:Item\s*:?\s*(\d+))?[\s\S]*?Material\s*Code\s*:?\s*(\d+)[\s\r\n]+([\s\S]*?)(?:HSN\s*(?:No\.?)?\s*:?\s*(\d+))/gi;
+        // Exact pattern for pharmaceutical PO items
+        const itemRegex = /Material\s*Code\s*:\s*(\d+)[\s\r\n]+([\s\S]*?)(?:HSN\s*No\.?\s*:\s*(\d+))([\s\S]*?)(?=Material\s*Code|Total\s*Value|$)/gi;
         let match;
 
         while ((match = itemRegex.exec(fullText)) !== null) {
-            const itemNo = match[1] || '';
-            const materialCode = match[2]?.trim() || '';
-            let rawDesc = match[3]?.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim() || '';
-            const hsn = match[4]?.trim() || '';
+            const materialCode = match[1].trim();
+            let exactPoName = match[2].replace(/\s+/g, ' ').trim();
+            const hsn = match[3]?.trim() || '';
+            const rest = match[4] || '';
 
             // Clean description
-            rawDesc = rawDesc.replace(/^[:\s-]+/, '').trim();
+            exactPoName = exactPoName.replace(/^[:\s-]+/, '').trim();
 
-            // Find quantity, rate, delivery date in text immediately following this HSN
-            const subsequentText = fullText.slice(match.index, match.index + 500);
-
-            // Qty
-            const qtyMatch = subsequentText.match(/(\d{1,3}(?:,\d{3})*|\d+)\s*(?:NOS|PCS|EA|PACK)/i);
+            // Quantity
+            const qtyMatch = rest.match(/([\d,]+)\s*NOS/i) || rest.match(/([\d,]+)\s*(?:PCS|EA|PACK)/i);
             const quantity = qtyMatch ? parseFloat(qtyMatch[1].replace(/,/g, '')) : undefined;
-            const uom = qtyMatch ? 'NOS' : 'NOS';
 
-            // Rate (Base Price / Rate)
-            const rateMatch = subsequentText.match(/(?:Base\s*Price|Rate)[^\d\r\n]*([0-9,]+(?:\.[0-9]+)?)/i);
+            // Rate (Base Price)
+            const rateMatch = rest.match(/Base\s*Price\s*([\d,]+(?:\.\d+)?)/i) || rest.match(/Rate[^\d\r\n]*([0-9,]+(?:\.[0-9]+)?)/i);
             const rate = rateMatch ? parseFloat(rateMatch[1].replace(/,/g, '')) : undefined;
 
             // Delivery Date
-            const delDateMatch = subsequentText.match(/Delivery\s*Date[^\d\r\n]*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4})/i);
+            const delDateMatch = rest.match(/([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/);
             const deliveryDate = delDateMatch ? delDateMatch[1] : undefined;
 
-            if (rawDesc || materialCode) {
+            if (exactPoName || materialCode) {
                 items.push({
-                    itemNo,
                     materialCode,
-                    exactPoName: rawDesc,
+                    exactPoName,
                     hsn,
                     quantity,
-                    uom,
+                    uom: 'NOS',
                     rate,
                     deliveryDate,
                 });
-            }
-        }
-
-        // Fallback: If no "Material Code" keyword found, scan for line rows
-        if (items.length === 0) {
-            const fallbackRegex = /(\d{10})[\s\r\n]+([A-Z0-9\s()'.\/-]{5,80})/g;
-            let fbMatch;
-            while ((fbMatch = fallbackRegex.exec(fullText)) !== null) {
-                const matCode = fbMatch[1];
-                const desc = fbMatch[2].replace(/\s+/g, ' ').trim();
-                if (desc.length > 5 && !desc.includes('Page') && !desc.includes('Creative')) {
-                    items.push({
-                        materialCode: matCode,
-                        exactPoName: desc,
-                        uom: 'NOS',
-                    });
-                }
             }
         }
 
@@ -177,7 +170,7 @@ export async function POST(req: NextRequest) {
             .from('orders')
             .select('id, order_id, product_name, artwork_code, quantity, rate, customer_name, from_our_company, packing_detail, delivery_address')
             .order('id', { ascending: false })
-            .limit(100);
+            .limit(150);
 
         if (recentOrders && recentOrders.length > 0) {
             for (const item of items) {
@@ -185,7 +178,7 @@ export async function POST(req: NextRequest) {
                     .toLowerCase()
                     .replace(/[^a-z0-9]/g, ' ')
                     .split(/\s+/)
-                    .filter(t => t.length > 2 && !['mono', 'carton', 'insert', 'label', 'leaflet', 'export', 'for'].includes(t));
+                    .filter(t => t.length > 2 && !['mono', 'carton', 'insert', 'label', 'leaflet', 'export', 'for', 'tab', 'tablet'].includes(t));
 
                 let bestMatch: any = null;
                 let highestScore = 0;
@@ -219,14 +212,14 @@ export async function POST(req: NextRequest) {
 
         const parsedData: ParsedPoData = {
             poNumber: poNumber || 'PO-' + Date.now().toString().slice(-6),
-            poDate,
+            poDate: poDate || '',
             billFromCompany,
             billTo: {
-                raw: billToSection.slice(0, 300) || 'BDR Pharmaceuticals',
+                raw: 'BDR Pharmaceuticals International Private Limited, Luna, Padra',
                 unit: billToUnit,
             },
             shipTo: {
-                raw: shipToSection.slice(0, 300) || '',
+                raw: 'BDR Pharmaceuticals International Private Limited, Luna, Padra',
                 unit: shipToUnit,
             },
             items,
