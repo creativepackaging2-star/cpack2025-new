@@ -1,10 +1,48 @@
 'use client';
 
-import { useEffect, useState, useMemo, useDeferredValue } from 'react';
+import { useEffect, useState, useMemo, useDeferredValue, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { Loader2, Box, ArrowUpRight, ArrowDownLeft, Database, Search, Filter, X, Plus, Trash2, History, Save, Calendar, Printer } from 'lucide-react';
+import {
+    Loader2,
+    Database,
+    Search,
+    X,
+    Plus,
+    Trash2,
+    History,
+    Save,
+    CheckCircle2,
+    FileText,
+    Layers,
+    PackageCheck
+} from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { format } from 'date-fns';
+import Link from 'next/link';
+
+// Cutoff ID so old historical orders do not clutter the new Paper Purchase ledger
+// Order #1748 (BD Tera 500mg inner carton, Oct 9 2026) is the first entry under the new tracking
+const PURCHASE_ORDER_CUTOFF_ID = 1748;
+const MANUAL_TX_CUTOFF_DATE = '2026-10-10T00:00:00';
+
+interface PaperPurchaseItem {
+    uid: string;
+    source: 'order' | 'manual';
+    record_id: number | string;
+    order_code?: string;
+    created_at: string;
+    vendor: string;
+    purchase_qty: number;
+    gsm: string;
+    actual_gsm?: string;
+    size: string;
+    colour: string;
+    product_name: string;
+    used_qty: number;
+    balance_qty: number;
+    bill_no: string;
+    paper_rate: string;
+}
 
 interface StockItem {
     gsm_id: number;
@@ -20,57 +58,92 @@ interface StockItem {
     net_stock: number;
 }
 
+function parseMetaJson(raw: string | null | undefined): {
+    bill_no?: string;
+    paper_rate?: string;
+    vendor?: string;
+    product_name?: string;
+    used_qty?: number;
+} {
+    if (!raw) return {};
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
+    } catch {
+        // If plain string was in file_no before, ignore or treat as empty
+    }
+    return {};
+}
+
 export default function InventoryPage() {
+    const [activeTab, setActiveTab] = useState<'purchases' | 'stock'>('purchases');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Purchases Ledger State
+    const [purchases, setPurchases] = useState<PaperPurchaseItem[]>([]);
+    // Local edits map: uid -> { bill_no, paper_rate, vendor, used_qty }
+    const [edits, setEdits] = useState<Record<string, { bill_no: string; paper_rate: string; vendor: string; used_qty: string }>>({});
+    const [savingUid, setSavingUid] = useState<string | null>(null);
+    const [savedUid, setSavedUid] = useState<string | null>(null);
+
+    // Stock Summary State
     const [stock, setStock] = useState<StockItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showEntryForm, setShowEntryForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showHistory, setShowHistory] = useState<any>(null);
 
-    // Form State
+    // New Purchase Entry Form State
     const [entryData, setEntryData] = useState({
+        vendor: '',
         gsm_id: '',
         paper_type_id: '',
         paper_order_size_id: '',
         printer_id: '',
         qty: '',
+        used_for_product: '',
+        used_qty: '0',
+        bill_no: '',
+        paper_rate: '',
         tx_type: 'IN',
-        reference: 'Manual Entry',
-        notes: ''
     });
 
-    // Resources for dropdowns
+    // Lookup resources
     const [resources, setResources] = useState({
         gsms: [] as any[],
         paperTypes: [] as any[],
         sizes: [] as any[],
-        printers: [] as any[]
+        printers: [] as any[],
+        vendors: [] as any[],
     });
 
-    // Performance: Fix for INP (Interaction to Next Paint)
-    // Deferred value allows the search input to remain responsive while table filtering happens in the background
     const deferredSearchTerm = useDeferredValue(searchTerm);
 
-    useEffect(() => {
-        fetchStock();
-    }, []);
-
-    async function fetchStock() {
+    const fetchInventoryData = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
-            // Fetch everything we need for the summary
-            const [txRes, ptRes, gsmRes, sizeRes, printerRes] = await Promise.all([
-                supabase.from('paper_transactions').select('*'),
+            const [txRes, ptRes, gsmRes, sizeRes, printerRes, vendorRes, ordersRes] = await Promise.all([
+                supabase.from('paper_transactions').select('*').order('created_at', { ascending: false }),
                 supabase.from('paper_types').select('id, name'),
                 supabase.from('gsm').select('id, name'),
                 supabase.from('sizes').select('id, name'),
-                supabase.from('printers').select('id, name')
+                supabase.from('printers').select('id, name'),
+                supabase.from('paperwala').select('id, name'),
+                supabase
+                    .from('orders')
+                    .select('id, order_id, product_name, paperwala_name, paper_order_qty, paper_required, total_print_qty, gsm_value, actual_gsm_used, paper_type_name, paper_order_size, file_no, created_at, order_date')
+                    .gte('id', PURCHASE_ORDER_CUTOFF_ID)
+                    .order('id', { ascending: false })
             ]);
 
             if (txRes.error) throw txRes.error;
+            if (ordersRes.error) throw ordersRes.error;
 
             const transactions = txRes.data || [];
+            const recentOrders = ordersRes.data || [];
+
             const paperTypeMap = Object.fromEntries((ptRes.data || []).map(i => [i.id, i.name]));
             const gsmMap = Object.fromEntries((gsmRes.data || []).map(i => [i.id, i.name]));
             const sizeMap = Object.fromEntries((sizeRes.data || []).map(i => [i.id, i.name]));
@@ -80,15 +153,94 @@ export default function InventoryPage() {
                 gsms: gsmRes.data || [],
                 paperTypes: ptRes.data || [],
                 sizes: sizeRes.data || [],
-                printers: printerRes.data || []
+                printers: printerRes.data || [],
+                vendors: vendorRes.data || [],
             });
 
-            // Group transactions
-            const grouping: Record<string, StockItem> = {};
+            // 1. Build Paper Purchases Ledger (From cutoff onwards, even if completely used)
+            const purchaseList: PaperPurchaseItem[] = [];
 
+            // A. From Orders (id >= PURCHASE_ORDER_CUTOFF_ID where paper is ordered)
+            recentOrders.forEach(ord => {
+                const pQty = Number(ord.paper_order_qty) || 0;
+                const hasVendor = Boolean(ord.paperwala_name && ord.paperwala_name.trim() !== '');
+                // Include if paper_order_qty > 0 or vendor is specified
+                if (pQty > 0 || hasVendor) {
+                    const meta = parseMetaJson(ord.file_no);
+                    const uQty = meta.used_qty !== undefined ? Number(meta.used_qty) : (Number(ord.paper_required) || 0);
+                    const bal = pQty - uQty;
+                    const uid = `order-${ord.id}`;
+
+                    purchaseList.push({
+                        uid,
+                        source: 'order',
+                        record_id: ord.id,
+                        order_code: ord.order_id,
+                        created_at: ord.order_date || ord.created_at,
+                        vendor: meta.vendor !== undefined ? meta.vendor : (ord.paperwala_name || ''),
+                        purchase_qty: pQty,
+                        gsm: ord.gsm_value || '-',
+                        actual_gsm: ord.actual_gsm_used || '',
+                        size: ord.paper_order_size || '-',
+                        colour: ord.paper_type_name || '-',
+                        product_name: ord.product_name || '-',
+                        used_qty: uQty,
+                        balance_qty: bal,
+                        bill_no: meta.bill_no || '',
+                        paper_rate: meta.paper_rate || '',
+                    });
+                }
+            });
+
+            // B. From Manual Paper Purchase Entries in paper_transactions (created after cutoff & reference === 'Manual Purchase')
+            transactions.forEach(tx => {
+                if (
+                    tx.tx_type === 'IN' &&
+                    tx.reference === 'Manual Purchase' &&
+                    tx.created_at >= MANUAL_TX_CUTOFF_DATE
+                ) {
+                    const meta = parseMetaJson(tx.notes);
+                    const pQty = Number(tx.qty) || 0;
+                    const uQty = Number(meta.used_qty) || 0;
+                    const bal = pQty - uQty;
+                    const uid = `tx-${tx.id}`;
+
+                    purchaseList.push({
+                        uid,
+                        source: 'manual',
+                        record_id: tx.id,
+                        created_at: tx.created_at,
+                        vendor: meta.vendor || '',
+                        purchase_qty: pQty,
+                        gsm: gsmMap[tx.gsm_id] || '-',
+                        size: sizeMap[tx.paper_order_size_id] || '-',
+                        colour: paperTypeMap[tx.paper_type_id] || '-',
+                        product_name: meta.product_name || 'General Stock',
+                        used_qty: uQty,
+                        balance_qty: bal,
+                        bill_no: meta.bill_no || '',
+                        paper_rate: meta.paper_rate || '',
+                    });
+                }
+            });
+
+            // Initialize local edit state
+            const initialEdits: Record<string, { bill_no: string; paper_rate: string; vendor: string; used_qty: string }> = {};
+            purchaseList.forEach(item => {
+                initialEdits[item.uid] = {
+                    bill_no: item.bill_no,
+                    paper_rate: item.paper_rate,
+                    vendor: item.vendor,
+                    used_qty: String(item.used_qty),
+                };
+            });
+            setEdits(initialEdits);
+            setPurchases(purchaseList);
+
+            // 2. Build Aggregate Stock Summary
+            const grouping: Record<string, StockItem> = {};
             transactions.forEach(tx => {
                 const key = `${tx.gsm_id}-${tx.paper_type_id}-${tx.paper_order_size_id}-${tx.printer_id}`;
-
                 if (!grouping[key]) {
                     grouping[key] = {
                         gsm_id: tx.gsm_id,
@@ -104,22 +256,17 @@ export default function InventoryPage() {
                         net_stock: 0
                     };
                 }
-
                 const qty = Number(tx.qty) || 0;
-                if (tx.tx_type === 'IN') {
-                    grouping[key].total_in += qty;
-                } else if (tx.tx_type === 'OUT') {
-                    grouping[key].total_out += qty;
-                }
+                if (tx.tx_type === 'IN') grouping[key].total_in += qty;
+                else if (tx.tx_type === 'OUT') grouping[key].total_out += qty;
             });
 
-            // Calculate Net Stock and convert to array
             const finalStock = Object.values(grouping)
                 .map(item => ({
                     ...item,
                     net_stock: item.total_in - item.total_out
                 }))
-                .filter(item => item.net_stock !== 0) // Hide items with zero stock
+                .filter(item => item.net_stock !== 0)
                 .sort((a, b) => b.net_stock - a.net_stock);
 
             setStock(finalStock);
@@ -129,45 +276,148 @@ export default function InventoryPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
-    const [showHistory, setShowHistory] = useState<any>(null); // { key, transactions }
+    useEffect(() => {
+        fetchInventoryData();
+    }, [fetchInventoryData]);
+
+    const handleEditChange = (uid: string, field: 'bill_no' | 'paper_rate' | 'vendor' | 'used_qty', value: string) => {
+        setEdits(prev => ({
+            ...prev,
+            [uid]: {
+                ...(prev[uid] || { bill_no: '', paper_rate: '', vendor: '', used_qty: '0' }),
+                [field]: value
+            }
+        }));
+    };
+
+    const handleSaveRow = async (item: PaperPurchaseItem) => {
+        const rowEdit = edits[item.uid];
+        if (!rowEdit) return;
+
+        setSavingUid(item.uid);
+        try {
+            const usedQtyNum = Number(rowEdit.used_qty) || 0;
+            const metaPayload = JSON.stringify({
+                bill_no: rowEdit.bill_no.trim(),
+                paper_rate: rowEdit.paper_rate.trim(),
+                vendor: rowEdit.vendor.trim(),
+                product_name: item.product_name,
+                used_qty: usedQtyNum,
+            });
+
+            if (item.source === 'order') {
+                const { error: updErr } = await supabase
+                    .from('orders')
+                    .update({
+                        file_no: metaPayload,
+                        paperwala_name: rowEdit.vendor.trim(),
+                        paper_required: usedQtyNum
+                    })
+                    .eq('id', item.record_id);
+
+                if (updErr) throw updErr;
+            } else {
+                const { error: updErr } = await supabase
+                    .from('paper_transactions')
+                    .update({
+                        notes: metaPayload
+                    })
+                    .eq('id', item.record_id);
+
+                if (updErr) throw updErr;
+            }
+
+            // Update local state
+            setPurchases(prev =>
+                prev.map(p =>
+                    p.uid === item.uid
+                        ? {
+                              ...p,
+                              bill_no: rowEdit.bill_no.trim(),
+                              paper_rate: rowEdit.paper_rate.trim(),
+                              vendor: rowEdit.vendor.trim(),
+                              used_qty: usedQtyNum,
+                              balance_qty: p.purchase_qty - usedQtyNum,
+                          }
+                        : p
+                )
+            );
+
+            setSavedUid(item.uid);
+            setTimeout(() => {
+                setSavedUid(prev => (prev === item.uid ? null : prev));
+            }, 2000);
+        } catch (err: any) {
+            alert('Error saving details: ' + err.message);
+        } finally {
+            setSavingUid(null);
+        }
+    };
 
     const handleManualSubmit = async () => {
         if (!entryData.gsm_id || !entryData.paper_type_id || !entryData.paper_order_size_id || !entryData.qty) {
-            alert('Please fill all mandatory fields (GSM, Type, Size, Qty)');
+            alert('Please fill GSM, Colour (Paper Type), Size, and Purchase Qty');
             return;
         }
 
         setIsSubmitting(true);
         try {
+            const pQty = parseFloat(entryData.qty) || 0;
+            const uQty = parseFloat(entryData.used_qty) || 0;
+
+            const metaNotes = JSON.stringify({
+                vendor: entryData.vendor.trim(),
+                product_name: entryData.used_for_product.trim() || 'General Stock',
+                used_qty: uQty,
+                bill_no: entryData.bill_no.trim(),
+                paper_rate: entryData.paper_rate.trim(),
+            });
+
             const payload = {
                 gsm_id: parseInt(entryData.gsm_id),
                 paper_type_id: parseInt(entryData.paper_type_id),
                 paper_order_size_id: parseInt(entryData.paper_order_size_id),
                 printer_id: parseInt(entryData.printer_id) || null,
-                qty: parseFloat(entryData.qty),
-                tx_type: entryData.tx_type,
-                reference: entryData.reference,
-                notes: entryData.notes
+                qty: pQty,
+                tx_type: 'IN',
+                reference: 'Manual Purchase',
+                notes: metaNotes
             };
 
             const { error: insErr } = await supabase.from('paper_transactions').insert([payload]);
             if (insErr) throw insErr;
 
-            alert('✅ Stock updated successfully.');
+            // If used_qty > 0, also record an OUT transaction for stock accuracy
+            if (uQty > 0) {
+                await supabase.from('paper_transactions').insert([{
+                    gsm_id: parseInt(entryData.gsm_id),
+                    paper_type_id: parseInt(entryData.paper_type_id),
+                    paper_order_size_id: parseInt(entryData.paper_order_size_id),
+                    printer_id: parseInt(entryData.printer_id) || null,
+                    qty: uQty,
+                    tx_type: 'OUT',
+                    reference: 'Manual Purchase Used',
+                    notes: `Used for: ${entryData.used_for_product.trim() || 'Job'}`
+                }]);
+            }
+
             setShowEntryForm(false);
             setEntryData({
+                vendor: '',
                 gsm_id: '',
                 paper_type_id: '',
                 paper_order_size_id: '',
                 printer_id: '',
                 qty: '',
+                used_for_product: '',
+                used_qty: '0',
+                bill_no: '',
+                paper_rate: '',
                 tx_type: 'IN',
-                reference: 'Manual Entry',
-                notes: ''
             });
-            fetchStock();
+            await fetchInventoryData();
         } catch (err: any) {
             console.error('Submit Error:', err);
             alert('Error: ' + err.message);
@@ -177,14 +427,11 @@ export default function InventoryPage() {
     };
 
     const deleteTransaction = async (id: number) => {
-        if (!window.confirm('Are you sure you want to delete this transaction? This will adjust the stock levels.')) return;
-
+        if (!window.confirm('Are you sure you want to delete this transaction?')) return;
         try {
             const { error: delErr } = await supabase.from('paper_transactions').delete().eq('id', id);
             if (delErr) throw delErr;
-            alert('✅ Transaction deleted.');
             if (showHistory) {
-                // Refresh history view
                 const { data } = await supabase.from('paper_transactions')
                     .select('*')
                     .eq('gsm_id', showHistory.gsm_id)
@@ -193,7 +440,7 @@ export default function InventoryPage() {
                     .eq('printer_id', showHistory.printer_id);
                 setShowHistory((prev: any) => ({ ...prev, transactions: data || [] }));
             }
-            fetchStock();
+            fetchInventoryData();
         } catch (err: any) {
             alert('Delete Error: ' + err.message);
         }
@@ -219,6 +466,19 @@ export default function InventoryPage() {
         }
     };
 
+    const filteredPurchases = useMemo(() => {
+        if (!deferredSearchTerm) return purchases;
+        const s = deferredSearchTerm.toLowerCase();
+        return purchases.filter(item =>
+            (item.vendor || '').toLowerCase().includes(s) ||
+            (item.product_name || '').toLowerCase().includes(s) ||
+            (item.gsm || '').toLowerCase().includes(s) ||
+            (item.size || '').toLowerCase().includes(s) ||
+            (item.colour || '').toLowerCase().includes(s) ||
+            (item.bill_no || '').toLowerCase().includes(s)
+        );
+    }, [purchases, deferredSearchTerm]);
+
     const filteredStock = useMemo(() => {
         if (!deferredSearchTerm) return stock;
         const s = deferredSearchTerm.toLowerCase();
@@ -234,31 +494,35 @@ export default function InventoryPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
-                <p className="text-slate-500 font-medium animate-pulse">Calculating Live Stock Levels...</p>
+                <p className="text-slate-500 font-medium animate-pulse">Loading Paper Purchase & Inventory Records...</p>
             </div>
         );
     }
 
     return (
-        <div className="font-montserrat">
+        <div className="font-montserrat space-y-6 pb-16">
             <PageHeader
-                title="Paper Stock Summary"
+                title="Paper Purchases & Inventory"
                 icon={<Database className="w-6 h-6" />}
                 actions={
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                         <button
                             onClick={() => setShowEntryForm(!showEntryForm)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg ${showEntryForm ? 'bg-slate-100 text-slate-700 shadow-slate-200' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 shadow-lg ${
+                                showEntryForm
+                                    ? 'bg-slate-100 text-slate-700 shadow-slate-200'
+                                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+                            }`}
                         >
-                            {showEntryForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                            {showEntryForm ? 'Close Form' : 'Update Stock'}
+                            {showEntryForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                            {showEntryForm ? 'Close Form' : 'Add Paper Purchase'}
                         </button>
-                        <div className="relative w-64 md:w-80">
+                        <div className="relative w-56 md:w-72">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Search GSM, Type, Size..."
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all shadow-sm text-sm text-white placeholder:text-slate-500 font-bold"
+                                placeholder="Search Vendor, Product, GSM, Bill..."
+                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all shadow-sm text-xs sm:text-sm text-white placeholder:text-slate-400 font-semibold"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -267,139 +531,387 @@ export default function InventoryPage() {
                 }
             />
 
-            <div className="space-y-6">
-                {error && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-bold flex items-center gap-2 animate-pulse">
-                        <X className="w-5 h-5" />
-                        <span>Error: {error}</span>
+            {/* View Toggle Tabs */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+                    <button
+                        onClick={() => setActiveTab('purchases')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                            activeTab === 'purchases'
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                    >
+                        <FileText className="w-4 h-4" />
+                        <span>Paper Purchases (All Entries)</span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[11px] ${
+                            activeTab === 'purchases' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                            {purchases.length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('stock')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                            activeTab === 'stock'
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                    >
+                        <Layers className="w-4 h-4" />
+                        <span>Warehouse Stock Summary</span>
+                    </button>
+                </div>
+
+                <div className="text-xs text-slate-500 font-medium">
+                    Showing all paper purchases from Oct 2026 onwards (including fully used stock)
+                </div>
+            </div>
+
+            {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-bold flex items-center gap-2">
+                    <X className="w-5 h-5" />
+                    <span>Error: {error}</span>
+                </div>
+            )}
+
+            {/* ADD PAPER PURCHASE FORM */}
+            {showEntryForm && (
+                <div className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-xl animate-in zoom-in-95 fade-in duration-200">
+                    <div className="flex justify-between items-center mb-5">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-200">
+                                <Plus className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 uppercase">Add New Paper Purchase</h3>
+                                <p className="text-xs text-slate-500 font-medium">Record vendor paper purchase, usage, bill no. & rate</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setShowEntryForm(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <X className="w-5 h-5 text-slate-400" />
+                        </button>
                     </div>
-                )}
 
-                {/* MANUAL ENTRY FORM */}
-                {showEntryForm && (
-                    <div className="bg-white p-6 rounded-2xl border border-indigo-200 shadow-xl animate-in zoom-in-95 fade-in duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-200">
-                                    <Plus className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-slate-900 uppercase">Add Manual Stock Adjustment</h3>
-                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Update warehouse inventory levels</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setShowEntryForm(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                <X className="w-5 h-5 text-slate-400" />
-                            </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Vendor (Paperwala)</label>
+                            <input
+                                type="text"
+                                list="vendor-list"
+                                placeholder="e.g. pramesh"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.vendor}
+                                onChange={e => setEntryData(p => ({ ...p, vendor: e.target.value }))}
+                            />
+                            <datalist id="vendor-list">
+                                {resources.vendors.map(v => <option key={v.id} value={v.name} />)}
+                            </datalist>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Warehouse</label>
-                                <select
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
-                                    value={entryData.printer_id}
-                                    onChange={e => setEntryData(p => ({ ...p, printer_id: e.target.value }))}
-                                >
-                                    <option value="">Select Warehouse...</option>
-                                    <option value="0">General Stock</option>
-                                    {resources.printers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Paper Type</label>
-                                <select
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
-                                    value={entryData.paper_type_id}
-                                    onChange={e => setEntryData(p => ({ ...p, paper_type_id: e.target.value }))}
-                                >
-                                    <option value="">Select Type...</option>
-                                    {resources.paperTypes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GSM</label>
-                                <select
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
-                                    value={entryData.gsm_id}
-                                    onChange={e => setEntryData(p => ({ ...p, gsm_id: e.target.value }))}
-                                >
-                                    <option value="">Select GSM...</option>
-                                    {resources.gsms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Size</label>
-                                <select
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
-                                    value={entryData.paper_order_size_id}
-                                    onChange={e => setEntryData(p => ({ ...p, paper_order_size_id: e.target.value }))}
-                                >
-                                    <option value="">Select Size...</option>
-                                    {resources.sizes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Purchase Qty *</label>
+                            <input
+                                type="number"
+                                placeholder="e.g. 2200"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
+                                value={entryData.qty}
+                                onChange={e => setEntryData(p => ({ ...p, qty: e.target.value }))}
+                            />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Type</label>
-                                <div className="flex bg-slate-100 p-1 rounded-xl">
-                                    <button
-                                        onClick={() => setEntryData(p => ({ ...p, tx_type: 'IN' }))}
-                                        className={`flex-1 py-2 text-xs font-black uppercase tracking-tighter rounded-lg transition-all ${entryData.tx_type === 'IN' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        Stock IN
-                                    </button>
-                                    <button
-                                        onClick={() => setEntryData(p => ({ ...p, tx_type: 'OUT' }))}
-                                        className={`flex-1 py-2 text-xs font-black uppercase tracking-tighter rounded-lg transition-all ${entryData.tx_type === 'OUT' ? 'bg-rose-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                    >
-                                        Stock OUT
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantity (Sheets)</label>
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-base"
-                                    value={entryData.qty}
-                                    onChange={e => setEntryData(p => ({ ...p, qty: e.target.value }))}
-                                />
-                            </div>
-                            <div className="md:col-span-2 space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes / Reference</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Purchase Invoice #123"
-                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
-                                    value={entryData.notes}
-                                    onChange={e => setEntryData(p => ({ ...p, notes: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowEntryForm(false)}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">GSM *</label>
+                            <select
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.gsm_id}
+                                onChange={e => setEntryData(p => ({ ...p, gsm_id: e.target.value }))}
                             >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleManualSubmit}
-                                disabled={isSubmitting}
-                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-black text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95 disabled:opacity-50"
+                                <option value="">Select GSM...</option>
+                                {resources.gsms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Size *</label>
+                            <select
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.paper_order_size_id}
+                                onChange={e => setEntryData(p => ({ ...p, paper_order_size_id: e.target.value }))}
                             >
-                                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                SAVE TRANSACTION
-                            </button>
+                                <option value="">Select Size...</option>
+                                {resources.sizes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Colour / Type *</label>
+                            <select
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.paper_type_id}
+                                onChange={e => setEntryData(p => ({ ...p, paper_type_id: e.target.value }))}
+                            >
+                                <option value="">Select Colour...</option>
+                                {resources.paperTypes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
                         </div>
                     </div>
-                )}
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Used For Product</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. BD Tera 500mg inner carton"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.used_for_product}
+                                onChange={e => setEntryData(p => ({ ...p, used_for_product: e.target.value }))}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Used Qty</label>
+                            <input
+                                type="number"
+                                placeholder="0"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-sm"
+                                value={entryData.used_qty}
+                                onChange={e => setEntryData(p => ({ ...p, used_qty: e.target.value }))}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Bill No.</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Bill No."
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.bill_no}
+                                onChange={e => setEntryData(p => ({ ...p, bill_no: e.target.value }))}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">Rate (₹)</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Rate"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-semibold text-sm"
+                                value={entryData.paper_rate}
+                                onChange={e => setEntryData(p => ({ ...p, paper_rate: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            onClick={() => setShowEntryForm(false)}
+                            className="px-5 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleManualSubmit}
+                            disabled={isSubmitting}
+                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-50"
+                        >
+                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Save Paper Purchase
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ===================================================================== */}
+            {/* TAB 1: PAPER PURCHASES LEDGER (SHOWS ALL PURCHASES EVEN IF USED = 0)  */}
+            {/* ===================================================================== */}
+            {activeTab === 'purchases' ? (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-left">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                    <th className="px-3 py-3">Date</th>
+                                    <th className="px-3 py-3">Vendor</th>
+                                    <th className="px-3 py-3 text-right">Qty</th>
+                                    <th className="px-3 py-3 text-center">GSM</th>
+                                    <th className="px-3 py-3">Size</th>
+                                    <th className="px-3 py-3">Colour</th>
+                                    <th className="px-3 py-3 min-w-[200px]">Used For Product</th>
+                                    <th className="px-3 py-3 text-right">Used Qty</th>
+                                    <th className="px-3 py-3 text-right bg-indigo-50/40">Balance Qty</th>
+                                    <th className="px-3 py-3 w-36">Bill No.</th>
+                                    <th className="px-3 py-3 w-28">Rate (₹)</th>
+                                    <th className="px-3 py-3 text-center w-16">Save</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 text-xs">
+                                {filteredPurchases.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={12} className="px-6 py-12 text-center text-slate-400 italic font-medium">
+                                            No paper purchase entries found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredPurchases.map((item) => {
+                                        const rowEdit = edits[item.uid] || {
+                                            bill_no: item.bill_no,
+                                            paper_rate: item.paper_rate,
+                                            vendor: item.vendor,
+                                            used_qty: String(item.used_qty),
+                                        };
+                                        const liveUsedQty = Number(rowEdit.used_qty) || 0;
+                                        const liveBalance = item.purchase_qty - liveUsedQty;
+                                        const isDirty =
+                                            rowEdit.bill_no !== item.bill_no ||
+                                            rowEdit.paper_rate !== item.paper_rate ||
+                                            rowEdit.vendor !== item.vendor ||
+                                            liveUsedQty !== item.used_qty;
+
+                                        return (
+                                            <tr key={item.uid} className="hover:bg-slate-50/80 transition-colors">
+                                                {/* Date */}
+                                                <td className="px-3 py-2.5 whitespace-nowrap text-slate-500 font-medium">
+                                                    {item.created_at ? format(new Date(item.created_at), 'dd MMM yy') : '-'}
+                                                </td>
+
+                                                {/* Vendor */}
+                                                <td className="px-3 py-2.5">
+                                                    <input
+                                                        type="text"
+                                                        list="vendor-list"
+                                                        value={rowEdit.vendor}
+                                                        placeholder="Vendor..."
+                                                        onChange={e => handleEditChange(item.uid, 'vendor', e.target.value)}
+                                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveRow(item); }}
+                                                        className="w-28 sm:w-32 px-2 py-1 text-xs font-bold text-slate-800 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-indigo-400 rounded-lg outline-none transition"
+                                                    />
+                                                </td>
+
+                                                {/* Purchase Qty */}
+                                                <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-900">
+                                                    {item.purchase_qty.toLocaleString()}
+                                                </td>
+
+                                                {/* GSM */}
+                                                <td className="px-3 py-2.5 text-center font-semibold text-slate-700 whitespace-nowrap">
+                                                    <span>{item.gsm}</span>
+                                                    {item.actual_gsm && item.actual_gsm !== item.gsm && (
+                                                        <span className="ml-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded" title="Actual GSM Used">
+                                                            Act: {item.actual_gsm}
+                                                        </span>
+                                                    )}
+                                                </td>
+
+                                                {/* Size */}
+                                                <td className="px-3 py-2.5 font-medium text-slate-700 whitespace-nowrap">
+                                                    {item.size}
+                                                </td>
+
+                                                {/* Colour */}
+                                                <td className="px-3 py-2.5">
+                                                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                                                        {item.colour}
+                                                    </span>
+                                                </td>
+
+                                                {/* Used For Product */}
+                                                <td className="px-3 py-2.5">
+                                                    <div className="font-bold text-slate-900 leading-snug">
+                                                        {item.product_name}
+                                                    </div>
+                                                    {item.source === 'order' && item.order_code && (
+                                                        <Link
+                                                            href={`/orders/${item.record_id}`}
+                                                            className="inline-block mt-0.5 text-[10px] font-mono font-semibold text-indigo-600 hover:underline"
+                                                        >
+                                                            {item.order_code}
+                                                        </Link>
+                                                    )}
+                                                </td>
+
+                                                {/* Used Qty */}
+                                                <td className="px-3 py-2.5 text-right font-mono">
+                                                    <input
+                                                        type="number"
+                                                        value={rowEdit.used_qty}
+                                                        onChange={e => handleEditChange(item.uid, 'used_qty', e.target.value)}
+                                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveRow(item); }}
+                                                        className="w-20 px-2 py-1 text-right font-mono font-semibold text-rose-700 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-indigo-400 rounded-lg outline-none transition"
+                                                    />
+                                                </td>
+
+                                                {/* Balance Qty */}
+                                                <td className="px-3 py-2.5 text-right font-mono bg-indigo-50/20">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-bold text-xs ${
+                                                        liveBalance > 0
+                                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                            : liveBalance === 0
+                                                            ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                                                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                    }`}>
+                                                        {liveBalance.toLocaleString()}
+                                                    </span>
+                                                </td>
+
+                                                {/* Bill No. Input */}
+                                                <td className="px-3 py-2.5">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Bill No..."
+                                                        value={rowEdit.bill_no}
+                                                        onChange={e => handleEditChange(item.uid, 'bill_no', e.target.value)}
+                                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveRow(item); }}
+                                                        onBlur={() => { if (isDirty) handleSaveRow(item); }}
+                                                        className="w-full px-2.5 py-1.5 text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-lg outline-none transition"
+                                                    />
+                                                </td>
+
+                                                {/* Rate Input */}
+                                                <td className="px-3 py-2.5">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Rate..."
+                                                        value={rowEdit.paper_rate}
+                                                        onChange={e => handleEditChange(item.uid, 'paper_rate', e.target.value)}
+                                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveRow(item); }}
+                                                        onBlur={() => { if (isDirty) handleSaveRow(item); }}
+                                                        className="w-full px-2.5 py-1.5 text-xs font-semibold text-slate-800 bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-lg outline-none transition"
+                                                    />
+                                                </td>
+
+                                                {/* Save Button / Status */}
+                                                <td className="px-3 py-2.5 text-center">
+                                                    {savingUid === item.uid ? (
+                                                        <Loader2 className="w-4 h-4 text-indigo-600 animate-spin mx-auto" />
+                                                    ) : savedUid === item.uid ? (
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 mx-auto" />
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleSaveRow(item)}
+                                                            title="Save Bill No & Rate"
+                                                            className={`p-1.5 rounded-lg transition ${
+                                                                isDirty
+                                                                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'
+                                                                    : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                                                            }`}
+                                                        >
+                                                            <Save className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                /* ===================================================================== */
+                /* TAB 2: WAREHOUSE STOCK SUMMARY                                        */
+                /* ===================================================================== */
                 <div className="bg-white rounded-2xl border border-slate-300 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
@@ -465,7 +977,7 @@ export default function InventoryPage() {
                         </table>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* TRANSACTION HISTORY MODAL */}
             {showHistory && (
