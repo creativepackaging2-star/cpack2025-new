@@ -22,9 +22,9 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 
 // Cutoff ID so old historical orders do not clutter the new Paper Purchase ledger
-// Order #1744 (Gudcef AV Cartons, Oct 7 2026) is the first entry under the new tracking
-const PURCHASE_ORDER_CUTOFF_ID = 1744;
-const MANUAL_TX_CUTOFF_DATE = '2026-10-07T00:00:00';
+// Order #1741 (MIXNIOS ‐ B 5miu Cartons, Oct 6 2026) is the first entry under the new tracking
+const PURCHASE_ORDER_CUTOFF_ID = 1741;
+const MANUAL_TX_CUTOFF_DATE = '2026-10-06T00:00:00';
 
 interface PaperPurchaseItem {
     uid: string;
