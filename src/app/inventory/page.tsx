@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useDeferredValue, useCallback } from 'react';
+import { useEffect, useState, useMemo, useDeferredValue, useCallback, useRef } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import {
     Loader2,
@@ -80,7 +80,32 @@ function parseMetaJson(raw: string | null | undefined): {
     return {};
 }
 
+function getWarehouseInfo(tx: any, printerMap: Record<number, string>): { warehouseName: string; warehouseKey: string } {
+    if (tx.notes) {
+        const match = tx.notes.match(/Warehouse:\s*([^|\n\r()]+)/i);
+        if (match && match[1].trim()) {
+            const raw = match[1].trim();
+            return {
+                warehouseName: raw,
+                warehouseKey: raw.toLowerCase().trim()
+            };
+        }
+    }
+    if (tx.printer_id && printerMap[tx.printer_id]) {
+        const pName = printerMap[tx.printer_id];
+        return {
+            warehouseName: pName,
+            warehouseKey: pName.toLowerCase().trim()
+        };
+    }
+    return {
+        warehouseName: 'Stock',
+        warehouseKey: 'stock'
+    };
+}
+
 export default function InventoryPage() {
+    const printerMapRef = useRef<Record<number, string>>({});
     const [activeTab, setActiveTab] = useState<'purchases' | 'stock'>('purchases');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -166,6 +191,7 @@ export default function InventoryPage() {
             const gsmMap = Object.fromEntries((gsmRes.data || []).map(i => [i.id, i.name]));
             const sizeMap = Object.fromEntries((sizeRes.data || []).map(i => [i.id, i.name]));
             const printerMap = Object.fromEntries((printerRes.data || []).map(i => [i.id, i.name]));
+            printerMapRef.current = printerMap;
 
             // Merge custom vendors & printers stored in paper_transactions META rows
             const mergedVendors: any[] = [...(vendorRes.data || [])];
@@ -303,7 +329,8 @@ export default function InventoryPage() {
             const grouping: Record<string, StockItem> = {};
             transactions.forEach(tx => {
                 if (tx.tx_type !== 'IN' && tx.tx_type !== 'OUT') return;
-                const key = `${tx.gsm_id}-${tx.paper_type_id}-${tx.paper_order_size_id}-${tx.printer_id}`;
+                const wh = getWarehouseInfo(tx, printerMap);
+                const key = `${tx.gsm_id}-${tx.paper_type_id}-${tx.paper_order_size_id}-${wh.warehouseKey}`;
                 if (!grouping[key]) {
                     grouping[key] = {
                         gsm_id: tx.gsm_id,
@@ -313,7 +340,7 @@ export default function InventoryPage() {
                         gsm_name: gsmMap[tx.gsm_id] || '-',
                         paper_type_name: paperTypeMap[tx.paper_type_id] || '-',
                         size_name: sizeMap[tx.paper_order_size_id] || '-',
-                        warehouse_name: printerMap[tx.printer_id] || 'Stock',
+                        warehouse_name: wh.warehouseName,
                         total_in: 0,
                         total_out: 0,
                         net_stock: 0,
@@ -328,7 +355,8 @@ export default function InventoryPage() {
 
             const finalStock = Object.values(grouping)
                 .map(item => {
-                    const key = `${item.gsm_id}-${item.paper_type_id}-${item.paper_order_size_id}-${item.printer_id}`;
+                    const whKey = item.warehouse_name.toLowerCase().trim();
+                    const key = `${item.gsm_id}-${item.paper_type_id}-${item.paper_order_size_id}-${whKey}`;
                     return {
                         ...item,
                         stock_key: key,
@@ -700,24 +728,26 @@ export default function InventoryPage() {
             return;
         }
 
-        const destPrinterId = transferToPrinterId === 'stock' ? null : parseInt(transferToPrinterId);
-        const sourcePrinterId = transferModalItem.printer_id;
+        const selectedPrinter = transferToPrinterId === 'stock'
+            ? { id: null, name: 'Stock' }
+            : resources.printers.find(p => String(p.id) === String(transferToPrinterId));
 
-        if (sourcePrinterId === destPrinterId) {
+        const destName = selectedPrinter?.name || (transferToPrinterId === 'stock' ? 'Stock' : 'Warehouse');
+        const destPrinterId = typeof selectedPrinter?.id === 'number' ? selectedPrinter.id : null;
+
+        const sourceName = transferModalItem.warehouse_name;
+        const sourcePrinterId = typeof transferModalItem.printer_id === 'number' ? transferModalItem.printer_id : null;
+
+        if (sourceName.toLowerCase().trim() === destName.toLowerCase().trim()) {
             alert('Source and destination warehouse cannot be the same');
             return;
         }
 
-        const sourceName = transferModalItem.warehouse_name;
-        const destName = transferToPrinterId === 'stock'
-            ? 'Stock'
-            : (resources.printers.find(p => p.id === destPrinterId)?.name || 'Warehouse');
-
         setIsTransferring(true);
         try {
             const cleanRemarks = transferRemarks.trim();
-            const transferNoteOut = `Transferred to ${destName}${cleanRemarks ? ` - ${cleanRemarks}` : ''}`;
-            const transferNoteIn = `Transferred from ${sourceName}${cleanRemarks ? ` - ${cleanRemarks}` : ''}`;
+            const transferNoteOut = `Warehouse: ${sourceName} | Transferred to ${destName}${cleanRemarks ? ` - ${cleanRemarks}` : ''}`;
+            const transferNoteIn = `Warehouse: ${destName} | Transferred from ${sourceName}${cleanRemarks ? ` - ${cleanRemarks}` : ''}`;
 
             const outTx = {
                 gsm_id: transferModalItem.gsm_id,
@@ -753,24 +783,24 @@ export default function InventoryPage() {
         }
     };
 
-    const deleteTransaction = async (id: number) => {
+    const deleteTransaction = async (id: string | number) => {
         if (!window.confirm('Are you sure you want to delete this transaction?')) return;
         try {
             const { error: delErr } = await supabase.from('paper_transactions').delete().eq('id', id);
             if (delErr) throw delErr;
             if (showHistory) {
-                let query = supabase.from('paper_transactions')
+                const { data } = await supabase.from('paper_transactions')
                     .select('*')
                     .eq('gsm_id', showHistory.gsm_id)
                     .eq('paper_type_id', showHistory.paper_type_id)
-                    .eq('paper_order_size_id', showHistory.paper_order_size_id);
-                if (showHistory.printer_id === null) {
-                    query = query.is('printer_id', null);
-                } else {
-                    query = query.eq('printer_id', showHistory.printer_id);
-                }
-                const { data } = await query.order('created_at', { ascending: false });
-                setShowHistory((prev: any) => ({ ...prev, transactions: data || [] }));
+                    .eq('paper_order_size_id', showHistory.paper_order_size_id)
+                    .order('created_at', { ascending: false });
+
+                const matched = (data || []).filter(tx => {
+                    const wh = getWarehouseInfo(tx, printerMapRef.current);
+                    return wh.warehouseName.toLowerCase().trim() === showHistory.warehouse_name.toLowerCase().trim();
+                });
+                setShowHistory((prev: any) => ({ ...prev, transactions: matched }));
             }
             fetchInventoryData();
         } catch (err: any) {
@@ -781,22 +811,20 @@ export default function InventoryPage() {
     const fetchHistory = async (item: StockItem) => {
         setLoading(true);
         try {
-            let query = supabase.from('paper_transactions')
+            const { data, error: hErr } = await supabase.from('paper_transactions')
                 .select('*')
                 .eq('gsm_id', item.gsm_id)
                 .eq('paper_type_id', item.paper_type_id)
-                .eq('paper_order_size_id', item.paper_order_size_id);
-
-            if (item.printer_id === null) {
-                query = query.is('printer_id', null);
-            } else {
-                query = query.eq('printer_id', item.printer_id);
-            }
-
-            const { data, error: hErr } = await query.order('created_at', { ascending: false });
+                .eq('paper_order_size_id', item.paper_order_size_id)
+                .order('created_at', { ascending: false });
 
             if (hErr) throw hErr;
-            setShowHistory({ ...item, transactions: data || [] });
+            const matched = (data || []).filter(tx => {
+                const wh = getWarehouseInfo(tx, printerMapRef.current);
+                return wh.warehouseName.toLowerCase().trim() === item.warehouse_name.toLowerCase().trim();
+            });
+
+            setShowHistory({ ...item, transactions: matched });
         } catch (err: any) {
             alert('History Error: ' + err.message);
         } finally {
@@ -1558,11 +1586,11 @@ export default function InventoryPage() {
                                     className="w-full px-3 py-2 text-sm font-semibold text-slate-800 bg-white border border-slate-300 focus:border-indigo-600 rounded-xl outline-none transition"
                                 >
                                     <option value="">Select Destination Warehouse...</option>
-                                    {transferModalItem.printer_id !== null && (
+                                    {transferModalItem.warehouse_name.toLowerCase() !== 'stock' && (
                                         <option value="stock">Stock (General Warehouse)</option>
                                     )}
                                     {resources.printers
-                                        .filter(p => p.id !== transferModalItem.printer_id)
+                                        .filter(p => p.name.toLowerCase().trim() !== transferModalItem.warehouse_name.toLowerCase().trim())
                                         .map(p => (
                                             <option key={p.id} value={String(p.id)}>{p.name}</option>
                                         ))
