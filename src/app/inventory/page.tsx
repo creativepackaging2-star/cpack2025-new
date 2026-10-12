@@ -14,16 +14,17 @@ import {
     CheckCircle2,
     FileText,
     Layers,
-    PackageCheck
+    PackageCheck,
+    ArrowRightLeft
 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
 // Cutoff ID so old historical orders do not clutter the new Paper Purchase ledger
-// Order #1748 (BD Tera 500mg inner carton, Oct 9 2026) is the first entry under the new tracking
-const PURCHASE_ORDER_CUTOFF_ID = 1748;
-const MANUAL_TX_CUTOFF_DATE = '2026-10-10T00:00:00';
+// Order #1744 (Gudcef AV Cartons, Oct 7 2026) is the first entry under the new tracking
+const PURCHASE_ORDER_CUTOFF_ID = 1744;
+const MANUAL_TX_CUTOFF_DATE = '2026-10-07T00:00:00';
 
 interface PaperPurchaseItem {
     uid: string;
@@ -49,7 +50,7 @@ interface StockItem {
     gsm_id: number;
     paper_type_id: number;
     paper_order_size_id: number;
-    printer_id: number;
+    printer_id: number | null;
     gsm_name: string;
     paper_type_name: string;
     size_name: string;
@@ -57,6 +58,8 @@ interface StockItem {
     total_in: number;
     total_out: number;
     net_stock: number;
+    remarks?: string;
+    stock_key?: string;
 }
 
 function parseMetaJson(raw: string | null | undefined): {
@@ -95,6 +98,18 @@ export default function InventoryPage() {
     const [showEntryForm, setShowEntryForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showHistory, setShowHistory] = useState<any>(null);
+
+    // Stock Remarks State
+    const [stockRemarks, setStockRemarks] = useState<Record<string, string>>({});
+    const [savingStockKey, setSavingStockKey] = useState<string | null>(null);
+    const [savedStockKey, setSavedStockKey] = useState<string | null>(null);
+
+    // Stock Transfer Modal State
+    const [transferModalItem, setTransferModalItem] = useState<StockItem | null>(null);
+    const [transferToPrinterId, setTransferToPrinterId] = useState<string>('');
+    const [transferQty, setTransferQty] = useState<string>('');
+    const [transferRemarks, setTransferRemarks] = useState<string>('');
+    const [isTransferring, setIsTransferring] = useState<boolean>(false);
 
     // New Purchase Entry Form State
     const [entryData, setEntryData] = useState({
@@ -271,6 +286,19 @@ export default function InventoryPage() {
             setEdits(initialEdits);
             setPurchases(purchaseList);
 
+            // Parse remarks for stock items
+            const stockRemarksMap: Record<string, string> = {};
+            transactions.forEach(tx => {
+                if (tx.tx_type === 'META' && tx.reference === 'STOCK_REMARK') {
+                    try {
+                        const parsed = JSON.parse(tx.notes || '{}');
+                        if (parsed.key && parsed.remark !== undefined && stockRemarksMap[parsed.key] === undefined) {
+                            stockRemarksMap[parsed.key] = parsed.remark;
+                        }
+                    } catch {}
+                }
+            });
+
             // 2. Build Aggregate Stock Summary
             const grouping: Record<string, StockItem> = {};
             transactions.forEach(tx => {
@@ -288,7 +316,9 @@ export default function InventoryPage() {
                         warehouse_name: printerMap[tx.printer_id] || 'Stock',
                         total_in: 0,
                         total_out: 0,
-                        net_stock: 0
+                        net_stock: 0,
+                        stock_key: key,
+                        remarks: stockRemarksMap[key] || '',
                     };
                 }
                 const qty = Number(tx.qty) || 0;
@@ -297,13 +327,25 @@ export default function InventoryPage() {
             });
 
             const finalStock = Object.values(grouping)
-                .map(item => ({
-                    ...item,
-                    net_stock: item.total_in - item.total_out
-                }))
+                .map(item => {
+                    const key = `${item.gsm_id}-${item.paper_type_id}-${item.paper_order_size_id}-${item.printer_id}`;
+                    return {
+                        ...item,
+                        stock_key: key,
+                        remarks: stockRemarksMap[key] || '',
+                        net_stock: item.total_in - item.total_out
+                    };
+                })
                 .filter(item => item.net_stock !== 0)
                 .sort((a, b) => b.net_stock - a.net_stock);
 
+            const initialStockRemarks: Record<string, string> = {};
+            finalStock.forEach(item => {
+                if (item.stock_key) {
+                    initialStockRemarks[item.stock_key] = item.remarks || '';
+                }
+            });
+            setStockRemarks(initialStockRemarks);
             setStock(finalStock);
         } catch (err: any) {
             console.error('Inventory Fetch Error:', err);
@@ -609,18 +651,125 @@ export default function InventoryPage() {
         }
     };
 
+    const handleStockRemarkChange = (key: string, value: string) => {
+        setStockRemarks(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
+
+    const handleSaveStockRemark = async (key: string) => {
+        if (!key) return;
+        const remark = stockRemarks[key] ?? '';
+        setSavingStockKey(key);
+        try {
+            const { error: insErr } = await supabase.from('paper_transactions').insert([{
+                tx_type: 'META',
+                qty: 0,
+                reference: 'STOCK_REMARK',
+                notes: JSON.stringify({ key, remark })
+            }]);
+            if (insErr) throw insErr;
+            setSavedStockKey(key);
+            setTimeout(() => {
+                setSavedStockKey(prev => (prev === key ? null : prev));
+            }, 2000);
+        } catch (err: any) {
+            alert('Error saving remark: ' + err.message);
+        } finally {
+            setSavingStockKey(null);
+        }
+    };
+
+    const handleOpenTransferModal = (item: StockItem) => {
+        setTransferModalItem(item);
+        setTransferToPrinterId('');
+        setTransferQty(item.net_stock > 0 ? String(item.net_stock) : '0');
+        setTransferRemarks('');
+    };
+
+    const handleConfirmTransfer = async () => {
+        if (!transferModalItem) return;
+        const qtyNum = parseFloat(transferQty);
+        if (!qtyNum || qtyNum <= 0) {
+            alert('Please enter a valid transfer quantity');
+            return;
+        }
+        if (transferToPrinterId === '') {
+            alert('Please select the destination warehouse / printer');
+            return;
+        }
+
+        const destPrinterId = transferToPrinterId === 'stock' ? null : parseInt(transferToPrinterId);
+        const sourcePrinterId = transferModalItem.printer_id;
+
+        if (sourcePrinterId === destPrinterId) {
+            alert('Source and destination warehouse cannot be the same');
+            return;
+        }
+
+        const sourceName = transferModalItem.warehouse_name;
+        const destName = transferToPrinterId === 'stock'
+            ? 'Stock'
+            : (resources.printers.find(p => p.id === destPrinterId)?.name || 'Warehouse');
+
+        setIsTransferring(true);
+        try {
+            const cleanRemarks = transferRemarks.trim();
+            const transferNoteOut = `Transferred to ${destName}${cleanRemarks ? ` - ${cleanRemarks}` : ''}`;
+            const transferNoteIn = `Transferred from ${sourceName}${cleanRemarks ? ` - ${cleanRemarks}` : ''}`;
+
+            const outTx = {
+                gsm_id: transferModalItem.gsm_id,
+                paper_type_id: transferModalItem.paper_type_id,
+                paper_order_size_id: transferModalItem.paper_order_size_id,
+                printer_id: sourcePrinterId,
+                qty: qtyNum,
+                tx_type: 'OUT',
+                reference: 'Stock Transfer',
+                notes: transferNoteOut,
+            };
+
+            const inTx = {
+                gsm_id: transferModalItem.gsm_id,
+                paper_type_id: transferModalItem.paper_type_id,
+                paper_order_size_id: transferModalItem.paper_order_size_id,
+                printer_id: destPrinterId,
+                qty: qtyNum,
+                tx_type: 'IN',
+                reference: 'Stock Transfer',
+                notes: transferNoteIn,
+            };
+
+            const { error: insErr } = await supabase.from('paper_transactions').insert([outTx, inTx]);
+            if (insErr) throw insErr;
+
+            setTransferModalItem(null);
+            await fetchInventoryData();
+        } catch (err: any) {
+            alert('Transfer Error: ' + err.message);
+        } finally {
+            setIsTransferring(false);
+        }
+    };
+
     const deleteTransaction = async (id: number) => {
         if (!window.confirm('Are you sure you want to delete this transaction?')) return;
         try {
             const { error: delErr } = await supabase.from('paper_transactions').delete().eq('id', id);
             if (delErr) throw delErr;
             if (showHistory) {
-                const { data } = await supabase.from('paper_transactions')
+                let query = supabase.from('paper_transactions')
                     .select('*')
                     .eq('gsm_id', showHistory.gsm_id)
                     .eq('paper_type_id', showHistory.paper_type_id)
-                    .eq('paper_order_size_id', showHistory.paper_order_size_id)
-                    .eq('printer_id', showHistory.printer_id);
+                    .eq('paper_order_size_id', showHistory.paper_order_size_id);
+                if (showHistory.printer_id === null) {
+                    query = query.is('printer_id', null);
+                } else {
+                    query = query.eq('printer_id', showHistory.printer_id);
+                }
+                const { data } = await query.order('created_at', { ascending: false });
                 setShowHistory((prev: any) => ({ ...prev, transactions: data || [] }));
             }
             fetchInventoryData();
@@ -632,13 +781,19 @@ export default function InventoryPage() {
     const fetchHistory = async (item: StockItem) => {
         setLoading(true);
         try {
-            const { data, error: hErr } = await supabase.from('paper_transactions')
+            let query = supabase.from('paper_transactions')
                 .select('*')
                 .eq('gsm_id', item.gsm_id)
                 .eq('paper_type_id', item.paper_type_id)
-                .eq('paper_order_size_id', item.paper_order_size_id)
-                .eq('printer_id', item.printer_id)
-                .order('created_at', { ascending: false });
+                .eq('paper_order_size_id', item.paper_order_size_id);
+
+            if (item.printer_id === null) {
+                query = query.is('printer_id', null);
+            } else {
+                query = query.eq('printer_id', item.printer_id);
+            }
+
+            const { data, error: hErr } = await query.order('created_at', { ascending: false });
 
             if (hErr) throw hErr;
             setShowHistory({ ...item, transactions: data || [] });
@@ -1252,57 +1407,238 @@ export default function InventoryPage() {
                                     <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500 bg-indigo-50/30">Stock</th>
                                     <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">IN</th>
                                     <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">OUT</th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-500 w-32">Move Stock</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 min-w-[220px]">Remarks</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-300">
                                 {filteredStock.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic font-medium">No inventory records found matching your search.</td>
+                                        <td colSpan={9} className="px-6 py-12 text-center text-slate-400 italic font-medium">No inventory records found matching your search.</td>
                                     </tr>
                                 ) : (
-                                    filteredStock.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50 transition-colors group cursor-default border-b border-slate-200 last:border-0">
-                                            <td className="px-6 py-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.warehouse_name}</span>
+                                    filteredStock.map((item, idx) => {
+                                        const stockKey = item.stock_key || `${item.gsm_id}-${item.paper_type_id}-${item.paper_order_size_id}-${item.printer_id}`;
+                                        const currentRemark = stockRemarks[stockKey] ?? item.remarks ?? '';
+                                        const isRemarkSaving = savingStockKey === stockKey;
+                                        const isRemarkSaved = savedStockKey === stockKey;
+
+                                        return (
+                                            <tr key={idx} className="hover:bg-slate-50 transition-colors group cursor-default border-b border-slate-200 last:border-0">
+                                                <td className="px-6 py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.warehouse_name}</span>
+                                                        <button
+                                                            onClick={() => fetchHistory(item)}
+                                                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                                            title="View Transaction History"
+                                                        >
+                                                            <History className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-2 text-sm text-slate-600 font-medium">
+                                                    {item.paper_type_name}
+                                                </td>
+                                                <td className="px-6 py-2 text-sm font-semibold text-slate-700">
+                                                    {item.gsm_name}
+                                                </td>
+                                                <td className="px-6 py-2 text-sm text-slate-500 tracking-tight font-medium">
+                                                    {item.size_name}
+                                                </td>
+                                                <td className="px-6 py-2 text-right bg-indigo-50/10 font-mono">
+                                                    <span className={`text-sm font-semibold tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
+                                                        {item.net_stock.toLocaleString()}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-2 text-right border-l border-slate-100 font-mono">
+                                                    <div className="text-slate-500 font-medium text-[11px]">
+                                                        {item.total_in.toLocaleString()}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-2 text-right font-mono">
+                                                    <div className="text-slate-400 font-medium text-[11px]">
+                                                        {item.total_out.toLocaleString()}
+                                                    </div>
+                                                </td>
+                                                {/* Move Stock Action */}
+                                                <td className="px-4 py-2 text-center">
                                                     <button
-                                                        onClick={() => fetchHistory(item)}
-                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                        title="View Transaction History"
+                                                        onClick={() => handleOpenTransferModal(item)}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg shadow-sm transition active:scale-95"
+                                                        title="Move stock to another warehouse"
                                                     >
-                                                        <History className="w-4 h-4" />
+                                                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                                                        <span>Move</span>
                                                     </button>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-2 text-sm text-slate-600 font-medium">
-                                                {item.paper_type_name}
-                                            </td>
-                                            <td className="px-6 py-2 text-sm font-semibold text-slate-700">
-                                                {item.gsm_name}
-                                            </td>
-                                            <td className="px-6 py-2 text-sm text-slate-500 tracking-tight font-medium">
-                                                {item.size_name}
-                                            </td>
-                                            <td className="px-6 py-2 text-right bg-indigo-50/10 font-mono">
-                                                <span className={`text-sm font-semibold tracking-tight ${item.net_stock < 0 ? 'text-rose-700' : 'text-indigo-900'}`}>
-                                                    {item.net_stock.toLocaleString()}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-2 text-right border-l border-slate-100 font-mono">
-                                                <div className="text-slate-500 font-medium text-[11px]">
-                                                    {item.total_in.toLocaleString()}
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-2 text-right font-mono">
-                                                <div className="text-slate-400 font-medium text-[11px]">
-                                                    {item.total_out.toLocaleString()}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                </td>
+                                                {/* Remarks - LAST COLUMN */}
+                                                <td className="px-4 py-2">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Add remark..."
+                                                            value={currentRemark}
+                                                            onChange={e => handleStockRemarkChange(stockKey, e.target.value)}
+                                                            onBlur={() => handleSaveStockRemark(stockKey)}
+                                                            onKeyDown={e => {
+                                                                if (e.key === 'Enter') handleSaveStockRemark(stockKey);
+                                                            }}
+                                                            className="w-full px-2.5 py-1 text-xs text-slate-800 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-lg outline-none transition"
+                                                        />
+                                                        {isRemarkSaving ? (
+                                                            <Loader2 className="w-3.5 h-3.5 text-indigo-600 animate-spin shrink-0" />
+                                                        ) : isRemarkSaved ? (
+                                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSaveStockRemark(stockKey)}
+                                                                className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded transition shrink-0"
+                                                                title="Save Remark"
+                                                            >
+                                                                <Save className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* TRANSFER STOCK MODAL */}
+            {transferModalItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 uppercase flex items-center gap-2">
+                                    <ArrowRightLeft className="w-5 h-5 text-indigo-600" />
+                                    Move Warehouse Stock
+                                </h3>
+                                <p className="text-xs text-slate-500 font-semibold mt-1">
+                                    {transferModalItem.paper_type_name} | {transferModalItem.gsm_name} | {transferModalItem.size_name}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setTransferModalItem(null)}
+                                className="p-2 hover:bg-white rounded-full transition-colors shadow-sm"
+                            >
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {/* Current / Source Warehouse */}
+                            <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex justify-between items-center">
+                                <div>
+                                    <div className="text-[10px] font-bold uppercase text-indigo-500 tracking-wider">Current Warehouse</div>
+                                    <div className="text-sm font-bold text-slate-800">{transferModalItem.warehouse_name}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-[10px] font-bold uppercase text-indigo-500 tracking-wider">Available Stock</div>
+                                    <div className="text-sm font-black text-indigo-700">{transferModalItem.net_stock.toLocaleString()} sheets</div>
+                                </div>
+                            </div>
+
+                            {/* Destination Warehouse */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Move To Warehouse / Printer <span className="text-rose-500">*</span>
+                                </label>
+                                <select
+                                    value={transferToPrinterId}
+                                    onChange={e => setTransferToPrinterId(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm font-semibold text-slate-800 bg-white border border-slate-300 focus:border-indigo-600 rounded-xl outline-none transition"
+                                >
+                                    <option value="">Select Destination Warehouse...</option>
+                                    {transferModalItem.printer_id !== null && (
+                                        <option value="stock">Stock (General Warehouse)</option>
+                                    )}
+                                    {resources.printers
+                                        .filter(p => p.id !== transferModalItem.printer_id)
+                                        .map(p => (
+                                            <option key={p.id} value={String(p.id)}>{p.name}</option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+
+                            {/* Transfer Quantity */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Quantity to Move (Sheets) <span className="text-rose-500">*</span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={transferModalItem.net_stock > 0 ? transferModalItem.net_stock : undefined}
+                                        value={transferQty}
+                                        onChange={e => setTransferQty(e.target.value)}
+                                        placeholder="Enter quantity..."
+                                        className="w-full px-3 py-2 text-sm font-semibold text-slate-800 bg-white border border-slate-300 focus:border-indigo-600 rounded-xl outline-none transition"
+                                    />
+                                    {transferModalItem.net_stock > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setTransferQty(String(transferModalItem.net_stock))}
+                                            className="px-3 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition whitespace-nowrap"
+                                        >
+                                            All ({transferModalItem.net_stock.toLocaleString()})
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Transfer Remarks */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Transfer Remarks / Reason (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={transferRemarks}
+                                    onChange={e => setTransferRemarks(e.target.value)}
+                                    placeholder="e.g. Sent for urgent job printing, moved to Ashutosh, etc."
+                                    className="w-full px-3 py-2 text-sm font-medium text-slate-800 bg-white border border-slate-300 focus:border-indigo-600 rounded-xl outline-none transition"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setTransferModalItem(null)}
+                                className="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmTransfer}
+                                disabled={isTransferring}
+                                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 active:scale-95 transition"
+                            >
+                                {isTransferring ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Moving Stock...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowRightLeft className="w-4 h-4" />
+                                        <span>Confirm Move</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
