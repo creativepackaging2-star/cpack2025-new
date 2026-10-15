@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, Fragment, useTransition, useDeferredValue
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
-import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer, ShoppingCart, UploadCloud } from 'lucide-react';
+import { Search, Plus, FileText, ChevronDown, ChevronRight, Save, X, CheckCircle, Loader2, Edit, Truck, Palette, MessageCircle, UserCheck, Database, Split, Printer, ShoppingCart, UploadCloud, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { PdfLogo, CdrLogo, WhatsAppLogo, PaperwalaWhatsAppLogo } from '@/components/FileLogos';
 import PageHeader from '@/components/PageHeader';
@@ -35,7 +35,7 @@ const DetailGroup = memo(({ title, items }: { title: string, items: { label: str
 ));
 DetailGroup.displayName = 'DetailGroup';
 
-const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder, selectedIds, toggleSelect, selectAll }: any) => {
+const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, handleUndoComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder, selectedIds, toggleSelect, selectAll }: any) => {
     const categoryValue = catOrders.reduce((sum: number, o: any) => sum + (o.value || 0), 0);
 
     return (
@@ -81,6 +81,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                                 isExpanded={expandedOrderId === order.id}
                                 toggleRow={toggleRow}
                                 handleMarkComplete={handleMarkComplete}
+                                handleUndoComplete={handleUndoComplete}
                                 toggleQuickEdit={toggleQuickEdit}
                                 isUpdating={isUpdating === order.id}
                                 isEditing={editingOrderId === order.id}
@@ -107,6 +108,7 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                         isExpanded={expandedOrderId === order.id}
                         toggleRow={toggleRow}
                         handleMarkComplete={handleMarkComplete}
+                        handleUndoComplete={handleUndoComplete}
                         toggleQuickEdit={toggleQuickEdit}
                         isUpdating={isUpdating === order.id}
                         isEditing={editingOrderId === order.id}
@@ -145,6 +147,7 @@ const OrderRow = memo(({
     isExpanded,
     toggleRow,
     handleMarkComplete,
+    handleUndoComplete,
     toggleQuickEdit,
     isUpdating,
     isEditing,
@@ -363,13 +366,26 @@ Plate No   : ${order.plate_no || '-'}`;
                     </div>
 
                     <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                        {(!order.status || order.status !== 'Complete') && (
+                        {(!order.status || order.status !== 'Complete') ? (
                             <button
                                 onClick={onCompleteClick}
                                 aria-label="Mark as Complete"
                                 className={`p-1.5 rounded-full border ${confirming ? 'bg-orange-500 text-white border-orange-500' : 'text-emerald-600 border-emerald-100'}`}
+                                title={confirming ? 'Click again to confirm complete' : 'Mark as Complete'}
                             >
-                                {confirming ? <CheckCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                                <CheckCircle className="w-4 h-4" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUndoComplete(order.id, order.progress);
+                                }}
+                                aria-label="Undo Complete"
+                                className="p-1.5 rounded-full border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition-all"
+                                title="Undo Complete — Reopen order"
+                            >
+                                <RotateCcw className="w-4 h-4" />
                             </button>
                         )}
                         <button
@@ -553,7 +569,7 @@ Plate No   : ${order.plate_no || '-'}`;
 
                 <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-0.5" onClick={e => e.stopPropagation()}>
-                        {(!order.status || order.status !== 'Complete') && (
+                        {(!order.status || order.status !== 'Complete') ? (
                             <button
                                 onClick={onCompleteClick}
                                 disabled={isUpdating}
@@ -562,6 +578,19 @@ Plate No   : ${order.plate_no || '-'}`;
                                 title={confirming ? 'Click again to confirm complete' : 'Mark as Complete'}
                             >
                                 {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUndoComplete(order.id, order.progress);
+                                }}
+                                disabled={isUpdating}
+                                aria-label="Undo Complete (Reopen)"
+                                className={`p-1 rounded-full transition-all border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 active:scale-95 ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                title="Undo Complete — Reopen order to In Production"
+                            >
+                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
                             </button>
                         )}
                         <button
@@ -596,12 +625,14 @@ const OrderDetailDrawer = memo(({
     order,
     isOpen,
     onClose,
-    onUpdateRate
+    onUpdateRate,
+    onUndoComplete
 }: {
     order: any;
     isOpen: boolean;
     onClose: () => void;
     onUpdateRate: (orderId: number, newRate: number, newValue: number, productId?: string | null) => Promise<void>;
+    onUndoComplete?: (orderId: number, previousProgress?: string) => Promise<void>;
 }) => {
     const [rateInput, setRateInput] = useState<string>('');
     const [savingRate, setSavingRate] = useState(false);
@@ -687,6 +718,12 @@ const OrderDetailDrawer = memo(({
                                 <span className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ring-1 ring-inset ${getProgressColor(order.progress)}`}>
                                     {order.progress || 'Pending'}
                                 </span>
+                                {order.status === 'Complete' && (
+                                    <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        <CheckCircle className="w-3 h-3" />
+                                        Completed
+                                    </span>
+                                )}
                                 <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 px-2 py-0.5 rounded">
                                     ID: {order.order_id || `#${order.id}`}
                                 </span>
@@ -897,6 +934,20 @@ const OrderDetailDrawer = memo(({
                             Press <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px] text-slate-600">ESC</kbd> or click outside to close
                         </span>
                         <div className="flex items-center gap-3">
+                            {order.status === 'Complete' && onUndoComplete && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onUndoComplete(order.id, order.progress);
+                                        onClose();
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition shadow-sm cursor-pointer active:scale-95"
+                                    title="Undo complete status and return order to In Production"
+                                >
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                    <span>Undo Complete</span>
+                                </button>
+                            )}
                             {isRateChanged && (
                                 <button
                                     type="button"
@@ -977,6 +1028,17 @@ function OrdersList() {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showPoModal, setShowPoModal] = useState(false);
     const [showGenerateDocsModal, setShowGenerateDocsModal] = useState(false);
+
+    // Undo Complete State
+    const [undoToast, setUndoToast] = useState<{ id: number; orderCode: string; productName?: string; previousProgress: string } | null>(null);
+
+    useEffect(() => {
+        if (!undoToast) return;
+        const timer = setTimeout(() => {
+            setUndoToast(null);
+        }, 10000);
+        return () => clearTimeout(timer);
+    }, [undoToast]);
 
     const toggleSelect = useCallback((id: number, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
@@ -1074,6 +1136,10 @@ function OrdersList() {
     }
 
     const handleMarkComplete = useCallback(async (id: number) => {
+        const targetOrder = orders.find(o => o.id === id);
+        const prevProg = targetOrder?.progress || 'Printing';
+        const orderCode = targetOrder?.order_id || `#${id}`;
+
         startTransition(() => {
             setIsUpdating(id);
         });
@@ -1093,9 +1159,53 @@ function OrdersList() {
                 setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Complete', progress: 'Ready' } : o));
             });
 
+            // Set Undo Toast notification
+            setUndoToast({
+                id,
+                orderCode,
+                productName: targetOrder?.product_name || 'Order',
+                previousProgress: prevProg
+            });
+
         } catch (err: any) {
             console.error('Persistence Failure:', err);
             alert('SYSTEM ERROR: ' + (err.message || 'Status could not be saved.'));
+        } finally {
+            startTransition(() => {
+                setIsUpdating(null);
+            });
+        }
+    }, [orders]);
+
+    const handleUndoComplete = useCallback(async (id: number, previousProgress?: string) => {
+        startTransition(() => {
+            setIsUpdating(id);
+        });
+
+        const targetProgress = (previousProgress && previousProgress.toLowerCase() !== 'ready')
+            ? previousProgress
+            : 'Printing';
+
+        try {
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                    status: 'In Production',
+                    progress: targetProgress
+                })
+                .eq('id', id);
+
+            if (updateError) throw updateError;
+
+            startTransition(() => {
+                setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'In Production', progress: targetProgress } : o));
+            });
+
+            // Dismiss undo toast if it was for this order
+            setUndoToast(prev => (prev?.id === id ? null : prev));
+        } catch (err: any) {
+            console.error('Undo Complete Failure:', err);
+            alert('SYSTEM ERROR: ' + (err.message || 'Status could not be restored.'));
         } finally {
             startTransition(() => {
                 setIsUpdating(null);
@@ -1526,6 +1636,7 @@ function OrdersList() {
                                 expandedOrderId={expandedOrderId}
                                 toggleRow={toggleRow}
                                 handleMarkComplete={handleMarkComplete}
+                                handleUndoComplete={handleUndoComplete}
                                 toggleQuickEdit={toggleQuickEdit}
                                 isUpdating={isUpdating}
                                 editingOrderId={editingOrderId}
@@ -1664,6 +1775,7 @@ function OrdersList() {
                 isOpen={Boolean(activeDrawerOrder)}
                 onClose={closeDrawer}
                 onUpdateRate={handleUpdateOrderRate}
+                onUndoComplete={handleUndoComplete}
             />
 
             {/* PO Upload & Tagging Modal */}
@@ -1678,6 +1790,32 @@ function OrdersList() {
                 isOpen={showGenerateDocsModal}
                 onClose={() => setShowGenerateDocsModal(false)}
             />
+
+            {/* Floating Undo Toast Notification */}
+            {undoToast && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-bottom duration-300">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <div className="text-sm font-medium">
+                        <span className="font-bold text-white">{undoToast.orderCode}</span> marked as <span className="text-emerald-400 font-bold">Complete</span>.
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleUndoComplete(undoToast.id, undoToast.previousProgress)}
+                        className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl transition shadow-md cursor-pointer"
+                    >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Undo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setUndoToast(null)}
+                        className="text-slate-400 hover:text-white p-1 ml-1 rounded-lg hover:bg-slate-800 transition"
+                        title="Dismiss"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
         </div >
     );
 }
