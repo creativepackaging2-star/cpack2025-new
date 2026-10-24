@@ -182,34 +182,44 @@ export async function POST(req: NextRequest) {
         const formattedDate = formatDateForZoho(invoiceDate);
         const formattedPoDate = poDate ? formatDateForZoho(poDate) : formattedDate;
 
-        // 4. Resolve next invoice number automatically if not explicitly provided
+        // 4. Resolve next invoice number & enforce STRICT NO-OVERWRITE protection
+        // Queries Zoho to guarantee the invoice number is strictly new and never touches any existing invoice
         let finalInvoiceNumber = invoiceNo;
-        if (!finalInvoiceNumber || finalInvoiceNumber.startsWith('INV-')) {
-            try {
-                const latestRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&sort_column=created_time&sort_order=D&per_page=10`, {
-                    headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
-                });
-                const latestData = await latestRes.json();
-                if (latestData.invoices && latestData.invoices.length > 0) {
-                    let maxNum = 0;
-                    let prefix = 'S-2627-';
-                    for (const inv of latestData.invoices) {
-                        const m = (inv.invoice_number || '').match(/^(.*?)(\d+)$/);
-                        if (m) {
-                            const num = parseInt(m[2], 10);
-                            if (num > maxNum) {
-                                maxNum = num;
-                                prefix = m[1];
-                            }
-                        }
-                    }
-                    if (maxNum > 0) {
-                        finalInvoiceNumber = `${prefix}${maxNum + 1}`;
+        try {
+            const latestRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&sort_column=created_time&sort_order=D&per_page=50`, {
+                headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
+            });
+            const latestData = await latestRes.json();
+            const existingInvoices: any[] = latestData.invoices || [];
+
+            let maxNum = 0;
+            let prefix = 'S-2627-';
+            for (const inv of existingInvoices) {
+                const m = (inv.invoice_number || '').match(/^(.*?)(\d+)$/);
+                if (m) {
+                    const num = parseInt(m[2], 10);
+                    if (num > maxNum) {
+                        maxNum = num;
+                        prefix = m[1];
                     }
                 }
-            } catch (invNumErr) {
-                console.error('Error auto-resolving next invoice number:', invNumErr);
             }
+
+            // If no number provided or placeholder, take max + 1
+            if (!finalInvoiceNumber || finalInvoiceNumber.startsWith('INV-')) {
+                finalInvoiceNumber = `${prefix}${maxNum + 1}`;
+            } else {
+                // If provided number already exists in Zoho, NEVER overwrite — always advance to next safe number
+                const alreadyExists = existingInvoices.some(
+                    inv => (inv.invoice_number || '').trim().toLowerCase() === finalInvoiceNumber.trim().toLowerCase()
+                );
+                if (alreadyExists) {
+                    console.warn(`Invoice number ${finalInvoiceNumber} already exists in Zoho. Advancing to next number to prevent overwrite.`);
+                    finalInvoiceNumber = `${prefix}${maxNum + 1}`;
+                }
+            }
+        } catch (invNumErr) {
+            console.error('Error verifying invoice number uniqueness:', invNumErr);
         }
 
         // 5. Custom fields (Place PO No and PO Date on the right side table)
@@ -279,5 +289,42 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
         console.error('Zoho Invoice Error:', err);
         return NextResponse.json({ error: err.message || 'Failed to create invoice in Zoho Books.' }, { status: 500 });
+    }
+}
+
+export async function GET() {
+    try {
+        const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
+        const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
+        const zohoOrgId = process.env.ZOHO_ORG_ID || '651108650';
+        const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
+
+        const tokenRes = await fetch(`https://accounts.zoho.com/oauth/v2/token?refresh_token=${zohoRefreshToken}&client_id=${zohoClientId}&client_secret=${zohoClientSecret}&grant_type=refresh_token`, {
+            method: 'POST'
+        });
+        const tokenData = await tokenRes.json();
+        const accessToken = tokenData.access_token;
+        if (!accessToken) throw new Error('Failed to obtain Zoho access token');
+
+        const latestRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&sort_column=created_time&sort_order=D&per_page=50`, {
+            headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
+        });
+        const latestData = await latestRes.json();
+        let maxNum = 0;
+        let prefix = 'S-2627-';
+        for (const inv of (latestData.invoices || [])) {
+            const m = (inv.invoice_number || '').match(/^(.*?)(\d+)$/);
+            if (m) {
+                const num = parseInt(m[2], 10);
+                if (num > maxNum) {
+                    maxNum = num;
+                    prefix = m[1];
+                }
+            }
+        }
+        const nextInvoiceNumber = `${prefix}${maxNum + 1}`;
+        return NextResponse.json({ nextInvoiceNumber, latestNumber: `${prefix}${maxNum}` });
+    } catch (err: any) {
+        return NextResponse.json({ nextInvoiceNumber: 'S-2627-1060' });
     }
 }

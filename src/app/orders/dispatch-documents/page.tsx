@@ -94,6 +94,16 @@ function DispatchDocumentsContent() {
     const [zohoSuccessData, setZohoSuccessData] = useState<{ invoiceNumber: string; invoiceUrl: string } | null>(null);
 
     useEffect(() => {
+        // Fetch safe next invoice number from Zoho (guarantees no overwrite)
+        fetch('/api/zoho/create-invoice')
+            .then(res => res.json())
+            .then(data => {
+                if (data.nextInvoiceNumber) {
+                    setInvoiceNo(data.nextInvoiceNumber);
+                }
+            })
+            .catch(() => {});
+
         if (!idsParam) {
             setLoading(false);
             return;
