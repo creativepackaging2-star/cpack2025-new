@@ -13,7 +13,8 @@ import {
     CheckCircle2,
     Building2,
     FileCheck,
-    X
+    X,
+    Download
 } from 'lucide-react';
 import Link from 'next/link';
 import InvoicePrintableCopy, { InvoiceCopyItem } from '@/components/InvoicePrintableCopy';
@@ -558,6 +559,17 @@ function DispatchDocumentsContent() {
                                 </>
                             )}
                         </button>
+
+                        {/* Download Unified Package (PDF) */}
+                        <a
+                            href={`/downloads/Dispatch_Documents_${invoiceNo}.pdf`}
+                            download={`Dispatch_Documents_${invoiceNo}.pdf`}
+                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold border border-emerald-500 shadow-md transition-all active:scale-95 cursor-pointer"
+                            title="Download unified 6-page PDF (3 Invoices + COAs)"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download Package (PDF)</span>
+                        </a>
 
                         {/* Secondary Action: Print COAs & Documents */}
                         <button
