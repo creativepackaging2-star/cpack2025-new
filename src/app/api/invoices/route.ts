@@ -165,8 +165,32 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // Sort by invoice_number descending (latest first)
+        // Helper to parse multiple date formats (YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY)
+        const parseDateToTimestamp = (dateStr?: string | null): number => {
+            if (!dateStr) return 0;
+            const s = dateStr.trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+                return new Date(s).getTime() || 0;
+            }
+            const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+            if (dmy) {
+                let year = parseInt(dmy[3], 10);
+                if (year < 100) year += 2000;
+                const month = parseInt(dmy[2], 10) - 1;
+                const day = parseInt(dmy[1], 10);
+                return new Date(year, month, day).getTime() || 0;
+            }
+            const parsed = new Date(s).getTime();
+            return isNaN(parsed) ? 0 : parsed;
+        };
+
+        // Sort by date descending (latest dispatch date at top); tie-break by invoice number
         invoicesList.sort((a, b) => {
+            const timeA = parseDateToTimestamp(a.date);
+            const timeB = parseDateToTimestamp(b.date);
+            if (timeB !== timeA) {
+                return timeB - timeA;
+            }
             const numA = parseInt(a.invoice_number.replace(/\D/g, '') || '0', 10);
             const numB = parseInt(b.invoice_number.replace(/\D/g, '') || '0', 10);
             return numB - numA;

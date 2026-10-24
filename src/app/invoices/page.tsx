@@ -15,9 +15,12 @@ import {
     Package,
     RefreshCw,
     CheckCircle2,
-    Eye
+    Eye,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
 } from 'lucide-react';
-import SendInvoiceEmailModal from '@/components/SendInvoiceEmailModal';
+import SendInvoiceEmailModal, { formatToDDMMYYYY } from '@/components/SendInvoiceEmailModal';
 
 interface SalesInvoiceRecord {
     invoice_number: string;
@@ -47,12 +50,37 @@ interface SalesInvoiceRecord {
     invoice_url: string;
 }
 
+export type SortField = 'date' | 'invoice_number' | 'customer_name' | 'company' | 'total_amount' | 'status';
+export type SortOrder = 'asc' | 'desc';
+
+function parseDateToTimestamp(dateStr?: string | null): number {
+    if (!dateStr) return 0;
+    const s = dateStr.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        return new Date(s).getTime() || 0;
+    }
+    const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+    if (dmy) {
+        let year = parseInt(dmy[3], 10);
+        if (year < 100) year += 2000;
+        const month = parseInt(dmy[2], 10) - 1;
+        const day = parseInt(dmy[1], 10);
+        return new Date(year, month, day).getTime() || 0;
+    }
+    const parsed = new Date(s).getTime();
+    return isNaN(parsed) ? 0 : parsed;
+}
+
 export default function SalesInvoicesPage() {
     const [loading, setLoading] = useState(true);
     const [invoices, setInvoices] = useState<SalesInvoiceRecord[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [companyFilter, setCompanyFilter] = useState<'All' | 'Creative Printers' | 'Creative Packaging' | 'Creative Enterprise'>('All');
+
+    // Sorting state (default: latest dispatch at top)
+    const [sortField, setSortField] = useState<SortField>('date');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
     // Email Modal state
     const [emailModalInvoice, setEmailModalInvoice] = useState<SalesInvoiceRecord | null>(null);
@@ -80,6 +108,16 @@ export default function SalesInvoicesPage() {
         fetchInvoices();
     }, []);
 
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            // Default descending for date and amount, ascending for text
+            setSortOrder(field === 'date' || field === 'total_amount' ? 'desc' : 'asc');
+        }
+    };
+
     const filteredInvoices = useMemo(() => {
         return invoices.filter(inv => {
             if (companyFilter !== 'All' && !inv.company.toLowerCase().includes(companyFilter.replace('Creative ', '').toLowerCase())) {
@@ -97,6 +135,43 @@ export default function SalesInvoicesPage() {
             return true;
         });
     }, [invoices, companyFilter, searchQuery]);
+
+    // Sorted invoices based on sortField and sortOrder
+    const sortedInvoices = useMemo(() => {
+        const list = [...filteredInvoices];
+        list.sort((a, b) => {
+            let res = 0;
+            if (sortField === 'date') {
+                const timeA = parseDateToTimestamp(a.date);
+                const timeB = parseDateToTimestamp(b.date);
+                res = timeA - timeB;
+                // Secondary tie-breaker: invoice number descending
+                if (res === 0) {
+                    const numA = parseInt(a.invoice_number.replace(/\D/g, '') || '0', 10);
+                    const numB = parseInt(b.invoice_number.replace(/\D/g, '') || '0', 10);
+                    res = numA - numB;
+                }
+            } else if (sortField === 'invoice_number') {
+                const numA = parseInt(a.invoice_number.replace(/\D/g, '') || '0', 10);
+                const numB = parseInt(b.invoice_number.replace(/\D/g, '') || '0', 10);
+                res = numA - numB;
+                if (res === 0) {
+                    res = a.invoice_number.localeCompare(b.invoice_number);
+                }
+            } else if (sortField === 'total_amount') {
+                res = (Number(a.total_amount) || 0) - (Number(b.total_amount) || 0);
+            } else if (sortField === 'customer_name') {
+                res = (a.customer_name || '').localeCompare(b.customer_name || '');
+            } else if (sortField === 'company') {
+                res = (a.company || '').localeCompare(b.company || '');
+            } else if (sortField === 'status') {
+                res = (a.status || '').localeCompare(b.status || '');
+            }
+
+            return sortOrder === 'desc' ? -res : res;
+        });
+        return list;
+    }, [filteredInvoices, sortField, sortOrder]);
 
     // KPI stats
     const stats = useMemo(() => {
@@ -129,6 +204,34 @@ export default function SalesInvoicesPage() {
         } finally {
             setViewingInvoiceNo(null);
         }
+    };
+
+    const renderSortableHeader = (label: string, field: SortField, align: 'left' | 'right' | 'center' = 'left') => {
+        const isActive = sortField === field;
+        return (
+            <th
+                className={`py-3.5 px-4 cursor-pointer select-none transition-colors hover:bg-slate-100 ${
+                    align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
+                } ${isActive ? 'text-indigo-700 font-black' : 'text-slate-600'}`}
+                onClick={() => handleSort(field)}
+                title={`Click to sort by ${label} (${isActive && sortOrder === 'desc' ? 'currently descending' : 'currently ascending'})`}
+            >
+                <div className={`inline-flex items-center gap-1.5 ${
+                    align === 'right' ? 'justify-end w-full' : align === 'center' ? 'justify-center w-full' : 'justify-start'
+                }`}>
+                    <span>{label}</span>
+                    {isActive ? (
+                        sortOrder === 'desc' ? (
+                            <ArrowDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                        ) : (
+                            <ArrowUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                        )
+                    ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 text-slate-300 opacity-60 hover:opacity-100" />
+                    )}
+                </div>
+            </th>
+        );
     };
 
     return (
@@ -205,7 +308,7 @@ export default function SalesInvoicesPage() {
                 </div>
             </div>
 
-            {/* Filter Toolbar */}
+            {/* Filter & Sorting Toolbar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                 {/* Company Tabs */}
                 <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-bold overflow-x-auto">
@@ -228,16 +331,26 @@ export default function SalesInvoicesPage() {
                     })}
                 </div>
 
-                {/* Search */}
-                <div className="relative md:w-80">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search invoice #, product, or customer..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
+                {/* Search & Sort Indicator */}
+                <div className="flex items-center gap-2.5">
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200">
+                        <span>Sorted by:</span>
+                        <strong className="text-indigo-700 capitalize">
+                            {sortField === 'date' ? 'Dispatch Date' : sortField.replace('_', ' ')}
+                        </strong>
+                        <span className="text-[10px] text-slate-400">({sortOrder === 'desc' ? 'Latest first' : 'Oldest first'})</span>
+                    </span>
+
+                    <div className="relative md:w-72">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search invoice #, product, customer..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -253,7 +366,7 @@ export default function SalesInvoicesPage() {
                         <AlertCircle className="w-8 h-8 mx-auto mb-2 text-rose-500" />
                         <p className="text-sm font-bold">{errorMsg}</p>
                     </div>
-                ) : filteredInvoices.length === 0 ? (
+                ) : sortedInvoices.length === 0 ? (
                     <div className="py-20 text-center text-slate-500">
                         <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                         <p className="text-sm font-bold text-slate-700">No matching invoices found</p>
@@ -264,26 +377,26 @@ export default function SalesInvoicesPage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-black uppercase text-slate-500 tracking-wider">
-                                    <th className="py-3.5 px-4">Date</th>
-                                    <th className="py-3.5 px-4">Invoice No</th>
-                                    <th className="py-3.5 px-4">Customer</th>
+                                    {renderSortableHeader('Dispatch Date', 'date')}
+                                    {renderSortableHeader('Invoice No', 'invoice_number')}
+                                    {renderSortableHeader('Customer', 'customer_name')}
                                     <th className="py-3.5 px-4">Products & Delivered Qty</th>
-                                    <th className="py-3.5 px-4">Company</th>
-                                    <th className="py-3.5 px-4 text-right">Amount (₹)</th>
-                                    <th className="py-3.5 px-4 text-center">Status</th>
+                                    {renderSortableHeader('Company', 'company')}
+                                    {renderSortableHeader('Amount (₹)', 'total_amount', 'right')}
+                                    {renderSortableHeader('Status', 'status', 'center')}
                                     <th className="py-3.5 px-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-xs">
-                                {filteredInvoices.map((inv, idx) => {
+                                {sortedInvoices.map((inv, idx) => {
                                     const isViewing = viewingInvoiceNo === inv.invoice_number;
                                     return (
                                         <tr key={inv.invoice_number || idx} className="hover:bg-slate-50/80 transition-colors">
                                             {/* Date */}
-                                            <td className="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">
+                                            <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap font-medium">
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                                    <span>{inv.date || '-'}</span>
+                                                    <span>{formatToDDMMYYYY(inv.date) || '-'}</span>
                                                 </div>
                                             </td>
 
