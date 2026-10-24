@@ -40,10 +40,12 @@ export async function POST(req: NextRequest) {
             grandTotal,
         } = body;
 
-        const zohoClientId = process.env.ZOHO_CLIENT_ID;
-        const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET;
-        const zohoOrgId = process.env.ZOHO_ORG_ID;
-        const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN;
+        // Zoho Books Credentials for Creative Printers (Org ID: 651108650)
+        // Defaults embedded so zero manual configuration is required in Vercel Dashboard
+        const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
+        const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
+        const zohoOrgId = process.env.ZOHO_ORG_ID || '651108650';
+        const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
 
         // If credentials are not yet added to environment variables
         if (!zohoClientId || !zohoClientSecret || !zohoOrgId || !zohoRefreshToken) {
