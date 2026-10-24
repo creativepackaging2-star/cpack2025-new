@@ -79,15 +79,24 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
         setLoading(true);
         setErrorMsg(null);
         try {
-            // Fetch open orders
+            // Fetch ONLY open orders (exclude Complete and Delivered)
             const { data, error } = await supabase
                 .from('orders')
                 .select('id, order_id, product_name, artwork_code, quantity, rate, qty_delivered, packing_detail, customer_name, from_our_company, remarks, status, delivery_address, delivery_date')
+                .neq('status', 'Complete')
+                .neq('status', 'Delivered')
                 .order('id', { ascending: false })
-                .limit(100);
+                .limit(200);
 
             if (error) throw error;
-            setOrders(data || []);
+
+            // Strict client-side filter to guarantee only active/open orders are shown
+            const openOrders = (data || []).filter(o => {
+                const s = (o.status || '').toLowerCase().trim();
+                return !s.includes('complete') && s !== 'delivered';
+            });
+
+            setOrders(openOrders);
         } catch (err: any) {
             console.error('Error fetching orders:', err);
             setErrorMsg(err.message || 'Failed to load orders.');
