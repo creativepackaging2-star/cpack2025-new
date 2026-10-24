@@ -44,9 +44,10 @@ export async function POST(req: NextRequest) {
 
         // Zoho Books Credentials for Creative Printers (Org ID: 651108650)
         // Defaults embedded so zero manual configuration is required in Vercel Dashboard
+        const isPackaging = (billFromCompany || '').toLowerCase().includes('pack');
         const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
         const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
-        const zohoOrgId = process.env.ZOHO_ORG_ID || '651108650';
+        const zohoOrgId = isPackaging ? '649079892' : (process.env.ZOHO_ORG_ID || '651108650');
         const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
 
         // If credentials are not yet added to environment variables
@@ -224,17 +225,20 @@ export async function POST(req: NextRequest) {
 
         // 5. Custom fields (Place PO No and PO Date on the right side table)
         const customFields = [];
+        const poNoFieldId = isPackaging ? '687997000000081881' : '874645000000060055';
+        const poDateFieldId = isPackaging ? '687997000000081885' : '874645000000060057';
+        const boxesFieldId = isPackaging ? '687997000000093035' : '874645000000066053';
 
         if (poNumber) {
             customFields.push({
-                customfield_id: '874645000000060055', // PO No on right side table
+                customfield_id: poNoFieldId, // PO No on right side table
                 value: poNumber,
             });
         }
 
         if (formattedPoDate) {
             customFields.push({
-                customfield_id: '874645000000060057', // PO Date on right side table
+                customfield_id: poDateFieldId, // PO Date on right side table
                 value: formattedPoDate,
             });
         }
@@ -242,7 +246,7 @@ export async function POST(req: NextRequest) {
         // No of boxes logic is deferred by user; omitted unless positive number passed
         if (noOfBoxes && Number(noOfBoxes) > 0) {
             customFields.push({
-                customfield_id: '874645000000066053', // No of Boxes
+                customfield_id: boxesFieldId, // No of Boxes
                 value: Number(noOfBoxes),
             } as any);
         }
@@ -292,11 +296,14 @@ export async function POST(req: NextRequest) {
     }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        const { searchParams } = new URL(req.url);
+        const companyParam = (searchParams.get('company') || '').toLowerCase();
+        const isPackaging = companyParam.includes('pack');
         const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
         const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
-        const zohoOrgId = process.env.ZOHO_ORG_ID || '651108650';
+        const zohoOrgId = isPackaging ? '649079892' : (process.env.ZOHO_ORG_ID || '651108650');
         const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
 
         const tokenRes = await fetch(`https://accounts.zoho.com/oauth/v2/token?refresh_token=${zohoRefreshToken}&client_id=${zohoClientId}&client_secret=${zohoClientSecret}&grant_type=refresh_token`, {

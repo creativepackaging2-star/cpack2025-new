@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
             invoiceMap[rawInv].total_amount += amt;
         });
 
-        // 2. Fetch live invoices from Zoho Books to enrich with payment status, total, and live secure view URL
+        // 2. Fetch live invoices from Zoho Books for both Creative Printers and Creative Packaging
         let zohoInvoices: any[] = [];
         try {
             const tokenRes = await fetch(`https://accounts.zoho.com/oauth/v2/token?refresh_token=${zohoRefreshToken}&client_id=${zohoClientId}&client_secret=${zohoClientSecret}&grant_type=refresh_token`, {
@@ -94,12 +94,27 @@ export async function GET(req: NextRequest) {
             });
             const tokenData = await tokenRes.json();
             if (tokenData.access_token) {
-                const zRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&sort_column=created_time&sort_order=D&per_page=50`, {
-                    headers: { 'Authorization': `Zoho-oauthtoken ${tokenData.access_token}` }
-                });
-                const zData = await zRes.json();
-                if (zData.invoices) {
-                    zohoInvoices = zData.invoices;
+                const orgs = [
+                    { id: '651108650', company: 'Creative Printers' },
+                    { id: '649079892', company: 'Creative Packaging' }
+                ];
+
+                for (const org of orgs) {
+                    try {
+                        const zRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${org.id}&sort_column=created_time&sort_order=D&per_page=50`, {
+                            headers: { 'Authorization': `Zoho-oauthtoken ${tokenData.access_token}` }
+                        });
+                        const zData = await zRes.json();
+                        if (zData.invoices) {
+                            zData.invoices.forEach((inv: any) => {
+                                inv._orgCompany = org.company;
+                                inv._orgId = org.id;
+                                zohoInvoices.push(inv);
+                            });
+                        }
+                    } catch (orgErr) {
+                        console.warn(`Zoho fetch error for ${org.company}:`, orgErr);
+                    }
                 }
             }
         } catch (zErr) {
@@ -124,7 +139,7 @@ export async function GET(req: NextRequest) {
                     zoho_id: zInv.invoice_id,
                     date: zInv.date || '',
                     customer_name: zInv.customer_name || 'Customer',
-                    company: 'Creative Printers',
+                    company: zInv._orgCompany || (invNum.startsWith('U-') ? 'Creative Packaging' : 'Creative Printers'),
                     orders: [],
                     total_delivered_qty: 0,
                     total_amount: zInv.total || 0,
