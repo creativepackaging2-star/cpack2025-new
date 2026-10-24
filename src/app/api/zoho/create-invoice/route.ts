@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/utils/supabase/client';
 
 function formatDateForZoho(dateStr: string): string {
     if (!dateStr) {
@@ -44,10 +45,30 @@ export async function POST(req: NextRequest) {
 
         // Zoho Books Credentials for Creative Printers (Org ID: 651108650)
         // Defaults embedded so zero manual configuration is required in Vercel Dashboard
-        const isPackaging = (billFromCompany || '').toLowerCase().includes('pack');
+        const companyNorm = (billFromCompany || '').toLowerCase();
+        const isPackaging = companyNorm.includes('pack');
+        const isEnterprise = companyNorm.includes('enter');
+
+        // If Creative Enterprise: handle locally without syncing to Zoho as enterprise keys are deferred
+        if (isEnterprise) {
+            const orderIds = (items || []).map((it: any) => it.orderId).filter((id: any) => id && id !== 'proc-charge-line');
+            if (orderIds.length > 0) {
+                await supabase
+                    .from('orders')
+                    .update({ invoice_no: invoiceNo, status: 'Invoiced' })
+                    .in('id', orderIds);
+            }
+            return NextResponse.json({
+                success: true,
+                message: `Invoice ${invoiceNo} generated for Creative Enterprise (Zoho sync for Enterprise deferred as requested).`,
+                invoiceNumber: invoiceNo,
+                isEnterprise: true,
+            });
+        }
+
         const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
         const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
-        const zohoOrgId = isPackaging ? '649079892' : (process.env.ZOHO_ORG_ID || '651108650');
+        const zohoOrgId = isPackaging ? '649079892' : '651108650';
         const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
 
         // If credentials are not yet added to environment variables
@@ -300,10 +321,41 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const companyParam = (searchParams.get('company') || '').toLowerCase();
+        const isEnterprise = companyParam.includes('enter');
         const isPackaging = companyParam.includes('pack');
+
+        if (isEnterprise) {
+            // Enterprise sequence from database (Zoho sync for Enterprise deferred as requested)
+            const { data: entOrders } = await supabase
+                .from('orders')
+                .select('invoice_no')
+                .ilike('from_our_company', '%enter%')
+                .not('invoice_no', 'is', null)
+                .neq('invoice_no', '')
+                .limit(50);
+
+            let maxNum = 1030;
+            let prefix = 'P-2526-';
+            for (const o of (entOrders || [])) {
+                const m = (o.invoice_no || '').match(/^(.*?)(\d+)$/);
+                if (m) {
+                    const n = parseInt(m[2], 10);
+                    if (n > maxNum) {
+                        maxNum = n;
+                        prefix = m[1];
+                    }
+                }
+            }
+            return NextResponse.json({
+                nextInvoiceNumber: `${prefix}${maxNum + 1}`,
+                latestNumber: `${prefix}${maxNum}`,
+                company: 'Creative Enterprise',
+            });
+        }
+
         const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
         const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
-        const zohoOrgId = isPackaging ? '649079892' : (process.env.ZOHO_ORG_ID || '651108650');
+        const zohoOrgId = isPackaging ? '649079892' : '651108650';
         const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
 
         const tokenRes = await fetch(`https://accounts.zoho.com/oauth/v2/token?refresh_token=${zohoRefreshToken}&client_id=${zohoClientId}&client_secret=${zohoClientSecret}&grant_type=refresh_token`, {
@@ -318,7 +370,7 @@ export async function GET(req: NextRequest) {
         });
         const latestData = await latestRes.json();
         let maxNum = 0;
-        let prefix = 'S-2627-';
+        let prefix = isPackaging ? 'U-2627-' : 'S-2627-';
         for (const inv of (latestData.invoices || [])) {
             const m = (inv.invoice_number || '').match(/^(.*?)(\d+)$/);
             if (m) {
@@ -330,8 +382,14 @@ export async function GET(req: NextRequest) {
             }
         }
         const nextInvoiceNumber = `${prefix}${maxNum + 1}`;
-        return NextResponse.json({ nextInvoiceNumber, latestNumber: `${prefix}${maxNum}` });
+        return NextResponse.json({
+            nextInvoiceNumber,
+            latestNumber: `${prefix}${maxNum}`,
+            company: isPackaging ? 'Creative Packaging' : 'Creative Printers'
+        });
     } catch (err: any) {
-        return NextResponse.json({ nextInvoiceNumber: 'S-2627-1060' });
+        const { searchParams } = new URL(req.url);
+        const isPackaging = (searchParams.get('company') || '').toLowerCase().includes('pack');
+        return NextResponse.json({ nextInvoiceNumber: isPackaging ? 'U-2627-3046' : 'S-2627-1060' });
     }
 }

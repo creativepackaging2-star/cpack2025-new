@@ -94,16 +94,6 @@ function DispatchDocumentsContent() {
     const [zohoSuccessData, setZohoSuccessData] = useState<{ invoiceNumber: string; invoiceUrl: string } | null>(null);
 
     useEffect(() => {
-        // Fetch safe next invoice number from Zoho (guarantees no overwrite)
-        fetch('/api/zoho/create-invoice')
-            .then(res => res.json())
-            .then(data => {
-                if (data.nextInvoiceNumber) {
-                    setInvoiceNo(data.nextInvoiceNumber);
-                }
-            })
-            .catch(() => {});
-
         if (!idsParam) {
             setLoading(false);
             return;
@@ -150,6 +140,16 @@ function DispatchDocumentsContent() {
                     // Auto-resolve billing company from the PO
                     const detectedCompany = normalizeCompany(data[0].from_our_company);
                     setCompany(detectedCompany);
+
+                    // Fetch next sequential invoice number strictly for this specific company
+                    fetch(`/api/zoho/create-invoice?company=${encodeURIComponent(detectedCompany)}`)
+                        .then(res => res.json())
+                        .then(resData => {
+                            if (resData.nextInvoiceNumber) {
+                                setInvoiceNo(resData.nextInvoiceNumber);
+                            }
+                        })
+                        .catch(() => {});
 
                     // Auto-resolve customer & address
                     if (data[0].customer_name) setCustomerName(data[0].customer_name.trim());
