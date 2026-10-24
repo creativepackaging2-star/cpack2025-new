@@ -182,12 +182,49 @@ export async function POST(req: NextRequest) {
         const formattedDate = formatDateForZoho(invoiceDate);
         const formattedPoDate = poDate ? formatDateForZoho(poDate) : formattedDate;
 
-        // 4. Custom fields (Only PO Date on the right side - PO# is already shown on the left via reference_number)
+        // 4. Resolve next invoice number automatically if not explicitly provided
+        let finalInvoiceNumber = invoiceNo;
+        if (!finalInvoiceNumber || finalInvoiceNumber.startsWith('INV-')) {
+            try {
+                const latestRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&sort_column=created_time&sort_order=D&per_page=10`, {
+                    headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
+                });
+                const latestData = await latestRes.json();
+                if (latestData.invoices && latestData.invoices.length > 0) {
+                    let maxNum = 0;
+                    let prefix = 'S-2627-';
+                    for (const inv of latestData.invoices) {
+                        const m = (inv.invoice_number || '').match(/^(.*?)(\d+)$/);
+                        if (m) {
+                            const num = parseInt(m[2], 10);
+                            if (num > maxNum) {
+                                maxNum = num;
+                                prefix = m[1];
+                            }
+                        }
+                    }
+                    if (maxNum > 0) {
+                        finalInvoiceNumber = `${prefix}${maxNum + 1}`;
+                    }
+                }
+            } catch (invNumErr) {
+                console.error('Error auto-resolving next invoice number:', invNumErr);
+            }
+        }
+
+        // 5. Custom fields (Place PO No and PO Date on the right side table)
         const customFields = [];
+
+        if (poNumber) {
+            customFields.push({
+                customfield_id: '874645000000060055', // PO No on right side table
+                value: poNumber,
+            });
+        }
 
         if (formattedPoDate) {
             customFields.push({
-                customfield_id: '874645000000060057', // PO Date
+                customfield_id: '874645000000060057', // PO Date on right side table
                 value: formattedPoDate,
             });
         }
@@ -200,7 +237,7 @@ export async function POST(req: NextRequest) {
             } as any);
         }
 
-        // 5. Create invoice in Zoho Books with ignore_auto_number_generation=true
+        // 6. Create invoice in Zoho Books with ignore_auto_number_generation=true
         const zohoInvoiceRes = await fetch(
             `https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&ignore_auto_number_generation=true`,
             {
@@ -211,8 +248,8 @@ export async function POST(req: NextRequest) {
                 },
                 body: JSON.stringify({
                     customer_id: customerId,
-                    reference_number: poNumber || '',
-                    invoice_number: invoiceNo,
+                    reference_number: '', // Left side is empty so PO No appears cleanly on right side table
+                    invoice_number: finalInvoiceNumber,
                     date: formattedDate,
                     custom_fields: customFields,
                     line_items: lineItems,
