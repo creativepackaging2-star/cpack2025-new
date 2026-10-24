@@ -15,8 +15,13 @@ import {
     Loader2,
     ArrowRight,
     Edit3,
-    Save
+    Save,
+    Download,
+    ExternalLink,
+    Mail,
+    RefreshCw
 } from 'lucide-react';
+import SendInvoiceEmailModal from '@/components/SendInvoiceEmailModal';
 
 interface GenerateDocsModalProps {
     isOpen: boolean;
@@ -100,6 +105,20 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
     const [procQty, setProcQty] = useState('1');
     const [procAmount, setProcAmount] = useState('');
     const [procDescription, setProcDescription] = useState('Label Processing Charges');
+
+    // Direct dispatch package generation states
+    const [isGeneratingPackage, setIsGeneratingPackage] = useState(false);
+    const [generationProgressText, setGenerationProgressText] = useState('Creating invoice & generating documents...');
+    const [generationError, setGenerationError] = useState<string | null>(null);
+    const [generatedResult, setGeneratedResult] = useState<{
+        invoiceNumber: string;
+        downloadUrl: string;
+        invoiceUrl?: string;
+        invoice?: any;
+    } | null>(null);
+
+    // Email modal state
+    const [emailModalInvoice, setEmailModalInvoice] = useState<any | null>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -331,22 +350,52 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
         setShowProcessingChargeStep(true);
     };
 
-    const handleConfirmAndProceed = () => {
+    const handleConfirmAndProceed = async () => {
         if (!addProcessingCharges) return;
 
-        let url = `/orders/dispatch-documents?ids=${selectedIds.join(',')}&noOfBoxes=${totalNoOfBoxes}`;
-        if (addProcessingCharges === 'yes') {
-            const q = parseFloat(procQty) || 1;
-            const amt = parseFloat(procAmount) || 0;
-            const desc = procDescription.trim() || 'Processing Charges';
-            url += `&hasProcessing=1&procQty=${q}&procAmount=${amt}&procName=${encodeURIComponent(desc)}`;
-        } else {
-            url += `&hasProcessing=0`;
-        }
-
         setShowProcessingChargeStep(false);
-        router.push(url);
-        onClose();
+        setIsGeneratingPackage(true);
+        setGenerationProgressText('Creating official invoice in Zoho Books...');
+        setGenerationError(null);
+
+        try {
+            const res = await fetch('/api/zoho/create-dispatch-package', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderIds: selectedIds,
+                    noOfBoxes: totalNoOfBoxes,
+                    hasProcessing: addProcessingCharges === 'yes',
+                    procQty: parseFloat(procQty) || 1,
+                    procAmount: parseFloat(procAmount) || 0,
+                    procName: procDescription.trim() || 'Label Processing Charges',
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to create invoice & dispatch package.');
+            }
+
+            // Automatically trigger browser download of unified PDF
+            if (data.downloadUrl) {
+                const link = document.createElement('a');
+                link.href = data.downloadUrl;
+                link.download = `Dispatch_Documents_${data.invoiceNumber}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            setGeneratedResult(data);
+            setSelectedIds([]);
+            await fetchCandidateOrders();
+        } catch (err: any) {
+            console.error('Error creating dispatch package:', err);
+            setGenerationError(err.message || 'An unexpected error occurred while generating documents.');
+        } finally {
+            setIsGeneratingPackage(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -847,12 +896,162 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                 }
                                 className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-extrabold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                             >
-                                <span>Continue to Documents</span>
+                                <span>Generate Invoice & Download Documents</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* In-Progress Generation Modal Overlay */}
+            {isGeneratingPackage && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-8 max-w-sm w-full flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-200">
+                        <div className="relative">
+                            <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white text-[10px] font-black">
+                                ✓
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Generating Dispatch Package</h4>
+                            <p className="text-xs font-medium text-slate-500">
+                                Creating official Zoho invoice, compiling 3 identical copies and official COAs...
+                            </p>
+                        </div>
+
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-indigo-600 h-full w-2/3 animate-pulse rounded-full" />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Generation Error Alert Modal */}
+            {generationError && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-red-200 p-6 max-w-md w-full space-y-4 animate-in zoom-in-95">
+                        <div className="flex items-center gap-3 text-red-600">
+                            <div className="p-2.5 bg-red-100 rounded-xl">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-slate-900">Failed to Generate Documents</h4>
+                                <p className="text-xs text-red-600 font-semibold">{generationError}</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setGenerationError(null)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Generation Success Dialog */}
+            {generatedResult && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl border border-emerald-200 max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header Banner */}
+                        <div className="p-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex flex-col items-center text-center space-y-3">
+                            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shadow-lg">
+                                <CheckCircle2 className="w-8 h-8 text-white" />
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-100">Success</span>
+                                <h3 className="text-xl font-black">Dispatch Package Ready!</h3>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-xs font-black">
+                                    <span>Invoice No:</span>
+                                    <span className="text-white underline">{generatedResult.invoiceNumber}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-5">
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs space-y-2">
+                                <div className="flex items-center gap-2 font-bold text-slate-800">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                    <span>Download Started Automatically</span>
+                                </div>
+                                <p className="text-slate-600 text-[11px] leading-relaxed pl-6">
+                                    Your unified PDF contains <strong>3 identical copies of the official Tax Invoice</strong> and all <strong>official client Certificates of Analysis (COAs)</strong>.
+                                </p>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="space-y-2.5">
+                                <a
+                                    href={generatedResult.downloadUrl}
+                                    download={`Dispatch_Documents_${generatedResult.invoiceNumber}.pdf`}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    <span>Download Dispatch PDF Again</span>
+                                </a>
+
+                                <div className="grid grid-cols-2 gap-2.5">
+                                    {generatedResult.invoiceUrl && (
+                                        <a
+                                            href={generatedResult.invoiceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5 text-slate-600" />
+                                            <span>Zoho Books</span>
+                                        </a>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (generatedResult.invoice) {
+                                                setEmailModalInvoice(generatedResult.invoice);
+                                            }
+                                        }}
+                                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                    >
+                                        <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                                        <span>Email to Client</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setGeneratedResult(null);
+                                    onClose();
+                                }}
+                                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer"
+                            >
+                                Done & Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Email Modal */}
+            {emailModalInvoice && (
+                <SendInvoiceEmailModal
+                    isOpen={Boolean(emailModalInvoice)}
+                    onClose={() => setEmailModalInvoice(null)}
+                    invoice={emailModalInvoice}
+                />
             )}
         </div>
     );
