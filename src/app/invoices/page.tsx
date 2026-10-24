@@ -1,0 +1,415 @@
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+    FileText,
+    ReceiptText,
+    Search,
+    Download,
+    Mail,
+    ExternalLink,
+    Loader2,
+    AlertCircle,
+    Building2,
+    Calendar,
+    Package,
+    RefreshCw,
+    CheckCircle2,
+    Eye
+} from 'lucide-react';
+import SendInvoiceEmailModal from '@/components/SendInvoiceEmailModal';
+
+interface SalesInvoiceRecord {
+    invoice_number: string;
+    zoho_id?: string;
+    date: string;
+    customer_name: string;
+    company: string;
+    orders: {
+        id: number;
+        order_id: string;
+        product_name: string;
+        artwork_code?: string;
+        quantity: number;
+        qty_delivered: number;
+        packing_detail?: string;
+        rate: number;
+        amount: number;
+        remarks?: string;
+    }[];
+    total_delivered_qty: number;
+    total_amount: number;
+    status: string;
+    source: string;
+    pdf_available: boolean;
+    pdf_url: string;
+    invoice_url: string;
+}
+
+export default function SalesInvoicesPage() {
+    const [loading, setLoading] = useState(true);
+    const [invoices, setInvoices] = useState<SalesInvoiceRecord[]>([]);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [companyFilter, setCompanyFilter] = useState<'All' | 'Creative Printers' | 'Creative Packaging' | 'Creative Enterprise'>('All');
+
+    // Email Modal state
+    const [emailModalInvoice, setEmailModalInvoice] = useState<SalesInvoiceRecord | null>(null);
+
+    // View Loading state
+    const [viewingInvoiceNo, setViewingInvoiceNo] = useState<string | null>(null);
+
+    const fetchInvoices = async () => {
+        setLoading(true);
+        setErrorMsg(null);
+        try {
+            const res = await fetch('/api/invoices');
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load invoices.');
+            setInvoices(data.invoices || []);
+        } catch (err: any) {
+            console.error('Error fetching invoices:', err);
+            setErrorMsg(err.message || 'Failed to fetch sales invoices.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchInvoices();
+    }, []);
+
+    const filteredInvoices = useMemo(() => {
+        return invoices.filter(inv => {
+            if (companyFilter !== 'All' && !inv.company.toLowerCase().includes(companyFilter.replace('Creative ', '').toLowerCase())) {
+                return false;
+            }
+
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const invNoMatch = inv.invoice_number.toLowerCase().includes(q);
+                const custMatch = inv.customer_name.toLowerCase().includes(q);
+                const prodMatch = (inv.orders || []).some(o => (o.product_name || '').toLowerCase().includes(q) || (o.artwork_code || '').toLowerCase().includes(q));
+                if (!invNoMatch && !custMatch && !prodMatch) return false;
+            }
+
+            return true;
+        });
+    }, [invoices, companyFilter, searchQuery]);
+
+    // KPI stats
+    const stats = useMemo(() => {
+        const totalCount = filteredInvoices.length;
+        const totalQty = filteredInvoices.reduce((acc, inv) => acc + (inv.total_delivered_qty || 0), 0);
+        const totalValue = filteredInvoices.reduce((acc, inv) => acc + (inv.total_amount || 0), 0);
+        const readyPdfs = filteredInvoices.filter(inv => inv.pdf_available).length;
+        return { totalCount, totalQty, totalValue, readyPdfs };
+    }, [filteredInvoices]);
+
+    const handleViewInvoice = async (inv: SalesInvoiceRecord) => {
+        if (inv.invoice_url) {
+            window.open(inv.invoice_url, '_blank');
+            return;
+        }
+
+        setViewingInvoiceNo(inv.invoice_number);
+        try {
+            const res = await fetch(`/api/zoho/invoice-url?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`);
+            const data = await res.json();
+            if (data.invoiceUrl) {
+                // Cache url in state
+                setInvoices(prev => prev.map(item => item.invoice_number === inv.invoice_number ? { ...item, invoice_url: data.invoiceUrl } : item));
+                window.open(data.invoiceUrl, '_blank');
+            } else {
+                alert(`Invoice URL not available from Zoho: ${data.error || 'Check Zoho Books configuration.'}`);
+            }
+        } catch (err: any) {
+            alert('Failed to retrieve Zoho invoice link: ' + err.message);
+        } finally {
+            setViewingInvoiceNo(null);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
+
+            {/* Header & Quick Action */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-3.5">
+                    <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/20">
+                        <ReceiptText className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Sales Invoices</h1>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Manage generated invoices, view Zoho Books documents, download 3-copy packages + official COAs, and email client contacts.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={fetchInvoices}
+                        disabled={loading}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        title="Refresh invoices from Zoho & Database"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                        <span>Refresh Invoices</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Top KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Invoices</p>
+                        <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.totalCount}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                        <FileText className="w-5 h-5" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Quantity</p>
+                        <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.totalQty.toLocaleString()}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                        <Package className="w-5 h-5" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Invoiced (₹)</p>
+                        <h3 className="text-2xl font-black text-emerald-600 mt-1">₹{Math.round(stats.totalValue).toLocaleString()}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                        <span className="font-black text-base">₹</span>
+                    </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unified PDFs Ready</p>
+                        <h3 className="text-2xl font-black text-blue-600 mt-1">{stats.readyPdfs}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                        <Download className="w-5 h-5" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Filter Toolbar */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                {/* Company Tabs */}
+                <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-bold overflow-x-auto">
+                    {(['All', 'Creative Printers', 'Creative Packaging', 'Creative Enterprise'] as const).map(c => {
+                        const active = companyFilter === c;
+                        return (
+                            <button
+                                key={c}
+                                type="button"
+                                onClick={() => setCompanyFilter(c)}
+                                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                                    active
+                                        ? 'bg-white text-slate-900 shadow-xs font-black'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                {c === 'All' ? 'All Billing Companies' : c}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Search */}
+                <div className="relative md:w-80">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        type="text"
+                        placeholder="Search invoice #, product, or customer..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                </div>
+            </div>
+
+            {/* Invoices Table */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                {loading ? (
+                    <div className="py-24 flex flex-col items-center justify-center text-center">
+                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
+                        <p className="text-xs font-bold text-slate-600">Loading invoices from Zoho Books & Database...</p>
+                    </div>
+                ) : errorMsg ? (
+                    <div className="p-8 text-center text-rose-600 bg-rose-50/50">
+                        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-rose-500" />
+                        <p className="text-sm font-bold">{errorMsg}</p>
+                    </div>
+                ) : filteredInvoices.length === 0 ? (
+                    <div className="py-20 text-center text-slate-500">
+                        <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-slate-700">No matching invoices found</p>
+                        <p className="text-xs text-slate-400 mt-1">Try clearing your search query or company filter.</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                                    <th className="py-3.5 px-4">Date</th>
+                                    <th className="py-3.5 px-4">Invoice No</th>
+                                    <th className="py-3.5 px-4">Customer</th>
+                                    <th className="py-3.5 px-4">Products & Delivered Qty</th>
+                                    <th className="py-3.5 px-4">Company</th>
+                                    <th className="py-3.5 px-4 text-right">Amount (₹)</th>
+                                    <th className="py-3.5 px-4 text-center">Status</th>
+                                    <th className="py-3.5 px-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-xs">
+                                {filteredInvoices.map((inv, idx) => {
+                                    const isViewing = viewingInvoiceNo === inv.invoice_number;
+                                    return (
+                                        <tr key={inv.invoice_number || idx} className="hover:bg-slate-50/80 transition-colors">
+                                            {/* Date */}
+                                            <td className="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                                    <span>{inv.date || '-'}</span>
+                                                </div>
+                                            </td>
+
+                                            {/* Invoice Number */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <span className="font-black text-indigo-700 text-sm font-mono">
+                                                    {inv.invoice_number}
+                                                </span>
+                                            </td>
+
+                                            {/* Customer */}
+                                            <td className="py-3.5 px-4 max-w-[200px]">
+                                                <div className="font-bold text-slate-800 truncate" title={inv.customer_name}>
+                                                    {inv.customer_name}
+                                                </div>
+                                            </td>
+
+                                            {/* Products & Delivered Quantities */}
+                                            <td className="py-3.5 px-4 max-w-[320px]">
+                                                {inv.orders && inv.orders.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {inv.orders.map((ord, oIdx) => (
+                                                            <div key={ord.id || oIdx} className="flex items-center justify-between gap-2 text-[11px] bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                                                <span className="font-semibold text-slate-800 truncate" title={ord.product_name}>
+                                                                    {ord.product_name}
+                                                                </span>
+                                                                <span className="font-mono font-bold text-indigo-700 shrink-0">
+                                                                    {Number(ord.qty_delivered || ord.quantity || 0).toLocaleString()} pcs
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[11px] text-slate-400 italic">Zoho line items</span>
+                                                )}
+                                            </td>
+
+                                            {/* Company */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                    <Building2 className="w-3 h-3 text-slate-500" />
+                                                    {inv.company}
+                                                </span>
+                                            </td>
+
+                                            {/* Total Amount */}
+                                            <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-black text-slate-900 text-sm">
+                                                ₹{Number(inv.total_amount || 0).toLocaleString()}
+                                            </td>
+
+                                            {/* Status Badge */}
+                                            <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                    inv.status === 'paid'
+                                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                        : inv.status === 'draft'
+                                                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                                        : 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                                }`}>
+                                                    {inv.status}
+                                                </span>
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    {/* 1. View Invoice */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleViewInvoice(inv)}
+                                                        disabled={isViewing}
+                                                        className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all cursor-pointer"
+                                                        title="View Invoice in Zoho Books"
+                                                    >
+                                                        {isViewing ? <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> : <Eye className="w-4 h-4" />}
+                                                    </button>
+
+                                                    {/* 2. Download Dispatch Package (3 Invoices + COAs) */}
+                                                    {inv.pdf_available ? (
+                                                        <a
+                                                            href={inv.pdf_url}
+                                                            download={`Dispatch_Documents_${inv.invoice_number}.pdf`}
+                                                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-all cursor-pointer inline-flex items-center"
+                                                            title="Download Unified PDF (3 Invoices + COAs)"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </a>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => alert(`Unified PDF has not been generated yet for ${inv.invoice_number}. You can generate it by clicking Generate Documents on the Orders page.`)}
+                                                            className="p-1.5 text-slate-300 border border-slate-200 rounded-lg cursor-not-allowed opacity-50"
+                                                            title="Unified PDF not yet generated"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+
+                                                    {/* 3. Email Invoice & COAs */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEmailModalInvoice(inv)}
+                                                        className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-emerald-200 rounded-lg transition-all cursor-pointer"
+                                                        title="Email Invoice & COAs to Customer"
+                                                    >
+                                                        <Mail className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Email Sales Invoice Modal */}
+            {emailModalInvoice && (
+                <SendInvoiceEmailModal
+                    isOpen={Boolean(emailModalInvoice)}
+                    onClose={() => setEmailModalInvoice(null)}
+                    invoice={emailModalInvoice}
+                />
+            )}
+
+        </div>
+    );
+}

@@ -38,7 +38,7 @@ function DispatchDocumentsContent() {
     });
     const [poNumber, setPoNumber] = useState('');
     const [poDate, setPoDate] = useState('');
-    const [noOfBoxes, setNoOfBoxes] = useState('');
+    const [noOfBoxes, setNoOfBoxes] = useState(() => searchParams.get('noOfBoxes') || '');
     const [customerName, setCustomerName] = useState('BDR Pharmaceuticals International Pvt. Ltd.');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [taxType, setTaxType] = useState<'IGST' | 'CGST_SGST'>('IGST');

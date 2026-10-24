@@ -56,6 +56,25 @@ export function parseOrderPoInfo(remarks: string | null | undefined, fallbackRat
     };
 }
 
+export function parseBoxesFromPacking(packingStr: string | null | undefined): number {
+    if (!packingStr) return 0;
+    const str = packingStr.trim();
+    const boxMatches = str.match(/(\d+)\s*box(?:es)?/gi);
+    if (boxMatches && boxMatches.length > 0) {
+        let total = 0;
+        for (const m of boxMatches) {
+            const num = parseInt(m.match(/\d+/)?.[0] || '0', 10);
+            total += num;
+        }
+        return total;
+    }
+    const justNum = parseInt(str, 10);
+    if (!isNaN(justNum) && justNum > 0 && justNum < 500) {
+        return justNum;
+    }
+    return 0;
+}
+
 export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModalProps) {
     const router = useRouter();
 
@@ -65,6 +84,9 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    // User editable boxes per item
+    const [itemBoxes, setItemBoxes] = useState<Record<number, number>>({});
 
     // Inline quick-edit state
     const [editingOrder, setEditingOrder] = useState<number | null>(null);
@@ -91,7 +113,7 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
             // Fetch ONLY open orders (exclude Complete and Delivered)
             const { data, error } = await supabase
                 .from('orders')
-                .select('id, order_id, product_name, artwork_code, quantity, rate, qty_delivered, packing_detail, customer_name, from_our_company, remarks, status, delivery_address, delivery_date')
+                .select('id, order_id, product_name, artwork_code, quantity, rate, qty_delivered, packing_detail, customer_name, from_our_company, remarks, status, delivery_address, delivery_date, invoice_no')
                 .neq('status', 'Complete')
                 .neq('status', 'Delivered')
                 .order('id', { ascending: false })
@@ -141,18 +163,31 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
         const hasPo = poInfo.isTagged;
         const hasQtyDelivered = Number(o.qty_delivered) > 0;
         const hasPackingDetails = Boolean(o.packing_detail && o.packing_detail.trim());
-        const isValid = hasPo && hasQtyDelivered && hasPackingDetails;
+        const hasInvoice = Boolean(o.invoice_no && o.invoice_no.trim() && o.invoice_no.trim() !== '-' && !o.invoice_no.trim().toLowerCase().startsWith('inv-'));
+        const isValid = hasPo && hasQtyDelivered && hasPackingDetails && !hasInvoice;
         const company = normalizeCompany(o.from_our_company);
 
         return {
             hasPo,
             hasQtyDelivered,
             hasPackingDetails,
+            hasInvoice,
+            invoiceNo: o.invoice_no,
             isValid,
             poInfo,
             company,
         };
     };
+
+    // Total boxes across all selected orders
+    const totalNoOfBoxes = useMemo(() => {
+        return selectedIds.reduce((sum, id) => {
+            const customVal = itemBoxes[id];
+            if (customVal !== undefined) return sum + customVal;
+            const ord = orders.find(o => o.id === id);
+            return sum + parseBoxesFromPacking(ord?.packing_detail);
+        }, 0);
+    }, [selectedIds, itemBoxes, orders]);
 
     // Determine target company for currently selected orders
     const currentSelectedCompany = useMemo<CompanyName | null>(() => {
@@ -197,6 +232,12 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
 
     const handleToggleSelect = (order: any) => {
         const id = order.id;
+        const val = getOrderValidation(order);
+        if (val.hasInvoice) {
+            alert(`Invoice ${val.invoiceNo} has already been generated for this order. It cannot be re-invoiced.`);
+            return;
+        }
+
         if (selectedIds.includes(id)) {
             setSelectedIds(prev => prev.filter(x => x !== id));
             return;
@@ -233,6 +274,11 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
 
     // Quick inline save for Qty Delivered & Packing Details
     const handleStartQuickEdit = (order: any) => {
+        const val = getOrderValidation(order);
+        if (val.hasInvoice) {
+            alert(`Invoice ${val.invoiceNo} has already been generated for this order. It cannot be edited.`);
+            return;
+        }
         setEditingOrder(order.id);
         setEditQty(order.qty_delivered ? String(order.qty_delivered) : (order.quantity ? String(order.quantity) : ''));
         setEditPacking(order.packing_detail || '');
@@ -288,7 +334,7 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
     const handleConfirmAndProceed = () => {
         if (!addProcessingCharges) return;
 
-        let url = `/orders/dispatch-documents?ids=${selectedIds.join(',')}`;
+        let url = `/orders/dispatch-documents?ids=${selectedIds.join(',')}&noOfBoxes=${totalNoOfBoxes}`;
         if (addProcessingCharges === 'yes') {
             const q = parseFloat(procQty) || 1;
             const amt = parseFloat(procAmount) || 0;
@@ -429,7 +475,7 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
-                                                disabled={isDifferentCompany}
+                                                disabled={isDifferentCompany || val.hasInvoice}
                                                 onChange={() => handleToggleSelect(order)}
                                                 className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed"
                                             />
@@ -447,8 +493,14 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                                     </h4>
                                                 </div>
 
-                                                {/* Company Badge */}
+                                                {/* Company & Invoice Badges */}
                                                 <div className="flex items-center gap-2 shrink-0">
+                                                    {val.hasInvoice && (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                                            Invoice Generated: {val.invoiceNo}
+                                                        </span>
+                                                    )}
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         <Building2 className="w-3 h-3 text-slate-500" />
                                                         {val.company}
@@ -502,8 +554,8 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                                     </span>
                                                 )}
 
-                                                {/* Quick Edit Trigger */}
-                                                {!isEditing && (!val.hasQtyDelivered || !val.hasPackingDetails) && (
+                                                {/* Quick Edit Trigger (Only for orders without invoice) */}
+                                                {!isEditing && !val.hasInvoice && (!val.hasQtyDelivered || !val.hasPackingDetails) && (
                                                     <button
                                                         type="button"
                                                         onClick={() => handleStartQuickEdit(order)}
@@ -514,6 +566,32 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                                     </button>
                                                 )}
                                             </div>
+
+                                            {/* Item Box Count Input (Only when selected and not yet invoiced) */}
+                                            {isSelected && !val.hasInvoice && (
+                                                <div className="mt-2.5 flex items-center gap-2.5 bg-indigo-50/70 border border-indigo-200/80 rounded-xl px-3 py-2 animate-in fade-in">
+                                                    <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-950">
+                                                        <Package className="w-3.5 h-3.5 text-indigo-600" />
+                                                        <span>No. of Boxes:</span>
+                                                    </div>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={itemBoxes[order.id] !== undefined ? itemBoxes[order.id] : parseBoxesFromPacking(order.packing_detail)}
+                                                        onChange={e => {
+                                                            const valNum = parseInt(e.target.value, 10);
+                                                            setItemBoxes(prev => ({
+                                                                ...prev,
+                                                                [order.id]: isNaN(valNum) ? 0 : valNum
+                                                            }));
+                                                        }}
+                                                        className="w-16 px-2.5 py-1 bg-white border border-indigo-300 rounded-lg font-black text-xs text-indigo-950 text-center shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    />
+                                                    <span className="text-[10px] text-slate-500 font-medium">
+                                                        (Parsed from packing: {parseBoxesFromPacking(order.packing_detail)} boxes)
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {/* Inline Quick Edit Form */}
                                             {isEditing && (
@@ -584,16 +662,22 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                     )}
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="text-xs text-slate-600">
+                        <div className="text-xs text-slate-600 flex flex-wrap items-center gap-3">
                             {selectedIds.length === 0 ? (
                                 <span className="font-semibold text-slate-500">No orders selected yet.</span>
                             ) : (
-                                <div>
-                                    <span className="font-bold text-slate-900">{selectedIds.length}</span> order(s) selected for billing company:{' '}
-                                    <span className="font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                                        {currentSelectedCompany}
-                                    </span>
-                                </div>
+                                <>
+                                    <div>
+                                        <span className="font-bold text-slate-900">{selectedIds.length}</span> order(s) selected for billing company:{' '}
+                                        <span className="font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                            {currentSelectedCompany}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-950 font-bold text-xs">
+                                        <Package className="w-4 h-4 text-indigo-600" />
+                                        <span>Total Boxes: <strong className="font-black text-indigo-700 text-sm">{totalNoOfBoxes}</strong></span>
+                                    </div>
+                                </>
                             )}
                         </div>
 
