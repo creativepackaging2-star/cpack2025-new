@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
             invoiceNo,
             invoiceDate,
             poNumber,
+            poDate,
+            noOfBoxes,
             customerName,
             deliveryAddress,
             taxType,
@@ -110,19 +112,40 @@ export async function POST(req: NextRequest) {
             customerId = '874645000002907003';
         }
 
-        // 3. Format line items for Zoho Books
+        // 3. Format line items for Zoho Books (Matching S-2526-085.pdf format)
         const isInterState = taxType === 'IGST';
         const lineItems = (items || []).map((it: any) => {
-            // First line: Material Code, then PO Item Name
-            let fullName = it.name || 'Item';
-            if (it.materialCode && !fullName.includes(it.materialCode)) {
-                fullName = `Material Code : ${it.materialCode}\n${it.name}`;
+            const hsn = it.hsn_or_sac || '48192010';
+            
+            // Category name as line item Title: 'Cartons' / 'Label' / 'Leaflet'
+            let categoryTitle = it.categoryName;
+            if (!categoryTitle) {
+                if (hsn.startsWith('4821')) categoryTitle = 'Label';
+                else if (hsn.startsWith('4901')) categoryTitle = 'Leaflet';
+                else categoryTitle = 'Cartons';
             }
 
-            // Next: Packing details under that
-            let description = it.description || '';
-            if (it.packingDetail && it.packingDetail !== '-' && !description.includes(it.packingDetail)) {
-                description = description ? `${description}\nPacking Details: ${it.packingDetail}` : `Packing Details: ${it.packingDetail}`;
+            // Description layout matching S-2526-085.pdf:
+            // Material Code : ...
+            // Carton for [Providenz 100]
+            // Packing Details: 11 boxes x 750 +1 box x 300
+            let descParts: string[] = [];
+            if (it.materialCode) {
+                descParts.push(`Material Code : ${it.materialCode}`);
+            }
+            if (it.name) {
+                descParts.push(it.name);
+            }
+            if (it.packingDetail && it.packingDetail !== '-') {
+                descParts.push(it.packingDetail);
+            } else if (it.description && !descParts.includes(it.description)) {
+                descParts.push(it.description);
+            }
+
+            // For label processing charges: name is "Label", description is "processing charges"
+            if (it.name && it.name.toLowerCase().includes('processing charges')) {
+                categoryTitle = 'Label';
+                descParts = ['processing charges'];
             }
 
             // Tax ID mapping:
@@ -137,18 +160,38 @@ export async function POST(req: NextRequest) {
             }
 
             return {
-                name: fullName,
-                description: description,
+                name: categoryTitle,
+                description: descParts.join('\n'),
                 rate: it.rate,
                 quantity: it.quantity,
-                hsn_or_sac: it.hsn_or_sac || '48192010',
+                hsn_or_sac: hsn,
                 tax_id: taxId,
             };
         });
 
         const formattedDate = formatDateForZoho(invoiceDate);
+        const formattedPoDate = poDate ? formatDateForZoho(poDate) : formattedDate;
 
-        // 4. Create invoice in Zoho Books with ignore_auto_number_generation=true
+        // 4. Custom fields matching S-2526-085 (PO No, PO Date, No of Boxes)
+        const customFields = [
+            {
+                customfield_id: '874645000000060055', // PO No
+                value: poNumber || '',
+            },
+            {
+                customfield_id: '874645000000060057', // PO Date
+                value: formattedPoDate,
+            },
+        ];
+
+        if (noOfBoxes !== undefined && noOfBoxes !== '') {
+            customFields.push({
+                customfield_id: '874645000000066053', // No of Boxes
+                value: Number(noOfBoxes) || 0,
+            } as any);
+        }
+
+        // 5. Create invoice in Zoho Books with ignore_auto_number_generation=true
         const zohoInvoiceRes = await fetch(
             `https://www.zohoapis.com/books/v3/invoices?organization_id=${zohoOrgId}&ignore_auto_number_generation=true`,
             {
@@ -162,7 +205,9 @@ export async function POST(req: NextRequest) {
                     reference_number: poNumber || '',
                     invoice_number: invoiceNo,
                     date: formattedDate,
+                    custom_fields: customFields,
                     line_items: lineItems,
+                    terms: 'Subject to Mumbai Jurisdiction only \n',
                     notes: `Billed from: ${billFromCompany} | PO: ${poNumber || 'N/A'}\nDelivery Address: ${deliveryAddress || '-'}`,
                 })
             }

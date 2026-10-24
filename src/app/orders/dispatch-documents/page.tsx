@@ -36,6 +36,8 @@ function DispatchDocumentsContent() {
         return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     });
     const [poNumber, setPoNumber] = useState('');
+    const [poDate, setPoDate] = useState('');
+    const [noOfBoxes, setNoOfBoxes] = useState('');
     const [customerName, setCustomerName] = useState('BDR Pharmaceuticals International Pvt. Ltd.');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [taxType, setTaxType] = useState<'IGST' | 'CGST_SGST'>('IGST');
@@ -141,12 +143,12 @@ function DispatchDocumentsContent() {
                     if (data[0].customer_name) setCustomerName(data[0].customer_name.trim());
                     if (data[0].delivery_address) setDeliveryAddress(data[0].delivery_address.trim());
 
-                    // Auto-resolve PO Number from tags
+                    // Auto-resolve PO Number and PO Date from tags
                     for (const o of data) {
                         const poInfo = parseOrderPoInfo(o.remarks);
-                        if (poInfo.isTagged && poInfo.poNumber) {
-                            setPoNumber(poInfo.poNumber);
-                            break;
+                        if (poInfo.isTagged) {
+                            if (poInfo.poNumber && !poNumber) setPoNumber(poInfo.poNumber);
+                            if (poInfo.poDate && !poDate) setPoDate(poInfo.poDate);
                         }
                     }
                 }
@@ -335,6 +337,8 @@ function DispatchDocumentsContent() {
                 invoiceNo,
                 invoiceDate,
                 poNumber,
+                poDate,
+                noOfBoxes,
                 customerName,
                 deliveryAddress,
                 taxType,
@@ -343,7 +347,7 @@ function DispatchDocumentsContent() {
                     materialCode: it.materialCode,
                     name: it.exactPoName,
                     packingDetail: it.packingDetail,
-                    description: it.packingDetail && it.packingDetail !== '-' ? `Packing Details: ${it.packingDetail}` : '',
+                    description: it.packingDetail && it.packingDetail !== '-' ? it.packingDetail : '',
                     quantity: it.deliveryQty,
                     rate: it.rate,
                     hsn_or_sac: it.hsn,
@@ -468,8 +472,8 @@ function DispatchDocumentsContent() {
 
                     {/* Controls & Action Buttons */}
                     <div className="flex items-center gap-2.5 flex-wrap">
-                        {/* Invoice No & Date */}
-                        <div className="flex items-center gap-1.5 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700 text-xs">
+                        {/* Invoice No, Date, PO No, PO Date, Boxes */}
+                        <div className="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 text-xs flex-wrap">
                             <span className="text-[10px] text-slate-400 font-bold uppercase">Inv No:</span>
                             <input
                                 value={invoiceNo}
@@ -482,6 +486,30 @@ function DispatchDocumentsContent() {
                                 value={invoiceDate}
                                 onChange={e => setInvoiceDate(e.target.value)}
                                 className="w-24 bg-transparent text-white font-bold text-xs focus:outline-none"
+                            />
+                            <span className="text-slate-600">|</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">PO No:</span>
+                            <input
+                                value={poNumber}
+                                placeholder="e.g. 4110023604"
+                                onChange={e => setPoNumber(e.target.value)}
+                                className="w-24 bg-transparent text-indigo-300 font-mono font-bold text-xs focus:outline-none"
+                            />
+                            <span className="text-slate-600">|</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">PO Date:</span>
+                            <input
+                                value={poDate}
+                                placeholder="DD/MM/YYYY"
+                                onChange={e => setPoDate(e.target.value)}
+                                className="w-24 bg-transparent text-white font-bold text-xs focus:outline-none"
+                            />
+                            <span className="text-slate-600">|</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Boxes:</span>
+                            <input
+                                value={noOfBoxes}
+                                placeholder="e.g. 16"
+                                onChange={e => setNoOfBoxes(e.target.value)}
+                                className="w-14 bg-transparent text-white font-bold text-xs focus:outline-none"
                             />
                         </div>
 
@@ -752,6 +780,8 @@ function DispatchDocumentsContent() {
                             invoiceNo={invoiceNo}
                             invoiceDate={invoiceDate}
                             poNumber={poNumber}
+                            poDate={poDate}
+                            noOfBoxes={noOfBoxes}
                             customerName={customerName}
                             deliveryAddress={deliveryAddress}
                             taxType={taxType}
@@ -776,6 +806,8 @@ function DispatchDocumentsContent() {
                             invoiceNo={invoiceNo}
                             invoiceDate={invoiceDate}
                             poNumber={poNumber}
+                            poDate={poDate}
+                            noOfBoxes={noOfBoxes}
                             customerName={customerName}
                             deliveryAddress={deliveryAddress}
                             taxType={taxType}
@@ -800,6 +832,8 @@ function DispatchDocumentsContent() {
                             invoiceNo={invoiceNo}
                             invoiceDate={invoiceDate}
                             poNumber={poNumber}
+                            poDate={poDate}
+                            noOfBoxes={noOfBoxes}
                             customerName={customerName}
                             deliveryAddress={deliveryAddress}
                             taxType={taxType}

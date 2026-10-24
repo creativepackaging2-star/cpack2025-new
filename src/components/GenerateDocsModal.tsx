@@ -34,7 +34,7 @@ export function normalizeCompany(companyStr: string | null | undefined): Company
 
 export function parseOrderPoInfo(remarks: string | null | undefined, fallbackRate = 0) {
     if (remarks && remarks.includes('[PO:')) {
-        const m = remarks.match(/\[PO:([^|]+)\|Item:([^|]+)\|Rate:([^|]+)(?:\|Code:([^\]]+))?/);
+        const m = remarks.match(/\[PO:([^|]+)\|Item:([^|]+)\|Rate:([^|]+)(?:\|Code:([^|\]]+))?(?:\|Date:([^\]]+))?/);
         if (m) {
             return {
                 isTagged: true,
@@ -42,6 +42,7 @@ export function parseOrderPoInfo(remarks: string | null | undefined, fallbackRat
                 poItemName: m[2].trim(),
                 rate: parseFloat(m[3]) || fallbackRate,
                 materialCode: m[4]?.trim() || '',
+                poDate: m[5]?.trim() || '',
             };
         }
     }
@@ -51,6 +52,7 @@ export function parseOrderPoInfo(remarks: string | null | undefined, fallbackRat
         poItemName: '',
         rate: fallbackRate,
         materialCode: '',
+        poDate: '',
     };
 }
 

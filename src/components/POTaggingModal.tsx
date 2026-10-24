@@ -172,7 +172,7 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
                         'Creative Enterprise': 'Enterprise',
                     };
 
-                    const poTag = `[PO:${poNumber}|Item:${item.exactPoName}|Rate:${item.rate || matched?.rate || 0}|Code:${item.materialCode || ''}]`;
+                    const poTag = `[PO:${poNumber}|Item:${item.exactPoName}|Rate:${item.rate || matched?.rate || 0}|Code:${item.materialCode || ''}|Date:${poDate || ''}]`;
                     const currentRemarks = (matched as any)?.remarks || '';
                     const cleanRemarks = currentRemarks.replace(/\[PO:[^\]]+\]/g, '').trim();
                     const newRemarks = cleanRemarks ? `${poTag} ${cleanRemarks}` : poTag;

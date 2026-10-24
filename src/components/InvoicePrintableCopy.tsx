@@ -6,6 +6,7 @@ import { CompanyName } from './GenerateDocsModal';
 export interface InvoiceCopyItem {
     orderId: number | string;
     materialCode?: string;
+    categoryName?: string;
     exactPoName: string;
     packingDetail: string;
     hsn: string;
@@ -21,6 +22,8 @@ interface InvoicePrintableCopyProps {
     invoiceNo: string;
     invoiceDate: string;
     poNumber: string;
+    poDate?: string;
+    noOfBoxes?: string | number;
     customerName: string;
     deliveryAddress: string;
     taxType: 'IGST' | 'CGST_SGST';
@@ -46,6 +49,10 @@ const COMPANY_CONFIG: Record<CompanyName, {
     stateCode: string;
     phone: string;
     email: string;
+    bankName: string;
+    accountNo: string;
+    ifsc: string;
+    pan: string;
     logo: string;
     signature: string;
     signLabel: string;
@@ -60,6 +67,10 @@ const COMPANY_CONFIG: Record<CompanyName, {
         stateCode: '27',
         phone: '8097032001',
         email: 'creativepackaging@outlook.com',
+        bankName: 'Kotak Mahindra Bank',
+        accountNo: '5013215984',
+        ifsc: 'KKBK0001393',
+        pan: 'AAIPS3624G',
         logo: '/logo_packaging.png',
         signature: '/sign_packaging.png',
         signLabel: 'Authorised Signatory',
@@ -74,6 +85,10 @@ const COMPANY_CONFIG: Record<CompanyName, {
         stateCode: '27',
         phone: '8097032001',
         email: 'creativepackaging@outlook.com',
+        bankName: 'Kotak Mahindra Bank',
+        accountNo: '5013215984',
+        ifsc: 'KKBK0001393',
+        pan: 'CGTPS8217E',
         logo: '/logo_printers.png',
         signature: '/sign_printers.png',
         signLabel: 'Proprietor',
@@ -88,6 +103,10 @@ const COMPANY_CONFIG: Record<CompanyName, {
         stateCode: '27',
         phone: '9146178720',
         email: 'creativepackaging@outlook.com',
+        bankName: 'Kotak Mahindra Bank',
+        accountNo: '5013215984',
+        ifsc: 'KKBK0001393',
+        pan: 'AARHP2206E',
         logo: '/creative_logo.png',
         signature: '/pr_shah_sign_new.png',
         signLabel: 'Proprietor',
@@ -113,7 +132,7 @@ function numberToIndianWords(num: number): string {
     const decimal = Math.round((num - whole) * 100);
     let str = inWords(whole).trim();
     if (!str) str = 'Zero';
-    str = 'INR ' + str;
+    str = 'Rupees ' + str;
     if (decimal > 0) {
         str += ' and ' + inWords(decimal).trim() + 'Paise';
     }
@@ -126,6 +145,8 @@ export default function InvoicePrintableCopy({
     invoiceNo,
     invoiceDate,
     poNumber,
+    poDate,
+    noOfBoxes,
     customerName,
     deliveryAddress,
     taxType,
@@ -180,7 +201,7 @@ export default function InvoicePrintableCopy({
                     </span>
                 </div>
 
-                {/* Company Header */}
+                {/* Company Header & Meta Table (Matching S-2526-085.pdf) */}
                 <div className="flex justify-between items-start gap-4 mb-4">
                     <div className="space-y-1">
                         <div className={`${config.logoWidth} mb-2`}>
@@ -199,23 +220,39 @@ export default function InvoicePrintableCopy({
                         </p>
                     </div>
 
-                    {/* Invoice Meta Table */}
-                    <div className="border border-slate-300 rounded text-xs shrink-0 w-64 overflow-hidden bg-slate-50/50">
+                    {/* Invoice Meta Table matching S-2526-085 */}
+                    <div className="border border-slate-300 rounded text-xs shrink-0 w-72 overflow-hidden bg-slate-50/50">
                         <div className="flex border-b border-slate-300">
-                            <span className="w-24 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Invoice No:</span>
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Invoice# :</span>
                             <span className="p-1.5 font-mono font-bold text-slate-900">{invoiceNo}</span>
                         </div>
                         <div className="flex border-b border-slate-300">
-                            <span className="w-24 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Date:</span>
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Invoice Date :</span>
                             <span className="p-1.5 font-bold text-slate-900">{invoiceDate}</span>
                         </div>
                         <div className="flex border-b border-slate-300">
-                            <span className="w-24 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Buyer PO No:</span>
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Terms :</span>
+                            <span className="p-1.5 text-slate-800">Due on Receipt</span>
+                        </div>
+                        <div className="flex border-b border-slate-300">
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Due Date :</span>
+                            <span className="p-1.5 font-bold text-slate-900">{invoiceDate}</span>
+                        </div>
+                        <div className="flex border-b border-slate-300">
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Place Of Supply :</span>
+                            <span className="p-1.5 font-bold text-slate-800">Gujarat (24)</span>
+                        </div>
+                        <div className="flex border-b border-slate-300">
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">PO No :</span>
                             <span className="p-1.5 font-mono font-bold text-indigo-900">{poNumber || '-'}</span>
                         </div>
+                        <div className="flex border-b border-slate-300">
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">PO Date :</span>
+                            <span className="p-1.5 font-bold text-slate-900">{poDate || '-'}</span>
+                        </div>
                         <div className="flex">
-                            <span className="w-24 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">Place of Supply:</span>
-                            <span className="p-1.5 font-bold text-slate-800">Gujarat (24)</span>
+                            <span className="w-28 p-1.5 font-bold text-slate-600 bg-slate-100 border-r border-slate-300 text-[10px] uppercase">No of Boxes :</span>
+                            <span className="p-1.5 font-bold text-slate-900">{noOfBoxes !== undefined && noOfBoxes !== '' ? noOfBoxes : '-'}</span>
                         </div>
                     </div>
                 </div>
@@ -224,85 +261,93 @@ export default function InvoicePrintableCopy({
                 <div className="grid grid-cols-2 gap-3 mb-4 text-xs">
                     <div className="border border-slate-300 rounded p-3 bg-slate-50/30">
                         <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1 border-b border-slate-200 pb-0.5">
-                            Details of Receiver / Billed To:
+                            Bill To:
                         </p>
                         <p className="font-bold text-slate-950 text-xs">{customerName}</p>
                         <p className="text-[11px] text-slate-700 whitespace-pre-wrap mt-0.5 leading-snug">
-                            {deliveryAddress || 'Padra / Halol, Gujarat, India'}
+                            {deliveryAddress || 'Survey No. 51/1, At Vanseti Village. PO: Tajpura. Dist. Panchamahals. Taluka – Halol, 389350 Gujarat India'}
                         </p>
                         <p className="text-[10px] font-bold text-slate-700 mt-1">
-                            State: <span className="font-semibold text-slate-900">Gujarat (State Code: 24)</span>
+                            GSTIN: <span className="font-mono text-slate-950">24AABCB9286B1ZU</span>
                         </p>
                     </div>
 
                     <div className="border border-slate-300 rounded p-3 bg-slate-50/30">
                         <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1 border-b border-slate-200 pb-0.5">
-                            Details of Consignee / Shipped To:
+                            Ship To:
                         </p>
                         <p className="font-bold text-slate-950 text-xs">{customerName}</p>
                         <p className="text-[11px] text-slate-700 whitespace-pre-wrap mt-0.5 leading-snug">
-                            {deliveryAddress || 'Padra / Halol, Gujarat, India'}
+                            {deliveryAddress || 'Survey No. 51/1, At Vanseti Village. PO: Tajpura. Dist. Panchamahals. Taluka – Halol, 389350 Gujarat India'}
                         </p>
                         <p className="text-[10px] font-bold text-slate-700 mt-1">
-                            State: <span className="font-semibold text-slate-900">Gujarat (State Code: 24)</span>
+                            State: <span className="font-semibold text-slate-900">Gujarat (24)</span>
                         </p>
                     </div>
                 </div>
 
-                {/* Line Items Table */}
+                {/* Line Items Table (Columns: # | Item & Description | HSN/SAC | Qty | Rate | IGST | Amount) */}
                 <div className="border border-slate-800 rounded-sm overflow-hidden mb-4">
                     <table className="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr className="bg-slate-100 border-b border-slate-800 text-[10px] font-black text-slate-800 uppercase">
-                                <th className="p-2 border-r border-slate-800 w-10 text-center">Sr</th>
-                                <th className="p-2 border-r border-slate-800">Description of Goods</th>
-                                <th className="p-2 border-r border-slate-800 w-16 text-center">HSN</th>
+                                <th className="p-2 border-r border-slate-800 w-10 text-center">#</th>
+                                <th className="p-2 border-r border-slate-800">Item & Description</th>
+                                <th className="p-2 border-r border-slate-800 w-24 text-center">HSN/SAC</th>
                                 <th className="p-2 border-r border-slate-800 w-24 text-right">Qty</th>
-                                <th className="p-2 border-r border-slate-800 w-20 text-right">Rate (₹)</th>
-                                <th className="p-2 w-28 text-right">Amount (₹)</th>
+                                <th className="p-2 border-r border-slate-800 w-20 text-right">Rate</th>
+                                <th className="p-2 border-r border-slate-800 w-16 text-center">{taxType === 'IGST' ? 'IGST' : 'GST'}</th>
+                                <th className="p-2 w-28 text-right">Amount</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-300">
                             {items.map((item, idx) => {
                                 const effectiveGst = item.gstRate || (item.hsn?.startsWith('4821') ? 18 : 5);
+                                const categoryHeader = item.categoryName || (
+                                    item.hsn?.startsWith('4821') ? 'Label' : item.hsn?.startsWith('4901') ? 'Leaflet' : 'Cartons'
+                                );
+
                                 return (
                                     <tr key={item.orderId || idx} className="align-top">
                                         <td className="p-2 border-r border-slate-800 text-center font-bold text-slate-500">
                                             {idx + 1}
                                         </td>
                                         <td className="p-2 border-r border-slate-800 space-y-0.5">
-                                            {/* First thing in line item: Material Code directly from PO */}
+                                            {/* Category Heading (e.g. Cartons / Label) */}
+                                            <p className="font-bold text-slate-900 text-xs uppercase">
+                                                {categoryHeader}
+                                            </p>
+
+                                            {/* Material Code directly from PO */}
                                             {item.materialCode ? (
-                                                <p className="font-mono font-bold text-slate-900 text-xs leading-tight">
+                                                <p className="font-mono text-slate-900 text-xs leading-tight">
                                                     Material Code : {item.materialCode}
                                                 </p>
                                             ) : null}
 
                                             {/* Exact PO Item Name */}
-                                            <p className="font-extrabold text-slate-950 uppercase tracking-tight text-xs leading-snug">
+                                            <p className="font-semibold text-slate-950 text-xs leading-snug">
                                                 {item.exactPoName}
                                             </p>
 
-                                            {/* Directly underneath: Packing Details */}
+                                            {/* Packing Details directly underneath */}
                                             {item.packingDetail && item.packingDetail !== '-' ? (
-                                                <p className="text-[11px] font-semibold text-slate-700 bg-amber-50/70 inline-block px-1.5 py-0.5 rounded border border-amber-200 mt-1">
-                                                    Packing Details: <span className="text-slate-950 font-bold">{item.packingDetail}</span>
+                                                <p className="text-[11px] text-slate-700 whitespace-pre-wrap leading-tight mt-0.5">
+                                                    {item.packingDetail}
                                                 </p>
-                                            ) : (
-                                                <p className="text-[10px] text-slate-400 italic">No packing details</p>
-                                            )}
+                                            ) : null}
                                         </td>
                                         <td className="p-2 border-r border-slate-800 text-center font-mono font-bold text-slate-700 text-[11px]">
                                             {item.hsn || '48192010'}
-                                            <div className="text-[9px] text-slate-500 font-normal">
-                                                ({effectiveGst}% GST)
-                                            </div>
                                         </td>
                                         <td className="p-2 border-r border-slate-800 text-right font-bold text-slate-950">
                                             {item.deliveryQty.toLocaleString()}
                                         </td>
                                         <td className="p-2 border-r border-slate-800 text-right font-semibold text-slate-800">
                                             {item.rate.toFixed(2)}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-center font-bold text-slate-800 text-[11px]">
+                                            {effectiveGst}%
                                         </td>
                                         <td className="p-2 text-right font-extrabold text-slate-950">
                                             {item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -319,7 +364,7 @@ export default function InvoicePrintableCopy({
                                 <td className="p-2 border-r border-slate-800 text-right font-black text-indigo-950">
                                     {totalQty.toLocaleString()}
                                 </td>
-                                <td className="p-2 border-r border-slate-800 text-right font-black uppercase text-[10px]">
+                                <td colSpan={2} className="p-2 border-r border-slate-800 text-right font-black uppercase text-[10px]">
                                     Sub Total:
                                 </td>
                                 <td className="p-2 text-right font-black text-slate-950">
@@ -330,17 +375,28 @@ export default function InvoicePrintableCopy({
                     </table>
                 </div>
 
-                {/* Tax Breakdown & Total Block */}
+                {/* Tax Breakdown, Bank Details & Total Block (Exact match with S-2526-085.pdf) */}
                 <div className="flex justify-between items-start gap-4 mb-4 text-xs">
-                    <div className="flex-1 border border-slate-300 rounded p-2.5 bg-slate-50/40 text-[11px] space-y-1">
-                        <p className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Amount in Words:</p>
-                        <p className="font-extrabold text-indigo-950 italic">{numberToIndianWords(grandTotal)}</p>
-                        <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500">
-                            <span className="font-bold text-slate-700 uppercase">Declaration:</span> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
+                    <div className="flex-1 space-y-2">
+                        <div>
+                            <p className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Total In Words:</p>
+                            <p className="font-extrabold text-indigo-950 italic">{numberToIndianWords(grandTotal)}</p>
+                        </div>
+
+                        {/* Bank Details */}
+                        <div className="border border-slate-200 rounded p-2.5 bg-slate-50/50 text-[11px] space-y-0.5">
+                            <p className="font-bold text-slate-900">Bank: {config.bankName}</p>
+                            <p className="text-slate-700">A/c No.: <span className="font-mono font-bold text-slate-900">{config.accountNo}</span></p>
+                            <p className="text-slate-700">IFSC: <span className="font-mono font-bold text-slate-900">{config.ifsc}</span></p>
+                            <p className="text-slate-700">PAN No: <span className="font-mono font-bold text-slate-900">{config.pan}</span></p>
+                        </div>
+
+                        <div className="text-[10px] text-slate-500 pt-1">
+                            <span className="font-bold text-slate-700 uppercase">Terms & Conditions:</span> Subject to Mumbai Jurisdiction only
                         </div>
                     </div>
 
-                    <div className="w-64 border border-slate-800 rounded-sm overflow-hidden text-xs shrink-0">
+                    <div className="w-72 border border-slate-800 rounded-sm overflow-hidden text-xs shrink-0">
                         <div className="flex justify-between p-1.5 border-b border-slate-300 bg-slate-50">
                             <span className="text-slate-600 font-bold text-[11px]">Sub Total:</span>
                             <span className="font-bold text-slate-900">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
@@ -350,13 +406,13 @@ export default function InvoicePrintableCopy({
                             <>
                                 {computedBreakdown.taxable5 > 0 && (
                                     <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                        <span className="text-slate-600 font-bold text-[11px]">IGST (5%):</span>
+                                        <span className="text-slate-600 font-bold text-[11px]">IGST5 (5%):</span>
                                         <span className="font-bold text-slate-900">₹{computedBreakdown.tax5.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
                                 {computedBreakdown.taxable18 > 0 && (
                                     <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                        <span className="text-slate-600 font-bold text-[11px]">IGST (18%):</span>
+                                        <span className="text-slate-600 font-bold text-[11px]">IGST18 (18%):</span>
                                         <span className="font-bold text-slate-900">₹{computedBreakdown.tax18.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 )}
@@ -393,23 +449,11 @@ export default function InvoicePrintableCopy({
                                         </div>
                                     </>
                                 )}
-                                {computedBreakdown.taxable5 === 0 && computedBreakdown.taxable18 === 0 && (
-                                    <>
-                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                            <span className="text-slate-600 font-bold text-[11px]">CGST:</span>
-                                            <span className="font-bold text-slate-900">₹{(taxAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                            <span className="text-slate-600 font-bold text-[11px]">SGST:</span>
-                                            <span className="font-bold text-slate-900">₹{(taxAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                    </>
-                                )}
                             </>
                         )}
 
                         <div className="flex justify-between p-2 bg-slate-900 text-white font-black text-sm">
-                            <span className="uppercase text-[11px] tracking-wider">Grand Total:</span>
+                            <span className="uppercase text-[11px] tracking-wider">Total:</span>
                             <span>₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
@@ -417,24 +461,12 @@ export default function InvoicePrintableCopy({
             </div>
 
             {/* Signature & Stamp Footer */}
-            <div className="border-t-2 border-slate-800 pt-3 mt-4">
-                <div className="flex justify-between items-end">
-                    <div className="text-[10px] text-slate-500 space-y-0.5">
-                        <p className="font-bold text-slate-700">Terms & Conditions:</p>
-                        <p>1. Goods once sold will not be taken back or exchanged.</p>
-                        <p>2. Subject to Mumbai Jurisdiction only.</p>
-                    </div>
-
-                    <div className="text-right">
-                        <p className="text-[11px] font-black text-slate-900 uppercase tracking-wider">
-                            For {config.fullName}
-                        </p>
-                        <div className="h-12 my-1 flex justify-end items-center">
-                            <img src={config.signature} alt={config.signLabel} className="h-full w-auto object-contain" />
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-700 uppercase border-t border-slate-300 pt-0.5 inline-block px-3">
-                            {config.signLabel}
-                        </p>
+            <div className="border-t border-slate-300 pt-2 mt-4 flex justify-between items-end text-[10px] text-slate-500">
+                <p className="italic">This is computor generated invoice hence it does not required signature</p>
+                <div className="text-right">
+                    <p className="font-bold text-slate-800 uppercase mb-1">{config.signLabel}</p>
+                    <div className="h-10 flex justify-end items-center">
+                        <img src={config.signature} alt={config.signLabel} className="h-full w-auto object-contain" />
                     </div>
                 </div>
             </div>
