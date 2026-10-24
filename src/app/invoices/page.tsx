@@ -24,6 +24,7 @@ interface SalesInvoiceRecord {
     zoho_id?: string;
     date: string;
     customer_name: string;
+    delivery_address?: string;
     company: string;
     orders: {
         id: number;

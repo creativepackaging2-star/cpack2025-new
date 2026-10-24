@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
             message,
             invoiceNo,
             invoiceDate,
+            plant,
             poNumber,
             customerName,
             company,
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
 <body>
   <div class="card">
     <div class="header">
-      <h1>Tax Invoice & Certificates of Analysis</h1>
+      <h1>Tax Invoice, Certificates of Analysis & E-way Bill</h1>
       <p>${company || 'Creative Printers'}</p>
     </div>
     <div class="content">
@@ -103,6 +104,11 @@ export async function POST(req: NextRequest) {
           <span class="meta-label">Invoice Date:</span>
           <span class="meta-val">${invoiceDate || new Date().toLocaleDateString('en-IN')}</span>
         </div>
+        ${plant ? `
+        <div class="meta-row">
+          <span class="meta-label">Plant:</span>
+          <span class="meta-val" style="color: #0f172a; font-weight: 700;">${plant}</span>
+        </div>` : ''}
         ${poNumber ? `
         <div class="meta-row">
           <span class="meta-label">PO Number:</span>
@@ -119,7 +125,7 @@ export async function POST(req: NextRequest) {
         </div>` : ''}
       </div>
 
-      <div class="message-box">${message || 'Please find attached the official Tax Invoice & Certificates of Analysis (COAs) for dispatch.'}</div>
+      <div class="message-box">${message || 'Please find attached the Tax Invoice, Certificates of Analysis & E-way Bill.'}</div>
 
       ${products.length > 0 ? `
       <h3 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 20px 0 8px 0; text-transform: uppercase;">
@@ -143,12 +149,12 @@ export async function POST(req: NextRequest) {
 
       ${pdfBuffer ? `
       <div>
-        <span class="attach-badge">📎 Attached: ${attachmentFilename} (Tax Invoices + COAs)</span>
+        <span class="attach-badge">📎 Attached: ${attachmentFilename} (Tax Invoices + COAs + E-way Bill)</span>
       </div>
       ` : ''}
     </div>
     <div class="footer">
-      Sent via Creative Printers Manufacturing & Invoicing Portal • from ${gmailUser}
+      Sent via ${company || 'Creative Printers'} • Accounts Department
     </div>
   </div>
 </body>
@@ -156,9 +162,11 @@ export async function POST(req: NextRequest) {
         `;
 
         // 4. Construct plain text fallback
-        let plainText = `${message || 'Please find attached the official Tax Invoice & Certificates of Analysis (COAs) for dispatch.'}\n\n`;
+        let plainText = `${message || 'Please find attached the Tax Invoice, Certificates of Analysis & E-way Bill.'}\n\n`;
+        plainText += `Invoice Details:\n`;
         plainText += `Invoice No: ${sanitizedInvNo}\n`;
         plainText += `Invoice Date: ${invoiceDate}\n`;
+        if (plant) plainText += `Plant: ${plant}\n`;
         if (poNumber) plainText += `PO Number: ${poNumber}\n`;
         plainText += `Customer: ${customerName}\n\n`;
         if (products.length > 0) {
@@ -169,7 +177,7 @@ export async function POST(req: NextRequest) {
             plainText += `\n`;
         }
         if (totalBoxes) plainText += `Total Boxes: ${totalBoxes} Boxes\n\n`;
-        plainText += `Regards,\n${company || 'Creative Printers'}`;
+        plainText += `Kindly acknowledge receipt.\n\nRegards,\nAccounts Department\n${company || 'Creative Printers'}`;
 
         // 5. Send mail
         const mailOptions: any = {

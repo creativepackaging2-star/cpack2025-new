@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
                 remarks,
                 status,
                 delivery_date,
+                delivery_address,
                 created_at,
                 invoice_no
             `)
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
                     invoice_number: rawInv,
                     date: ord.delivery_date || ord.created_at?.split('T')[0] || '',
                     customer_name: ord.customer_name?.trim() || 'BDR Pharmaceuticals International Pvt. Ltd.',
+                    delivery_address: ord.delivery_address || '',
                     company: ord.from_our_company || 'Creative Printers',
                     orders: [],
                     total_delivered_qty: 0,
@@ -61,6 +63,8 @@ export async function GET(req: NextRequest) {
                     pdf_url: '',
                     invoice_url: '',
                 };
+            } else if (!invoiceMap[rawInv].delivery_address && ord.delivery_address) {
+                invoiceMap[rawInv].delivery_address = ord.delivery_address;
             }
 
             const delQty = ord.qty_delivered || ord.quantity || 0;

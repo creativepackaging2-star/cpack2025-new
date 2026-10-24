@@ -17,6 +17,7 @@ interface SendInvoiceEmailModalProps {
         invoice_number: string;
         date?: string;
         customer_name?: string;
+        delivery_address?: string;
         company?: string;
         orders?: any[];
         pdf_available?: boolean;
@@ -24,6 +25,49 @@ interface SendInvoiceEmailModalProps {
         po_number?: string;
         total_boxes?: number;
     } | null;
+}
+
+export function formatToDDMMYYYY(dateStr?: string | null): string {
+    if (!dateStr) {
+        const now = new Date();
+        return `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+    }
+    const s = dateStr.trim();
+    // If already DD-MM-YYYY
+    if (/^\d{2}-\d{2}-\d{4}$/.test(s)) return s;
+    // If YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        const [y, m, d] = s.slice(0, 10).split('-');
+        return `${d}-${m}-${y}`;
+    }
+    // If DD/MM/YYYY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+        return s.replace(/\//g, '-');
+    }
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    }
+    return s;
+}
+
+export function detectPlant(shipToAddress?: string | null, customerName?: string | null): string {
+    const addr = (shipToAddress || '').toLowerCase();
+    if (addr.includes('halol')) return 'BDR Halol';
+    if (addr.includes('padra')) return 'BDR Padra';
+
+    const cust = (customerName || '').trim();
+    if (addr.includes('bdr') || cust.toLowerCase().includes('bdr')) {
+        return 'BDR Pharmaceuticals';
+    }
+    return cust || 'Client Site';
+}
+
+export function detectSenderCompany(companyStr?: string | null): string {
+    const c = (companyStr || '').toLowerCase();
+    if (c.includes('print')) return 'Creative Printers';
+    if (c.includes('enter')) return 'Creative Enterprise';
+    return 'Creative Packaging';
 }
 
 export default function SendInvoiceEmailModal({ isOpen, onClose, invoice }: SendInvoiceEmailModalProps) {
@@ -55,11 +99,11 @@ export default function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Send
     useEffect(() => {
         if (invoice) {
             const invNo = invoice.invoice_number;
-            const cust = invoice.customer_name || 'BDR Pharmaceuticals';
-            const comp = invoice.company || 'Creative Printers';
-            const invDate = invoice.date || new Date().toLocaleDateString('en-IN');
+            const comp = detectSenderCompany(invoice.company);
+            const plant = detectPlant(invoice.delivery_address, invoice.customer_name);
+            const formattedDate = formatToDDMMYYYY(invoice.date);
 
-            setSubject(`Dispatch Documents & Tax Invoice ${invNo} - ${cust}`);
+            setSubject(`Dispatch Documents & Tax Invoice ${invNo} - ${plant}`);
 
             // Build products text list
             let productsText = '';
@@ -71,24 +115,25 @@ export default function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Send
                 }).join('\n');
             }
 
-            const initialMsg = `Dear Team,
+            const exactMsg = `Dear Team,
 
-Please find attached the official Tax Invoice & Certificates of Analysis (COAs) for dispatch.
+Please find attached the Tax Invoice, Certificates of Analysis & E-way Bill.
 
 Invoice Details:
 Invoice No: ${invNo}
-Invoice Date: ${invDate}
-Customer: ${cust}
+Invoice Date: ${formattedDate}
+Plant: ${plant}
 
 Dispatched Products:
-${productsText || '- Products dispatched as per invoice'}
+${productsText || '- Dispatched products as per invoice'}
 
 Kindly acknowledge receipt.
 
 Regards,
+Accounts Department
 ${comp}`;
 
-            setMessage(initialMsg);
+            setMessage(exactMsg);
             setSentSuccess(false);
             setErrorMessage(null);
         }
@@ -151,6 +196,10 @@ ${comp}`;
         setSending(true);
         setErrorMessage(null);
 
+        const companyName = detectSenderCompany(invoice.company);
+        const plantName = detectPlant(invoice.delivery_address, invoice.customer_name);
+        const formattedDate = formatToDDMMYYYY(invoice.date);
+
         try {
             const res = await fetch('/api/send-invoice-email', {
                 method: 'POST',
@@ -160,9 +209,10 @@ ${comp}`;
                     subject,
                     message,
                     invoiceNo: invoice.invoice_number,
-                    invoiceDate: invoice.date,
+                    invoiceDate: formattedDate,
+                    plant: plantName,
                     customerName: invoice.customer_name,
-                    company: invoice.company,
+                    company: companyName,
                     products: (invoice.orders || []).map(o => ({
                         name: o.product_name,
                         quantity: o.qty_delivered || o.quantity || 0,
@@ -209,7 +259,7 @@ ${comp}`;
                                 </span>
                             </div>
                             <p className="text-xs text-slate-400">
-                                Send unified Tax Invoices & official COAs directly to customer contacts
+                                Send unified Tax Invoices, official COAs & E-way Bill details to customer contacts
                             </p>
                         </div>
                     </div>
@@ -320,7 +370,7 @@ ${comp}`;
                             Message Body
                         </label>
                         <textarea
-                            rows={8}
+                            rows={12}
                             value={message}
                             onChange={e => setMessage(e.target.value)}
                             className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors leading-relaxed"
@@ -337,7 +387,7 @@ ${comp}`;
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-bold text-slate-800">{attachmentFilename}</span>
                                     <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-300">
-                                        Tax Invoices + COAs
+                                        Tax Invoices + COAs + E-way Bill
                                     </span>
                                 </div>
                                 <p className="text-[11px] text-slate-500 mt-0.5">
