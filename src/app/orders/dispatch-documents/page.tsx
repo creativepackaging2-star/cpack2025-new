@@ -87,7 +87,7 @@ function DispatchDocumentsContent() {
 
     // Zoho Sync state
     const [isCreatingZoho, setIsCreatingZoho] = useState(false);
-    const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string; url?: string } | null>(null);
 
     useEffect(() => {
         if (!idsParam) {
@@ -257,7 +257,11 @@ function DispatchDocumentsContent() {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Failed to create invoice in Zoho Books.');
 
-            setFeedback({ type: 'success', message: json.message || 'Invoice created successfully in Zoho Books!' });
+            setFeedback({
+                type: 'success',
+                message: json.message || 'Invoice created successfully in Zoho Books!',
+                url: json.invoiceUrl,
+            });
         } catch (err: any) {
             console.error('Zoho error:', err);
             setFeedback({ type: 'error', message: err.message || 'Error communicating with Zoho Books.' });
@@ -438,6 +442,16 @@ function DispatchDocumentsContent() {
                     }`}>
                         {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
                         <span>{feedback.message}</span>
+                        {feedback.url && (
+                            <a
+                                href={feedback.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 underline bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-[11px] ml-2 font-bold cursor-pointer transition-colors"
+                            >
+                                View in Zoho Books &rarr;
+                            </a>
+                        )}
                     </div>
                 )}
             </header>
