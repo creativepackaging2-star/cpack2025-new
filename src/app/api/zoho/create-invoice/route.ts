@@ -159,7 +159,17 @@ export async function POST(req: NextRequest) {
                 taxId = isInterState ? '874645000000060433' : '874645000000060439';
             }
 
+            // Map to active item_id in Zoho Catalog:
+            // Cartons: 874645000002219003, LEAFLET: 874645000002219025, Label: 874645000002219014
+            let itemId = '874645000002219003';
+            if (hsn.startsWith('4821') || categoryTitle.toLowerCase().includes('label')) {
+                itemId = '874645000002219014'; // Label
+            } else if (hsn.startsWith('4901') || categoryTitle.toLowerCase().includes('leaflet') || categoryTitle.toLowerCase().includes('insert')) {
+                itemId = '874645000002219025'; // LEAFLET
+            }
+
             return {
+                item_id: itemId,
                 name: categoryTitle,
                 description: descParts.join('\n'),
                 rate: it.rate,
@@ -172,22 +182,21 @@ export async function POST(req: NextRequest) {
         const formattedDate = formatDateForZoho(invoiceDate);
         const formattedPoDate = poDate ? formatDateForZoho(poDate) : formattedDate;
 
-        // 4. Custom fields matching S-2526-085 (PO No, PO Date, No of Boxes)
-        const customFields = [
-            {
-                customfield_id: '874645000000060055', // PO No
-                value: poNumber || '',
-            },
-            {
+        // 4. Custom fields (Only PO Date on the right side - PO# is already shown on the left via reference_number)
+        const customFields = [];
+
+        if (formattedPoDate) {
+            customFields.push({
                 customfield_id: '874645000000060057', // PO Date
                 value: formattedPoDate,
-            },
-        ];
+            });
+        }
 
-        if (noOfBoxes !== undefined && noOfBoxes !== '') {
+        // No of boxes logic is deferred by user; omitted unless positive number passed
+        if (noOfBoxes && Number(noOfBoxes) > 0) {
             customFields.push({
                 customfield_id: '874645000000066053', // No of Boxes
-                value: Number(noOfBoxes) || 0,
+                value: Number(noOfBoxes),
             } as any);
         }
 
@@ -208,7 +217,7 @@ export async function POST(req: NextRequest) {
                     custom_fields: customFields,
                     line_items: lineItems,
                     terms: 'Subject to Mumbai Jurisdiction only \n',
-                    notes: `Billed from: ${billFromCompany} | PO: ${poNumber || 'N/A'}\nDelivery Address: ${deliveryAddress || '-'}`,
+                    notes: '',
                 })
             }
         );

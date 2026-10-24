@@ -17,7 +17,7 @@ export interface InvoiceCopyItem {
 }
 
 interface InvoicePrintableCopyProps {
-    copyType: 'ORIGINAL FOR RECIPIENT' | 'DUPLICATE FOR TRANSPORTER' | 'TRIPLICATE FOR SUPPLIER';
+    copyType?: string;
     company: CompanyName;
     invoiceNo: string;
     invoiceDate: string;
@@ -196,9 +196,11 @@ export default function InvoicePrintableCopy({
                     <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">
                         TAX INVOICE
                     </span>
-                    <span className="px-3 py-1 rounded bg-slate-900 text-white font-extrabold text-[10px] tracking-widest uppercase">
-                        {copyType}
-                    </span>
+                    {copyType ? (
+                        <span className="px-3 py-1 rounded bg-slate-900 text-white font-extrabold text-[10px] tracking-widest uppercase">
+                            {copyType}
+                        </span>
+                    ) : null}
                 </div>
 
                 {/* Company Header & Meta Table (Matching S-2526-085.pdf) */}

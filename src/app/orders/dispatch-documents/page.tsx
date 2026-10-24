@@ -90,6 +90,7 @@ function DispatchDocumentsContent() {
     // Zoho Sync state
     const [isCreatingZoho, setIsCreatingZoho] = useState(false);
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string; url?: string } | null>(null);
+    const [zohoSuccessData, setZohoSuccessData] = useState<{ invoiceNumber: string; invoiceUrl: string } | null>(null);
 
     useEffect(() => {
         if (!idsParam) {
@@ -538,34 +539,34 @@ function DispatchDocumentsContent() {
                             </button>
                         </div>
 
-                        {/* Print / Save PDF Button */}
-                        <button
-                            type="button"
-                            onClick={handlePrint}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black shadow-md shadow-indigo-600/30 transition-all active:scale-95 cursor-pointer"
-                        >
-                            <Printer className="w-4 h-4" />
-                            Print / Save PDF (Triplicate + COAs)
-                        </button>
-
-                        {/* Zoho Sync Button */}
+                        {/* Primary Action: Generate in Zoho Books */}
                         <button
                             type="button"
                             onClick={handleCreateZohoInvoice}
                             disabled={isCreatingZoho}
-                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
                         >
                             {isCreatingZoho ? (
                                 <>
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    <span>Syncing Zoho...</span>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Creating in Zoho Books...</span>
                                 </>
                             ) : (
                                 <>
-                                    <Sparkles className="w-3.5 h-3.5" />
-                                    <span>Zoho Books</span>
+                                    <Sparkles className="w-4 h-4 text-amber-300" />
+                                    <span>Generate Official Invoice in Zoho Books</span>
                                 </>
                             )}
+                        </button>
+
+                        {/* Secondary Action: Print COAs & Documents */}
+                        <button
+                            type="button"
+                            onClick={handlePrint}
+                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition-all active:scale-95 cursor-pointer"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Print COAs & Documents</span>
                         </button>
                     </div>
                 </div>
@@ -767,15 +768,14 @@ function DispatchDocumentsContent() {
                     3. Triplicate for Supplier
                    ======================================================== */}
                 <div className="space-y-10 print:space-y-0">
-                    {/* Copy 1: Original */}
+                    {/* Copy 1 */}
                     <div className="relative">
                         <div className="no-print text-center text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
                             <span className="w-8 h-px bg-slate-300"></span>
-                            Page 1: Invoice (Original for Recipient)
+                            Page 1: Tax Invoice (Copy 1)
                             <span className="w-8 h-px bg-slate-300"></span>
                         </div>
                         <InvoicePrintableCopy
-                            copyType="ORIGINAL FOR RECIPIENT"
                             company={company}
                             invoiceNo={invoiceNo}
                             invoiceDate={invoiceDate}
@@ -793,15 +793,14 @@ function DispatchDocumentsContent() {
                         />
                     </div>
 
-                    {/* Copy 2: Duplicate */}
+                    {/* Copy 2 */}
                     <div className="relative">
                         <div className="no-print text-center text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
                             <span className="w-8 h-px bg-slate-300"></span>
-                            Page 2: Invoice (Duplicate for Transporter)
+                            Page 2: Tax Invoice (Copy 2)
                             <span className="w-8 h-px bg-slate-300"></span>
                         </div>
                         <InvoicePrintableCopy
-                            copyType="DUPLICATE FOR TRANSPORTER"
                             company={company}
                             invoiceNo={invoiceNo}
                             invoiceDate={invoiceDate}
@@ -819,15 +818,14 @@ function DispatchDocumentsContent() {
                         />
                     </div>
 
-                    {/* Copy 3: Triplicate */}
+                    {/* Copy 3 */}
                     <div className="relative">
                         <div className="no-print text-center text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
                             <span className="w-8 h-px bg-slate-300"></span>
-                            Page 3: Invoice (Triplicate for Supplier)
+                            Page 3: Tax Invoice (Copy 3)
                             <span className="w-8 h-px bg-slate-300"></span>
                         </div>
                         <InvoicePrintableCopy
-                            copyType="TRIPLICATE FOR SUPPLIER"
                             company={company}
                             invoiceNo={invoiceNo}
                             invoiceDate={invoiceDate}
