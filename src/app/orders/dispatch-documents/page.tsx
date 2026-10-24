@@ -159,63 +159,168 @@ function DispatchDocumentsContent() {
         })();
     }, [idsParam]);
 
-    // Format Invoice Line Items
-    const invoiceItems: InvoiceCopyItem[] = useMemo(() => {
-        const items: InvoiceCopyItem[] = orders.map(o => {
-            const poInfo = parseOrderPoInfo(o.remarks, o.rate);
-            const exactPoName = poInfo.isTagged ? poInfo.poItemName : (o.product_name || 'Item');
-            const rate = poInfo.isTagged ? poInfo.rate : (o.rate || 0);
-            const deliveryQty = o.qty_delivered || o.quantity || 0;
-            const amount = Math.round(deliveryQty * rate * 100) / 100;
+    // Line items state with full HSN, GST rate, and Material Code editing
+    const [editableItems, setEditableItems] = useState<{
+        orderId: string | number;
+        materialCode: string;
+        exactPoName: string;
+        packingDetail: string;
+        hsn: string;
+        gstRate: number;
+        deliveryQty: number;
+        rate: number;
+        amount: number;
+        isProcessing?: boolean;
+    }[]>([]);
 
-            // Auto HSN
-            let hsn = '4819';
-            const pLower = (o.product_name || '').toLowerCase();
-            if (pLower.includes('label')) hsn = '4821';
-            if (pLower.includes('insert') || pLower.includes('leaflet')) hsn = '4901';
+    const detectDefaultHsnAndGst = (productName: string, artworkCode?: string) => {
+        const p = (productName || '').toLowerCase();
+        const ac = (artworkCode || '').toLowerCase();
 
-            return {
-                orderId: o.id,
-                exactPoName,
-                packingDetail: o.packing_detail || '',
-                hsn,
-                deliveryQty,
-                rate,
-                amount,
-            };
-        });
-
-        // Add separate line item for processing charges (apart from actual label qty & rate)
-        if (processingChargeState.enabled && processingChargeState.amount > 0) {
-            const q = processingChargeState.qty || 1;
-            const r = processingChargeState.amount;
-            const amt = Math.round(q * r * 100) / 100;
-
-            items.push({
-                orderId: 'proc-charge-line',
-                exactPoName: processingChargeState.name || 'Label Processing Charges',
-                packingDetail: '-',
-                hsn: '9988',
-                deliveryQty: q,
-                rate: r,
-                amount: amt,
-            });
+        // Leaflet / Insert -> 49011020, 5%
+        if (p.includes('insert') || p.includes('leaflet') || p.includes('outsert') || p.includes('pil') || ac.includes('/i')) {
+            return { hsn: '49011020', gstRate: 5 };
         }
+        // Label -> 48211020, 18%
+        if (p.includes('label') || p.includes('sticker') || ac.includes('/l')) {
+            return { hsn: '48211020', gstRate: 18 };
+        }
+        // Carton -> 48192010, 5%
+        if (p.includes('carton') || p.includes('box') || p.includes('outer') || ac.includes('/c')) {
+            return { hsn: '48192010', gstRate: 5 };
+        }
+        return { hsn: '48192010', gstRate: 5 };
+    };
 
-        return items;
+    useEffect(() => {
+        if (!orders || orders.length === 0) return;
+
+        setEditableItems(prevItems => {
+            const newItems = orders.map(o => {
+                const poInfo = parseOrderPoInfo(o.remarks, o.rate);
+                const exactPoName = poInfo.isTagged && poInfo.poItemName ? poInfo.poItemName : (o.product_name || 'Item');
+                const rate = poInfo.isTagged && poInfo.rate ? poInfo.rate : (o.rate || 0);
+                const deliveryQty = o.qty_delivered || o.quantity || 0;
+                const materialCode = poInfo.materialCode || '';
+                const defaultHsnGst = detectDefaultHsnAndGst(o.product_name, o.products?.artwork_code);
+
+                // Preserve existing user customization if already edited
+                const existing = prevItems.find(it => String(it.orderId) === String(o.id));
+                const finalHsn = existing ? existing.hsn : defaultHsnGst.hsn;
+                const finalGst = existing ? existing.gstRate : defaultHsnGst.gstRate;
+                const finalQty = existing ? existing.deliveryQty : deliveryQty;
+                const finalRate = existing ? existing.rate : rate;
+                const finalPacking = existing ? existing.packingDetail : (o.packing_detail || '');
+                const finalMatCode = existing ? existing.materialCode : materialCode;
+                const finalName = existing ? existing.exactPoName : exactPoName;
+
+                return {
+                    orderId: o.id,
+                    materialCode: finalMatCode,
+                    exactPoName: finalName,
+                    packingDetail: finalPacking,
+                    hsn: finalHsn,
+                    gstRate: finalGst,
+                    deliveryQty: finalQty,
+                    rate: finalRate,
+                    amount: Math.round(finalQty * finalRate * 100) / 100,
+                    isProcessing: false,
+                };
+            });
+
+            // Add separate line item for processing charges if enabled
+            if (processingChargeState.enabled && processingChargeState.amount > 0) {
+                const q = processingChargeState.qty || 1;
+                const r = processingChargeState.amount;
+                const existingProc = prevItems.find(it => it.orderId === 'proc-charge-line');
+                newItems.push({
+                    orderId: 'proc-charge-line',
+                    materialCode: '',
+                    exactPoName: processingChargeState.name || 'Label Processing Charges',
+                    packingDetail: '-',
+                    hsn: existingProc ? existingProc.hsn : '48211020',
+                    gstRate: existingProc ? existingProc.gstRate : 18,
+                    deliveryQty: q,
+                    rate: r,
+                    amount: Math.round(q * r * 100) / 100,
+                    isProcessing: true,
+                });
+            }
+
+            return newItems;
+        });
     }, [orders, processingChargeState]);
 
-    const subtotal = useMemo(() => {
-        return invoiceItems.reduce((sum, it) => sum + (it.amount || 0), 0);
-    }, [invoiceItems]);
+    const handleUpdateItem = (orderId: string | number, field: string, value: any) => {
+        setEditableItems(prev => prev.map(item => {
+            if (item.orderId !== orderId) return item;
+            const updated: any = { ...item, [field]: value };
+            if (field === 'hsn') {
+                if (value === '48192010') updated.gstRate = 5;
+                else if (value === '48211020') updated.gstRate = 18;
+                else if (value === '49011020') updated.gstRate = 5;
+            }
+            if (field === 'deliveryQty' || field === 'rate') {
+                const q = field === 'deliveryQty' ? parseFloat(value) || 0 : item.deliveryQty;
+                const r = field === 'rate' ? parseFloat(value) || 0 : item.rate;
+                updated.amount = Math.round(q * r * 100) / 100;
+            }
+            return updated;
+        }));
+    };
 
-    const taxAmount = useMemo(() => {
-        return Math.round(subtotal * 0.18 * 100) / 100;
-    }, [subtotal]);
+    // Calculate dynamic Tax Breakdown (supporting mixed 5% and 18% items)
+    const taxBreakdown = useMemo(() => {
+        let subtotal = 0;
+        let taxable5 = 0;
+        let tax5 = 0;
+        let taxable18 = 0;
+        let tax18 = 0;
 
-    const grandTotal = useMemo(() => {
-        return Math.round((subtotal + taxAmount) * 100) / 100;
-    }, [subtotal, taxAmount]);
+        for (const it of editableItems) {
+            const amt = Math.round((Number(it.deliveryQty || 0) * Number(it.rate || 0)) * 100) / 100;
+            subtotal += amt;
+            if (Number(it.gstRate) === 5) {
+                taxable5 += amt;
+                tax5 += Math.round(amt * 0.05 * 100) / 100;
+            } else {
+                taxable18 += amt;
+                tax18 += Math.round(amt * 0.18 * 100) / 100;
+            }
+        }
+
+        const totalTax = Math.round((tax5 + tax18) * 100) / 100;
+        const grandTotal = Math.round((subtotal + totalTax) * 100) / 100;
+
+        return {
+            subtotal: Math.round(subtotal * 100) / 100,
+            taxable5: Math.round(taxable5 * 100) / 100,
+            tax5: Math.round(tax5 * 100) / 100,
+            taxable18: Math.round(taxable18 * 100) / 100,
+            tax18: Math.round(tax18 * 100) / 100,
+            totalTax,
+            grandTotal,
+        };
+    }, [editableItems]);
+
+    // Format Printable Line Items
+    const invoiceItems: InvoiceCopyItem[] = useMemo(() => {
+        return editableItems.map(it => ({
+            orderId: it.orderId,
+            materialCode: it.materialCode,
+            exactPoName: it.exactPoName,
+            packingDetail: it.packingDetail,
+            hsn: it.hsn,
+            gstRate: it.gstRate,
+            deliveryQty: it.deliveryQty,
+            rate: it.rate,
+            amount: it.amount,
+        }));
+    }, [editableItems]);
+
+    const subtotal = taxBreakdown.subtotal;
+    const taxAmount = taxBreakdown.totalTax;
+    const grandTotal = taxBreakdown.grandTotal;
 
     const handlePrint = () => {
         window.print();
@@ -233,14 +338,16 @@ function DispatchDocumentsContent() {
                 customerName,
                 deliveryAddress,
                 taxType,
-                items: invoiceItems.map(it => ({
+                items: editableItems.map(it => ({
                     orderId: it.orderId,
+                    materialCode: it.materialCode,
                     name: it.exactPoName,
-                    description: it.packingDetail ? `Packing Details: ${it.packingDetail}` : '',
+                    packingDetail: it.packingDetail,
+                    description: it.packingDetail && it.packingDetail !== '-' ? `Packing Details: ${it.packingDetail}` : '',
                     quantity: it.deliveryQty,
                     rate: it.rate,
                     hsn_or_sac: it.hsn,
-                    tax_percentage: 18,
+                    tax_percentage: it.gstRate,
                     item_total: it.amount,
                 })),
                 subtotal,
@@ -460,6 +567,172 @@ function DispatchDocumentsContent() {
             <main className="max-w-5xl mx-auto py-8 print:py-0 space-y-10 print:space-y-0">
 
                 {/* ========================================================
+                    INTERACTIVE INVOICE ITEMS, HSN & GST CONFIGURATION
+                    (Screen only, hidden when printing)
+                   ======================================================== */}
+                <div className="no-print bg-white rounded-2xl shadow-xl border border-slate-300 overflow-hidden mb-6">
+                    <div className="px-5 py-3.5 bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                            <span className="p-1.5 bg-indigo-600 rounded-lg text-white">
+                                <FileCheck className="w-4 h-4" />
+                            </span>
+                            <div>
+                                <h2 className="text-xs font-black uppercase tracking-wider">
+                                    Invoice Items, HSN & GST Setup
+                                </h2>
+                                <p className="text-[10px] text-slate-400">
+                                    HSN auto-assigned: Carton (48192010 - 5%), Label (48211020 - 18%), Leaflet (49011020 - 5%). Select or change below.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Tax Type Selector: IGST vs CGST+SGST */}
+                        <div className="flex items-center gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase px-1">GST Type:</span>
+                            <button
+                                type="button"
+                                onClick={() => setTaxType('IGST')}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                                    taxType === 'IGST'
+                                        ? 'bg-indigo-600 text-white shadow'
+                                        : 'text-slate-300 hover:text-white'
+                                }`}
+                            >
+                                IGST (Inter-State)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setTaxType('CGST_SGST')}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                                    taxType === 'CGST_SGST'
+                                        ? 'bg-indigo-600 text-white shadow'
+                                        : 'text-slate-300 hover:text-white'
+                                }`}
+                            >
+                                CGST + SGST (Intra-State)
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Table of items */}
+                    <div className="p-4 overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-200 text-slate-500 text-[10px] font-black uppercase bg-slate-50/50">
+                                    <th className="py-2 px-2 w-8 text-center">#</th>
+                                    <th className="py-2 px-2 min-w-[280px]">Material Code & Description</th>
+                                    <th className="py-2 px-2 min-w-[220px]">HSN Code</th>
+                                    <th className="py-2 px-2 w-20 text-center">GST %</th>
+                                    <th className="py-2 px-2 w-24 text-right">Qty</th>
+                                    <th className="py-2 px-2 w-24 text-right">Rate (₹)</th>
+                                    <th className="py-2 px-2 w-28 text-right">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {editableItems.map((item, idx) => (
+                                    <tr key={item.orderId || idx} className="hover:bg-slate-50/60 transition-colors">
+                                        <td className="py-2.5 px-2 text-center font-bold text-slate-400">
+                                            {idx + 1}
+                                        </td>
+                                        <td className="py-2.5 px-2 space-y-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase shrink-0">Material Code:</span>
+                                                <input
+                                                    value={item.materialCode || ''}
+                                                    placeholder="e.g. 2020000643"
+                                                    onChange={e => handleUpdateItem(item.orderId, 'materialCode', e.target.value)}
+                                                    className="w-36 bg-slate-50 border border-slate-200 rounded px-2 py-0.5 text-xs font-mono font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                            <input
+                                                value={item.exactPoName}
+                                                onChange={e => handleUpdateItem(item.orderId, 'exactPoName', e.target.value)}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            />
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] text-slate-500 font-semibold shrink-0">Packing Details:</span>
+                                                <input
+                                                    value={item.packingDetail}
+                                                    placeholder="e.g. 1000 per roll / 500 per box"
+                                                    onChange={e => handleUpdateItem(item.orderId, 'packingDetail', e.target.value)}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="py-2.5 px-2">
+                                            <select
+                                                value={item.hsn}
+                                                onChange={e => handleUpdateItem(item.orderId, 'hsn', e.target.value)}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-mono font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                            >
+                                                <option value="48192010">48192010 - Carton (5% GST)</option>
+                                                <option value="48211020">48211020 - Label (18% GST)</option>
+                                                <option value="49011020">49011020 - Leaflet / Insert (5% GST)</option>
+                                            </select>
+                                        </td>
+                                        <td className="py-2.5 px-2 text-center">
+                                            <select
+                                                value={item.gstRate}
+                                                onChange={e => handleUpdateItem(item.orderId, 'gstRate', Number(e.target.value))}
+                                                className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-xs font-bold text-center text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                                            >
+                                                <option value={5}>5%</option>
+                                                <option value={18}>18%</option>
+                                                <option value={0}>0%</option>
+                                                <option value={12}>12%</option>
+                                            </select>
+                                        </td>
+                                        <td className="py-2.5 px-2 text-right">
+                                            <input
+                                                type="number"
+                                                value={item.deliveryQty}
+                                                onChange={e => handleUpdateItem(item.orderId, 'deliveryQty', e.target.value)}
+                                                className="w-20 text-right bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            />
+                                        </td>
+                                        <td className="py-2.5 px-2 text-right">
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={item.rate}
+                                                onChange={e => handleUpdateItem(item.orderId, 'rate', e.target.value)}
+                                                className="w-20 text-right bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            />
+                                        </td>
+                                        <td className="py-2.5 px-2 text-right font-mono font-bold text-slate-900">
+                                            ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Tax Breakdown Bar */}
+                    <div className="px-5 py-3 bg-slate-100 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-4 text-slate-600">
+                            <span>Subtotal: <strong className="text-slate-900 font-mono">₹{taxBreakdown.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></span>
+                            {taxBreakdown.taxable5 > 0 && (
+                                <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-medium">
+                                    5% GST on ₹{taxBreakdown.taxable5.toLocaleString()}: <strong>₹{taxBreakdown.tax5.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+                                </span>
+                            )}
+                            {taxBreakdown.taxable18 > 0 && (
+                                <span className="bg-blue-100 text-blue-900 px-2 py-0.5 rounded font-medium">
+                                    18% GST on ₹{taxBreakdown.taxable18.toLocaleString()}: <strong>₹{taxBreakdown.tax18.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-slate-600">Total Tax: <strong className="text-slate-900 font-mono">₹{taxBreakdown.totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></span>
+                            <span className="bg-slate-900 text-white px-3 py-1 rounded-lg font-black text-xs font-mono">
+                                Grand Total: ₹{taxBreakdown.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ========================================================
                     PART 1: INVOICE IN TRIPLICATE (3 COPIES)
                     1. Original for Recipient
                     2. Duplicate for Transporter
@@ -486,6 +759,7 @@ function DispatchDocumentsContent() {
                             subtotal={subtotal}
                             taxAmount={taxAmount}
                             grandTotal={grandTotal}
+                            taxBreakdown={taxBreakdown}
                         />
                     </div>
 
@@ -509,6 +783,7 @@ function DispatchDocumentsContent() {
                             subtotal={subtotal}
                             taxAmount={taxAmount}
                             grandTotal={grandTotal}
+                            taxBreakdown={taxBreakdown}
                         />
                     </div>
 
@@ -532,6 +807,7 @@ function DispatchDocumentsContent() {
                             subtotal={subtotal}
                             taxAmount={taxAmount}
                             grandTotal={grandTotal}
+                            taxBreakdown={taxBreakdown}
                         />
                     </div>
                 </div>

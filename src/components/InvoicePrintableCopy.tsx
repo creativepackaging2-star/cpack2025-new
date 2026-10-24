@@ -5,9 +5,11 @@ import { CompanyName } from './GenerateDocsModal';
 
 export interface InvoiceCopyItem {
     orderId: number | string;
+    materialCode?: string;
     exactPoName: string;
     packingDetail: string;
     hsn: string;
+    gstRate?: number;
     deliveryQty: number;
     rate: number;
     amount: number;
@@ -26,6 +28,13 @@ interface InvoicePrintableCopyProps {
     subtotal: number;
     taxAmount: number;
     grandTotal: number;
+    taxBreakdown?: {
+        taxable5: number;
+        tax5: number;
+        taxable18: number;
+        tax18: number;
+        totalTax: number;
+    };
 }
 
 const COMPANY_CONFIG: Record<CompanyName, {
@@ -124,9 +133,37 @@ export default function InvoicePrintableCopy({
     subtotal,
     taxAmount,
     grandTotal,
+    taxBreakdown,
 }: InvoicePrintableCopyProps) {
     const config = COMPANY_CONFIG[company] || COMPANY_CONFIG['Creative Packaging'];
     const totalQty = items.reduce((sum, it) => sum + (it.deliveryQty || 0), 0);
+
+    // Compute breakdown if not explicitly passed
+    const computedBreakdown = React.useMemo(() => {
+        if (taxBreakdown) return taxBreakdown;
+        let t5 = 0;
+        let t18 = 0;
+        let tb5 = 0;
+        let tb18 = 0;
+        for (const it of items) {
+            const amt = it.amount || (it.deliveryQty * it.rate);
+            const rate = it.gstRate || (it.hsn?.startsWith('4821') ? 18 : 5);
+            if (rate === 5) {
+                tb5 += amt;
+                t5 += amt * 0.05;
+            } else {
+                tb18 += amt;
+                t18 += amt * 0.18;
+            }
+        }
+        return {
+            taxable5: tb5,
+            tax5: Math.round(t5 * 100) / 100,
+            taxable18: tb18,
+            tax18: Math.round(t18 * 100) / 100,
+            totalTax: Math.round((t5 + t18) * 100) / 100,
+        };
+    }, [items, taxBreakdown]);
 
     return (
         <div className="invoice-copy-page bg-white text-slate-900 font-sans p-8 md:p-10 border border-slate-300 shadow-xl print:shadow-none print:border-none print:p-6 print:m-0 w-full max-w-[210mm] mx-auto min-h-[297mm] flex flex-col justify-between"
@@ -226,39 +263,53 @@ export default function InvoicePrintableCopy({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-300">
-                            {items.map((item, idx) => (
-                                <tr key={item.orderId || idx} className="align-top">
-                                    <td className="p-2 border-r border-slate-800 text-center font-bold text-slate-500">
-                                        {idx + 1}
-                                    </td>
-                                    <td className="p-2 border-r border-slate-800 space-y-1">
-                                        {/* Exact PO Item Name */}
-                                        <p className="font-extrabold text-slate-950 uppercase tracking-tight text-xs">
-                                            {item.exactPoName}
-                                        </p>
-                                        {/* Packing Details directly underneath */}
-                                        {item.packingDetail ? (
-                                            <p className="text-[11px] font-semibold text-slate-700 bg-amber-50/70 inline-block px-1.5 py-0.5 rounded border border-amber-200">
-                                                Packing Details: <span className="text-slate-900 font-bold">{item.packingDetail}</span>
+                            {items.map((item, idx) => {
+                                const effectiveGst = item.gstRate || (item.hsn?.startsWith('4821') ? 18 : 5);
+                                return (
+                                    <tr key={item.orderId || idx} className="align-top">
+                                        <td className="p-2 border-r border-slate-800 text-center font-bold text-slate-500">
+                                            {idx + 1}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 space-y-0.5">
+                                            {/* First thing in line item: Material Code directly from PO */}
+                                            {item.materialCode ? (
+                                                <p className="font-mono font-bold text-slate-900 text-xs leading-tight">
+                                                    Material Code : {item.materialCode}
+                                                </p>
+                                            ) : null}
+
+                                            {/* Exact PO Item Name */}
+                                            <p className="font-extrabold text-slate-950 uppercase tracking-tight text-xs leading-snug">
+                                                {item.exactPoName}
                                             </p>
-                                        ) : (
-                                            <p className="text-[10px] text-slate-400 italic">No packing details</p>
-                                        )}
-                                    </td>
-                                    <td className="p-2 border-r border-slate-800 text-center font-mono font-bold text-slate-700 text-[11px]">
-                                        {item.hsn || '4819'}
-                                    </td>
-                                    <td className="p-2 border-r border-slate-800 text-right font-bold text-slate-950">
-                                        {item.deliveryQty.toLocaleString()}
-                                    </td>
-                                    <td className="p-2 border-r border-slate-800 text-right font-semibold text-slate-800">
-                                        {item.rate.toFixed(2)}
-                                    </td>
-                                    <td className="p-2 text-right font-extrabold text-slate-950">
-                                        {item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                    </td>
-                                </tr>
-                            ))}
+
+                                            {/* Directly underneath: Packing Details */}
+                                            {item.packingDetail && item.packingDetail !== '-' ? (
+                                                <p className="text-[11px] font-semibold text-slate-700 bg-amber-50/70 inline-block px-1.5 py-0.5 rounded border border-amber-200 mt-1">
+                                                    Packing Details: <span className="text-slate-950 font-bold">{item.packingDetail}</span>
+                                                </p>
+                                            ) : (
+                                                <p className="text-[10px] text-slate-400 italic">No packing details</p>
+                                            )}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-center font-mono font-bold text-slate-700 text-[11px]">
+                                            {item.hsn || '48192010'}
+                                            <div className="text-[9px] text-slate-500 font-normal">
+                                                ({effectiveGst}% GST)
+                                            </div>
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-right font-bold text-slate-950">
+                                            {item.deliveryQty.toLocaleString()}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-right font-semibold text-slate-800">
+                                            {item.rate.toFixed(2)}
+                                        </td>
+                                        <td className="p-2 text-right font-extrabold text-slate-950">
+                                            {item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                         <tfoot>
                             <tr className="border-t-2 border-slate-800 bg-slate-50 font-bold text-xs">
@@ -296,20 +347,64 @@ export default function InvoicePrintableCopy({
                         </div>
 
                         {taxType === 'IGST' ? (
-                            <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                <span className="text-slate-600 font-bold text-[11px]">IGST (18%):</span>
-                                <span className="font-bold text-slate-900">₹{taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
+                            <>
+                                {computedBreakdown.taxable5 > 0 && (
+                                    <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                        <span className="text-slate-600 font-bold text-[11px]">IGST (5%):</span>
+                                        <span className="font-bold text-slate-900">₹{computedBreakdown.tax5.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
+                                {computedBreakdown.taxable18 > 0 && (
+                                    <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                        <span className="text-slate-600 font-bold text-[11px]">IGST (18%):</span>
+                                        <span className="font-bold text-slate-900">₹{computedBreakdown.tax18.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
+                                {computedBreakdown.taxable5 === 0 && computedBreakdown.taxable18 === 0 && (
+                                    <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                        <span className="text-slate-600 font-bold text-[11px]">IGST:</span>
+                                        <span className="font-bold text-slate-900">₹{taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <>
-                                <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                    <span className="text-slate-600 font-bold text-[11px]">CGST (9%):</span>
-                                    <span className="font-bold text-slate-900">₹{(taxAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                </div>
-                                <div className="flex justify-between p-1.5 border-b border-slate-300">
-                                    <span className="text-slate-600 font-bold text-[11px]">SGST (9%):</span>
-                                    <span className="font-bold text-slate-900">₹{(taxAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                </div>
+                                {computedBreakdown.taxable5 > 0 && (
+                                    <>
+                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                            <span className="text-slate-600 font-bold text-[11px]">CGST (2.5%):</span>
+                                            <span className="font-bold text-slate-900">₹{(computedBreakdown.tax5 / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                            <span className="text-slate-600 font-bold text-[11px]">SGST (2.5%):</span>
+                                            <span className="font-bold text-slate-900">₹{(computedBreakdown.tax5 / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                    </>
+                                )}
+                                {computedBreakdown.taxable18 > 0 && (
+                                    <>
+                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                            <span className="text-slate-600 font-bold text-[11px]">CGST (9%):</span>
+                                            <span className="font-bold text-slate-900">₹{(computedBreakdown.tax18 / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                            <span className="text-slate-600 font-bold text-[11px]">SGST (9%):</span>
+                                            <span className="font-bold text-slate-900">₹{(computedBreakdown.tax18 / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                    </>
+                                )}
+                                {computedBreakdown.taxable5 === 0 && computedBreakdown.taxable18 === 0 && (
+                                    <>
+                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                            <span className="text-slate-600 font-bold text-[11px]">CGST:</span>
+                                            <span className="font-bold text-slate-900">₹{(taxAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between p-1.5 border-b border-slate-300">
+                                            <span className="text-slate-600 font-bold text-[11px]">SGST:</span>
+                                            <span className="font-bold text-slate-900">₹{(taxAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                    </>
+                                )}
                             </>
                         )}
 

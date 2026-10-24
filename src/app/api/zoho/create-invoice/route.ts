@@ -109,13 +109,40 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Format line items for Zoho Books
-        const lineItems = (items || []).map((it: any) => ({
-            name: it.name,
-            description: it.description || '',
-            rate: it.rate,
-            quantity: it.quantity,
-            hsn_or_sac: it.hsn_or_sac || '48192000',
-        }));
+        const isInterState = taxType === 'IGST';
+        const lineItems = (items || []).map((it: any) => {
+            // First line: Material Code, then PO Item Name
+            let fullName = it.name || 'Item';
+            if (it.materialCode && !fullName.includes(it.materialCode)) {
+                fullName = `Material Code : ${it.materialCode}\n${it.name}`;
+            }
+
+            // Next: Packing details under that
+            let description = it.description || '';
+            if (it.packingDetail && it.packingDetail !== '-' && !description.includes(it.packingDetail)) {
+                description = description ? `${description}\nPacking Details: ${it.packingDetail}` : `Packing Details: ${it.packingDetail}`;
+            }
+
+            // Tax ID mapping:
+            // IGST5: 874645000000060417, IGST18: 874645000000060433
+            // GST5:  874645000000060423, GST18:  874645000000060439
+            const gstRate = Number(it.tax_percentage || it.gstRate || 18);
+            let taxId = '';
+            if (gstRate === 5) {
+                taxId = isInterState ? '874645000000060417' : '874645000000060423';
+            } else {
+                taxId = isInterState ? '874645000000060433' : '874645000000060439';
+            }
+
+            return {
+                name: fullName,
+                description: description,
+                rate: it.rate,
+                quantity: it.quantity,
+                hsn_or_sac: it.hsn_or_sac || '48192010',
+                tax_id: taxId,
+            };
+        });
 
         const formattedDate = formatDateForZoho(invoiceDate);
 
