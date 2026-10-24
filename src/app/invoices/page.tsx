@@ -120,8 +120,16 @@ export default function SalesInvoicesPage() {
 
     const filteredInvoices = useMemo(() => {
         return invoices.filter(inv => {
-            if (companyFilter !== 'All' && !inv.company.toLowerCase().includes(companyFilter.replace('Creative ', '').toLowerCase())) {
-                return false;
+            const num = (inv.invoice_number || '').trim().toUpperCase();
+            if (companyFilter === 'Creative Printers') {
+                if (num.startsWith('U-') || num.startsWith('P-')) return false;
+                if (!inv.company.toLowerCase().includes('print') && !num.startsWith('S-')) return false;
+            } else if (companyFilter === 'Creative Packaging') {
+                if (num.startsWith('S-') || num.startsWith('P-')) return false;
+                if (!inv.company.toLowerCase().includes('pack') && !num.startsWith('U-')) return false;
+            } else if (companyFilter === 'Creative Enterprise') {
+                if (num.startsWith('S-') || num.startsWith('U-')) return false;
+                if (!inv.company.toLowerCase().includes('enter') && !num.startsWith('P-')) return false;
             }
 
             if (searchQuery.trim()) {

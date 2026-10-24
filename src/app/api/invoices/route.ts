@@ -5,6 +5,20 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+function resolveCompany(invNum: string, dbCompany?: string): string {
+    const s = (invNum || '').trim().toUpperCase();
+    if (s.startsWith('S-')) return 'Creative Printers';
+    if (s.startsWith('U-')) return 'Creative Packaging';
+    if (s.startsWith('P-')) return 'Creative Enterprise';
+    if (dbCompany) {
+        const c = dbCompany.toLowerCase();
+        if (c.includes('print')) return 'Creative Printers';
+        if (c.includes('enter')) return 'Creative Enterprise';
+        if (c.includes('pack')) return 'Creative Packaging';
+    }
+    return 'Creative Printers';
+}
+
 export async function GET(req: NextRequest) {
     try {
         const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
@@ -54,7 +68,7 @@ export async function GET(req: NextRequest) {
                     date: ord.delivery_date || ord.created_at?.split('T')[0] || '',
                     customer_name: ord.customer_name?.trim() || 'BDR Pharmaceuticals International Pvt. Ltd.',
                     delivery_address: ord.delivery_address || '',
-                    company: ord.from_our_company || 'Creative Printers',
+                    company: resolveCompany(rawInv, ord.from_our_company),
                     orders: [],
                     total_delivered_qty: 0,
                     total_amount: 0,
@@ -133,13 +147,18 @@ export async function GET(req: NextRequest) {
                 existing.date = zInv.date || existing.date;
                 existing.total_amount = zInv.total || existing.total_amount;
                 existing.customer_name = zInv.customer_name || existing.customer_name;
+                if (zInv._orgCompany) {
+                    existing.company = zInv._orgCompany;
+                } else {
+                    existing.company = resolveCompany(invNum, existing.company);
+                }
             } else {
                 invoiceMap[invNum] = {
                     invoice_number: invNum,
                     zoho_id: zInv.invoice_id,
                     date: zInv.date || '',
                     customer_name: zInv.customer_name || 'Customer',
-                    company: zInv._orgCompany || (invNum.startsWith('U-') ? 'Creative Packaging' : 'Creative Printers'),
+                    company: zInv._orgCompany || resolveCompany(invNum),
                     orders: [],
                     total_delivered_qty: 0,
                     total_amount: zInv.total || 0,
