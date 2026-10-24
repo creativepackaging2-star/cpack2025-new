@@ -12,7 +12,8 @@ import {
     AlertCircle,
     CheckCircle2,
     Building2,
-    FileCheck
+    FileCheck,
+    X
 } from 'lucide-react';
 import Link from 'next/link';
 import InvoicePrintableCopy, { InvoiceCopyItem } from '@/components/InvoicePrintableCopy';
@@ -38,6 +39,51 @@ function DispatchDocumentsContent() {
     const [customerName, setCustomerName] = useState('BDR Pharmaceuticals International Pvt. Ltd.');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [taxType, setTaxType] = useState<'IGST' | 'CGST_SGST'>('IGST');
+
+    // Processing Charges mandatory state
+    const hasProcessingParam = searchParams.get('hasProcessing');
+    const procQtyParam = searchParams.get('procQty');
+    const procAmountParam = searchParams.get('procAmount');
+    const procNameParam = searchParams.get('procName');
+
+    const [processingChargeState, setProcessingChargeState] = useState<{
+        decided: boolean;
+        enabled: boolean;
+        qty: number;
+        amount: number;
+        name: string;
+    }>(() => {
+        if (hasProcessingParam === '1') {
+            return {
+                decided: true,
+                enabled: true,
+                qty: parseFloat(procQtyParam || '1') || 1,
+                amount: parseFloat(procAmountParam || '0') || 0,
+                name: procNameParam ? decodeURIComponent(procNameParam) : 'Label Processing Charges',
+            };
+        } else if (hasProcessingParam === '0') {
+            return {
+                decided: true,
+                enabled: false,
+                qty: 1,
+                amount: 0,
+                name: 'Label Processing Charges',
+            };
+        }
+        return {
+            decided: false,
+            enabled: false,
+            qty: 1,
+            amount: 0,
+            name: 'Label Processing Charges',
+        };
+    });
+
+    const [showEditProcessingModal, setShowEditProcessingModal] = useState(false);
+    const [tempChoice, setTempChoice] = useState<'yes' | 'no' | null>(null);
+    const [tempQty, setTempQty] = useState('1');
+    const [tempAmount, setTempAmount] = useState('');
+    const [tempName, setTempName] = useState('Label Processing Charges');
 
     // Zoho Sync state
     const [isCreatingZoho, setIsCreatingZoho] = useState(false);
@@ -115,7 +161,7 @@ function DispatchDocumentsContent() {
 
     // Format Invoice Line Items
     const invoiceItems: InvoiceCopyItem[] = useMemo(() => {
-        return orders.map(o => {
+        const items: InvoiceCopyItem[] = orders.map(o => {
             const poInfo = parseOrderPoInfo(o.remarks, o.rate);
             const exactPoName = poInfo.isTagged ? poInfo.poItemName : (o.product_name || 'Item');
             const rate = poInfo.isTagged ? poInfo.rate : (o.rate || 0);
@@ -138,7 +184,26 @@ function DispatchDocumentsContent() {
                 amount,
             };
         });
-    }, [orders]);
+
+        // Add separate line item for processing charges (apart from actual label qty & rate)
+        if (processingChargeState.enabled && processingChargeState.amount > 0) {
+            const q = processingChargeState.qty || 1;
+            const r = processingChargeState.amount;
+            const amt = Math.round(q * r * 100) / 100;
+
+            items.push({
+                orderId: 'proc-charge-line',
+                exactPoName: processingChargeState.name || 'Label Processing Charges',
+                packingDetail: '-',
+                hsn: '9988',
+                deliveryQty: q,
+                rate: r,
+                amount: amt,
+            });
+        }
+
+        return items;
+    }, [orders, processingChargeState]);
 
     const subtotal = useMemo(() => {
         return invoiceItems.reduce((sum, it) => sum + (it.amount || 0), 0);
@@ -307,6 +372,31 @@ function DispatchDocumentsContent() {
                                 onChange={e => setInvoiceDate(e.target.value)}
                                 className="w-24 bg-transparent text-white font-bold text-xs focus:outline-none"
                             />
+                        </div>
+
+                        {/* Processing Charges Pill with Edit Option */}
+                        <div className="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 text-xs">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Processing:</span>
+                            {processingChargeState.enabled && processingChargeState.amount > 0 ? (
+                                <span className="text-amber-400 font-bold">
+                                    {processingChargeState.qty} x ₹{processingChargeState.amount} (₹{(processingChargeState.qty * processingChargeState.amount).toLocaleString()})
+                                </span>
+                            ) : (
+                                <span className="text-slate-400">None</span>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTempChoice(processingChargeState.enabled ? 'yes' : 'no');
+                                    setTempQty(String(processingChargeState.qty || 1));
+                                    setTempAmount(processingChargeState.amount > 0 ? String(processingChargeState.amount) : '');
+                                    setTempName(processingChargeState.name || 'Label Processing Charges');
+                                    setShowEditProcessingModal(true);
+                                }}
+                                className="ml-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-bold underline cursor-pointer"
+                            >
+                                Edit
+                            </button>
                         </div>
 
                         {/* Print / Save PDF Button */}
@@ -482,6 +572,186 @@ function DispatchDocumentsContent() {
                 </div>
 
             </main>
+
+            {/* Mandatory Processing Charges Step Modal (Guarantees user cannot bypass without answering) */}
+            {(!processingChargeState.decided || showEditProcessingModal) && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 font-black text-sm">
+                                    ₹
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold uppercase tracking-tight">Add Processing Charges?</h4>
+                                    <p className="text-[10px] text-slate-400">Required step before generating Invoice & COAs</p>
+                                </div>
+                            </div>
+                            {processingChargeState.decided && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditProcessingModal(false)}
+                                    className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-5 space-y-4">
+                            <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
+                                <p className="font-bold">Add processing charges as a separate line item?</p>
+                                <p className="text-[11px] text-amber-800 mt-1">
+                                    This must be added apart from the actual label quantity and rate as a separate line item. Without this step, you cannot proceed with invoice & COA generation.
+                                </p>
+                            </div>
+
+                            {/* Yes / No Options */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setTempChoice('no')}
+                                    className={`p-3.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 cursor-pointer transition-all ${
+                                        tempChoice === 'no'
+                                            ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-900/20'
+                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                    }`}
+                                >
+                                    <span className="text-base">❌ No</span>
+                                    <span className="text-[10px] opacity-80">No Processing Charges</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setTempChoice('yes')}
+                                    className={`p-3.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 cursor-pointer transition-all ${
+                                        tempChoice === 'yes'
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-500/20'
+                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                    }`}
+                                >
+                                    <span className="text-base">✅ Yes</span>
+                                    <span className="text-[10px] opacity-80">Add Separate Line Item</span>
+                                </button>
+                            </div>
+
+                            {/* Inputs if Yes is selected */}
+                            {tempChoice === 'yes' && (
+                                <div className="space-y-3 pt-3 border-t border-slate-200 animate-in fade-in slide-in-from-top-2">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                                            Item Description
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={tempName}
+                                            onChange={e => setTempName(e.target.value)}
+                                            placeholder="Label Processing Charges"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:border-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                                                Qty <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                step="1"
+                                                value={tempQty}
+                                                onChange={e => setTempQty(e.target.value)}
+                                                placeholder="1"
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                                                Amount / Rate (₹) <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="0.01"
+                                                step="any"
+                                                value={tempAmount}
+                                                onChange={e => setTempAmount(e.target.value)}
+                                                placeholder="e.g. 1500"
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-indigo-700 focus:bg-white focus:outline-none focus:border-indigo-500"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {tempQty && tempAmount && Number(tempAmount) > 0 && (
+                                        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5 text-xs flex justify-between items-center text-indigo-950 font-bold">
+                                            <span>Invoice Line Total:</span>
+                                            <span className="text-sm font-black text-indigo-700">
+                                                ₹{(Number(tempQty) * Number(tempAmount)).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            {!processingChargeState.decided ? (
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/orders')}
+                                    className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+                                >
+                                    Cancel & Return
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditProcessingModal(false)}
+                                    className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+                                >
+                                    Close
+                                </button>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (tempChoice === 'yes') {
+                                        setProcessingChargeState({
+                                            decided: true,
+                                            enabled: true,
+                                            qty: parseFloat(tempQty) || 1,
+                                            amount: parseFloat(tempAmount) || 0,
+                                            name: tempName.trim() || 'Label Processing Charges',
+                                        });
+                                    } else if (tempChoice === 'no') {
+                                        setProcessingChargeState({
+                                            decided: true,
+                                            enabled: false,
+                                            qty: 1,
+                                            amount: 0,
+                                            name: 'Label Processing Charges',
+                                        });
+                                    }
+                                    setShowEditProcessingModal(false);
+                                }}
+                                disabled={
+                                    !tempChoice ||
+                                    (tempChoice === 'yes' && (!tempAmount || Number(tempAmount) <= 0 || !tempQty || Number(tempQty) <= 0))
+                                }
+                                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-extrabold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+                            >
+                                <span>Apply to Documents</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
