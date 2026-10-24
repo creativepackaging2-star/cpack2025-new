@@ -179,38 +179,81 @@ export async function POST(req: NextRequest) {
             return !s.includes('complete') && s !== 'delivered';
         });
 
+        // Packaging type detector (Leaflet and Insert are one and same)
+        const detectPackagingType = (text: string, artworkCode: string = '') => {
+            const t = (text || '').toLowerCase();
+            const ac = (artworkCode || '').toUpperCase();
+
+            // Check artwork code suffix (/I = Insert/Leaflet, /L = Label, /C = Carton)
+            if (ac.includes('/I') || ac.endsWith('I') || ac.endsWith('I2') || ac.endsWith('I3')) return 'insert';
+            if (ac.includes('/L') || ac.endsWith('L') || ac.endsWith('L2') || ac.endsWith('L3')) return 'label';
+            if (ac.includes('/C') || ac.endsWith('C') || ac.endsWith('C2') || ac.endsWith('C3')) return 'carton';
+
+            // Leaflet and Insert are identical in pharma packaging
+            if (t.includes('leaflet') || t.includes('insert') || t.includes('outsert') || t.includes('pil') || t.includes('literature')) return 'insert';
+            if (t.includes('label') || t.includes('sticker')) return 'label';
+            if (t.includes('carton') || t.includes('mono') || t.includes('box') || t.includes('outer')) return 'carton';
+            return 'unknown';
+        };
+
         if (recentOrders && recentOrders.length > 0) {
+            const assignedOrderIds = new Set<string | number>();
+
             for (const item of items) {
+                const itemType = detectPackagingType(item.exactPoName);
                 const searchTokens = item.exactPoName
                     .toLowerCase()
                     .replace(/[^a-z0-9]/g, ' ')
                     .split(/\s+/)
-                    .filter(t => t.length > 2 && !['mono', 'carton', 'insert', 'label', 'leaflet', 'export', 'for', 'tab', 'tablet'].includes(t));
+                    .filter(t => t.length > 2 && !['for', 'tab', 'tablet', 'ip', 'bp', 'usp', 'mg', 'ml'].includes(t));
 
                 let bestMatch: any = null;
-                let highestScore = 0;
+                let highestScore = -999;
 
                 for (const order of recentOrders) {
                     const oName = (order.product_name || '').toLowerCase();
                     const oCode = (order.artwork_code || '').toLowerCase();
+                    const orderType = detectPackagingType(oName, order.artwork_code);
                     let score = 0;
 
+                    // 1. Brand name tokens match
                     for (const token of searchTokens) {
-                        if (oName.includes(token)) score += 2;
-                        if (oCode.includes(token)) score += 3;
+                        if (oName.includes(token)) score += 5;
+                        if (oCode.includes(token)) score += 5;
                     }
 
+                    // 2. Material code match
                     if (item.materialCode && (oCode.includes(item.materialCode) || oName.includes(item.materialCode))) {
-                        score += 5;
+                        score += 15;
                     }
 
-                    if (score > highestScore && score >= 2) {
+                    // 3. Packaging type match (Leaflet <=> Insert are one and same)
+                    if (itemType !== 'unknown' && orderType !== 'unknown') {
+                        if (itemType === orderType) {
+                            score += 30; // Strong type match
+                        } else {
+                            score -= 60; // Fatal penalty for cross-type match (e.g. Leaflet matched to Label)
+                        }
+                    }
+
+                    // 4. Exact quantity match bonus
+                    if (item.quantity && order.quantity && Number(item.quantity) === Number(order.quantity)) {
+                        score += 15;
+                    }
+
+                    // 5. Avoid double-assigning the same order to multiple PO items
+                    if (assignedOrderIds.has(order.id)) {
+                        score -= 40;
+                    }
+
+                    if (score > highestScore && score >= 10) {
                         highestScore = score;
                         bestMatch = order;
                     }
                 }
 
                 if (bestMatch) {
+                    assignedOrderIds.add(bestMatch.id);
                     item.matchedOrderId = bestMatch.id;
                     item.matchedOrderName = `${bestMatch.order_id || bestMatch.id} - ${bestMatch.product_name}`;
                 }
