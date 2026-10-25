@@ -247,7 +247,7 @@ export default function SalesInvoicesPage() {
             <th
                 className={`py-3.5 px-4 cursor-pointer select-none transition-colors hover:bg-slate-100 ${
                     align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
-                } ${isActive ? 'text-indigo-700 font-black' : 'text-slate-600'}`}
+                } ${isActive ? 'text-indigo-700 font-bold' : 'text-slate-500 font-medium'}`}
                 onClick={() => handleSort(field)}
                 title={`Click to sort by ${label} (${isActive && sortOrder === 'desc' ? 'currently descending' : 'currently ascending'})`}
             >
@@ -411,15 +411,15 @@ export default function SalesInvoicesPage() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                                <tr className="border-b border-slate-300 bg-slate-50 text-xs font-medium uppercase text-slate-500 tracking-wider">
                                     {renderSortableHeader('Dispatch Date', 'date')}
                                     {renderSortableHeader('Invoice No', 'invoice_number')}
                                     {renderSortableHeader('Customer', 'customer_name')}
-                                    <th className="py-3.5 px-4">Products & Delivered Qty</th>
+                                    <th className="py-3.5 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">Products & Delivered Qty</th>
                                     {renderSortableHeader('Company', 'company')}
                                     {renderSortableHeader('Amount (₹)', 'total_amount', 'right')}
                                     {renderSortableHeader('Status', 'status', 'center')}
-                                    <th className="py-3.5 px-4 text-center">Actions</th>
+                                    <th className="py-3.5 px-4 text-center text-xs font-medium uppercase tracking-wider text-slate-500">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-300 text-xs">
@@ -428,8 +428,8 @@ export default function SalesInvoicesPage() {
                                     return (
                                         <tr key={inv.invoice_number || idx} className="hover:bg-slate-50/90 transition-colors border-b border-slate-300 last:border-b-0">
                                             {/* Date */}
-                                            <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap font-medium">
-                                                <div className="flex items-center gap-1.5">
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                                                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                                     <span>{formatToDDMMYYYY(inv.date) || '-'}</span>
                                                 </div>
@@ -437,14 +437,14 @@ export default function SalesInvoicesPage() {
 
                                             {/* Invoice Number */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <span className="font-black text-indigo-700 text-sm font-mono">
+                                                <span className="font-bold text-indigo-600 text-sm tracking-tight">
                                                     {inv.invoice_number}
                                                 </span>
                                             </td>
 
                                             {/* Customer */}
                                             <td className="py-3.5 px-4 max-w-[200px]">
-                                                <div className="font-bold text-slate-800 truncate" title={inv.customer_name}>
+                                                <div className="text-sm font-semibold text-slate-900 truncate" title={inv.customer_name}>
                                                     {inv.customer_name}
                                                 </div>
                                             </td>
@@ -452,20 +452,20 @@ export default function SalesInvoicesPage() {
                                             {/* Products & Delivered Quantities */}
                                             <td className="py-3.5 px-4 max-w-[320px]">
                                                 {inv.orders && inv.orders.length > 0 ? (
-                                                    <div className="space-y-1">
+                                                    <div className="space-y-1.5">
                                                         {inv.orders.map((ord, oIdx) => (
-                                                            <div key={ord.id || oIdx} className="flex items-center justify-between gap-2 text-[11px] bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                                                                <span className="font-semibold text-slate-800 truncate" title={ord.product_name}>
+                                                            <div key={ord.id || oIdx} className="flex items-center justify-between gap-2 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                                                                <span className="text-xs font-semibold text-slate-800 truncate" title={ord.product_name}>
                                                                     {ord.product_name}
                                                                 </span>
-                                                                <span className="font-mono font-bold text-indigo-700 shrink-0">
+                                                                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 shrink-0 whitespace-nowrap">
                                                                     {Number(ord.qty_delivered || ord.quantity || 0).toLocaleString()} pcs
                                                                 </span>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-[11px] text-slate-400 italic">Zoho line items</span>
+                                                    <span className="text-xs text-slate-400 italic">Zoho line items</span>
                                                 )}
                                             </td>
 
@@ -478,7 +478,7 @@ export default function SalesInvoicesPage() {
                                             </td>
 
                                             {/* Total Amount */}
-                                            <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-black text-slate-900 text-sm">
+                                            <td className="py-3.5 px-4 text-right whitespace-nowrap font-bold text-slate-900 text-sm">
                                                 ₹{Number(inv.total_amount || 0).toLocaleString()}
                                             </td>
 
