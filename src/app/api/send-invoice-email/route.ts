@@ -62,6 +62,14 @@ export async function POST(req: NextRequest) {
             </tr>
         `).join('');
 
+        const effectiveCompany = (company || '').toLowerCase().includes('print')
+            ? 'Creative Printers'
+            : ((company || '').toLowerCase().includes('enter') ? 'Creative Enterprise' : 'Creative Packaging');
+
+        const effectivePlant = plant || (customerName && customerName.toLowerCase().includes('halol')
+            ? 'BDR Halol'
+            : (customerName && customerName.toLowerCase().includes('padra') ? 'BDR Padra' : customerName)) || 'BDR Pharmaceuticals';
+
         // 3. Clean HTML Email Body
         const htmlContent = `
 <!DOCTYPE html>
@@ -73,7 +81,7 @@ export async function POST(req: NextRequest) {
     .card { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .header { background: #0f172a; padding: 24px; color: #ffffff; }
     .header h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
-    .header p { margin: 4px 0 0; font-size: 13px; color: #94a3b8; }
+    .header p { margin: 4px 0 0; font-size: 13px; color: #94a3b8; font-weight: 600; }
     .content { padding: 28px 24px; }
     .meta-box { background: #f8fafc; border-radius: 12px; padding: 16px; margin: 16px 0 20px; border: 1px solid #e2e8f0; }
     .meta-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
@@ -92,7 +100,7 @@ export async function POST(req: NextRequest) {
   <div class="card">
     <div class="header">
       <h1>Tax Invoice, Certificates of Analysis & E-way Bill</h1>
-      <p>${company || 'Creative Printers'}</p>
+      <p>${effectiveCompany}</p>
     </div>
     <div class="content">
       <div class="meta-box">
@@ -102,22 +110,17 @@ export async function POST(req: NextRequest) {
         </div>
         <div class="meta-row">
           <span class="meta-label">Invoice Date:</span>
-          <span class="meta-val">${invoiceDate || new Date().toLocaleDateString('en-IN')}</span>
+          <span class="meta-val">${invoiceDate || new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}</span>
         </div>
-        ${plant ? `
         <div class="meta-row">
           <span class="meta-label">Plant:</span>
-          <span class="meta-val" style="color: #0f172a; font-weight: 700;">${plant}</span>
-        </div>` : ''}
+          <span class="meta-val" style="color: #0f172a; font-weight: 700;">${effectivePlant}</span>
+        </div>
         ${poNumber ? `
         <div class="meta-row">
           <span class="meta-label">PO Number:</span>
           <span class="meta-val">${poNumber}</span>
         </div>` : ''}
-        <div class="meta-row">
-          <span class="meta-label">Customer:</span>
-          <span class="meta-val">${customerName || 'BDR Pharmaceuticals International Pvt. Ltd.'}</span>
-        </div>
         ${totalBoxes ? `
         <div class="meta-row">
           <span class="meta-label">Total No. of Boxes:</span>
@@ -149,12 +152,12 @@ export async function POST(req: NextRequest) {
 
       ${pdfBuffer ? `
       <div>
-        <span class="attach-badge">📎 Attached: ${attachmentFilename} (Tax Invoices + COAs + E-way Bill)</span>
+        <span class="attach-badge">📎 Attached: ${attachmentFilename} (Tax Invoice, Certificates of Analysis & E-way Bill)</span>
       </div>
       ` : ''}
     </div>
     <div class="footer">
-      Sent via ${company || 'Creative Printers'} • Accounts Department
+      Sent via ${effectiveCompany} • Accounts Department
     </div>
   </div>
 </body>
@@ -166,22 +169,21 @@ export async function POST(req: NextRequest) {
         plainText += `Invoice Details:\n`;
         plainText += `Invoice No: ${sanitizedInvNo}\n`;
         plainText += `Invoice Date: ${invoiceDate}\n`;
-        if (plant) plainText += `Plant: ${plant}\n`;
+        plainText += `Plant: ${effectivePlant}\n`;
         if (poNumber) plainText += `PO Number: ${poNumber}\n`;
-        plainText += `Customer: ${customerName}\n\n`;
         if (products.length > 0) {
-            plainText += `Dispatched Products:\n`;
+            plainText += `\nDispatched Products:\n`;
             products.forEach((p: any) => {
                 plainText += `- ${p.name || p.product_name}: ${Number(p.quantity || p.qty_delivered || 0).toLocaleString()} pcs (${p.packing || p.packing_detail || '-'})\n`;
             });
             plainText += `\n`;
         }
         if (totalBoxes) plainText += `Total Boxes: ${totalBoxes} Boxes\n\n`;
-        plainText += `Kindly acknowledge receipt.\n\nRegards,\nAccounts Department\n${company || 'Creative Printers'}`;
+        plainText += `Kindly acknowledge receipt.\n\nRegards,\nAccounts Department\n${effectiveCompany}`;
 
         // 5. Send mail
         const mailOptions: any = {
-            from: `"${company || 'Creative Printers'}" <${gmailUser}>`,
+            from: `"${effectiveCompany}" <${gmailUser}>`,
             to: recipients,
             subject: subject || `Dispatch Documents & Invoice ${sanitizedInvNo} - ${customerName}`,
             text: plainText,

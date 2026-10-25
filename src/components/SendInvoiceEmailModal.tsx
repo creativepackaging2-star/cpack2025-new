@@ -52,12 +52,12 @@ export function formatToDDMMYYYY(dateStr?: string | null): string {
 }
 
 export function detectPlant(shipToAddress?: string | null, customerName?: string | null): string {
-    const addr = (shipToAddress || '').toLowerCase();
-    if (addr.includes('halol')) return 'BDR Halol';
-    if (addr.includes('padra')) return 'BDR Padra';
+    const combined = `${shipToAddress || ''} ${customerName || ''}`.toLowerCase();
+    if (combined.includes('halol')) return 'BDR Halol';
+    if (combined.includes('padra')) return 'BDR Padra';
 
     const cust = (customerName || '').trim();
-    if (addr.includes('bdr') || cust.toLowerCase().includes('bdr')) {
+    if (combined.includes('bdr')) {
         return 'BDR Pharmaceuticals';
     }
     return cust || 'Client Site';
