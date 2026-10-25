@@ -398,14 +398,20 @@ export async function POST(req: NextRequest) {
             finalInvoiceNumber = `${prefix}${maxNum + 1}`;
 
             // Resolve contact ID
-            let customerId = isPackaging ? '649079892' : '874645000000060001';
+            let customerId = isPackaging ? '687997000000062001' : '874645000000060001';
             try {
-                const searchRes = await fetch(`https://www.zohoapis.com/books/v3/contacts?organization_id=${zohoOrgId}&search_text=${encodeURIComponent(customerName)}`, {
+                const searchKeyword = customerName.replace(/[^a-zA-Z0-9\s]/g, ' ').trim().split(/\s+/)[0] || 'BDR';
+                const searchRes = await fetch(`https://www.zohoapis.com/books/v3/contacts?organization_id=${zohoOrgId}&search_text=${encodeURIComponent(searchKeyword)}`, {
                     headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
                 });
                 const searchData = await searchRes.json();
                 if (searchData.contacts && searchData.contacts.length > 0) {
-                    customerId = searchData.contacts[0].contact_id;
+                    if (isPackaging && deliveryAddress.toLowerCase().includes('padra')) {
+                        const padra = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('padra'));
+                        customerId = padra ? padra.contact_id : searchData.contacts[0].contact_id;
+                    } else {
+                        customerId = searchData.contacts[0].contact_id;
+                    }
                 }
             } catch {}
 
@@ -424,16 +430,37 @@ export async function POST(req: NextRequest) {
                 desc += `${exactName}\n`;
                 if (o.packing_detail) desc += o.packing_detail;
 
-                // Catalog Item ID
-                let catalogItemId = isPackaging ? undefined : (hsnGst.gstRate === 18 ? '874645000002219014' : '874645000002219003');
+                const isInsert = exactName.toLowerCase().includes('insert') || exactName.toLowerCase().includes('leaflet') || o.product_name.toLowerCase().includes('insert');
+                const isLabel = hsnGst.gstRate === 18 || exactName.toLowerCase().includes('label') || o.product_name.toLowerCase().includes('label');
+
+                // Catalog Item ID & Tax ID
+                let catalogItemId: string | undefined;
+                let taxId: string | undefined;
+
+                if (isPackaging) {
+                    if (isLabel) {
+                        catalogItemId = '687997000000078025'; // LABELS
+                        taxId = '687997000000059078'; // IGST 18%
+                    } else if (isInsert) {
+                        catalogItemId = '687997000000069007'; // LEAFLET
+                        taxId = '687997000000059054'; // IGST 5%
+                    } else {
+                        catalogItemId = '687997000000061011'; // CARTON
+                        taxId = '687997000000059054'; // IGST 5%
+                    }
+                } else {
+                    catalogItemId = isLabel ? '874645000002219014' : '874645000002219003';
+                    taxId = isLabel ? '874645000000060043' : '874645000000060037';
+                }
 
                 lineItems.push({
                     ...(catalogItemId ? { item_id: catalogItemId } : {}),
-                    name: hsnGst.gstRate === 18 ? 'Label' : (exactName.toLowerCase().includes('insert') ? 'LEAFLET' : 'Cartons'),
+                    name: isLabel ? 'LABELS' : (isInsert ? 'LEAFLET' : 'CARTON'),
                     description: desc.trim(),
                     rate,
                     quantity: qty,
                     hsn_or_sac: hsnGst.hsn,
+                    ...(taxId ? { tax_id: taxId } : {}),
                     tax_name: isInterState ? `IGST [${hsnGst.gstRate}%]` : `GST [${hsnGst.gstRate}%]`,
                     tax_percentage: hsnGst.gstRate,
                 });
@@ -441,12 +468,16 @@ export async function POST(req: NextRequest) {
 
             // Optional processing charge
             if (hasProcessing && Number(procAmount) > 0) {
+                const procTaxId = isPackaging ? '687997000000059078' : '874645000000060043';
+                const procItemId = isPackaging ? '687997000000078025' : '874645000002219014';
                 lineItems.push({
-                    name: 'Label',
+                    item_id: procItemId,
+                    name: 'LABELS',
                     description: procName || 'Label Processing Charges',
                     rate: Number(procAmount),
                     quantity: Number(procQty) || 1,
                     hsn_or_sac: '48211020',
+                    tax_id: procTaxId,
                     tax_name: isInterState ? 'IGST [18%]' : 'GST [18%]',
                     tax_percentage: 18,
                 });

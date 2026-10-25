@@ -56,17 +56,44 @@ export type SortOrder = 'asc' | 'desc';
 function parseDateToTimestamp(dateStr?: string | null): number {
     if (!dateStr) return 0;
     const s = dateStr.trim();
+
+    // 1. ISO format YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-        return new Date(s).getTime() || 0;
+        return new Date(s.slice(0, 10)).getTime() || 0;
     }
-    const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
-    if (dmy) {
-        let year = parseInt(dmy[3], 10);
+
+    // 2. Separated by - or /
+    const parts = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+    if (parts) {
+        let p1 = parseInt(parts[1], 10);
+        let p2 = parseInt(parts[2], 10);
+        let year = parseInt(parts[3], 10);
         if (year < 100) year += 2000;
-        const month = parseInt(dmy[2], 10) - 1;
-        const day = parseInt(dmy[1], 10);
-        return new Date(year, month, day).getTime() || 0;
+
+        let day = p1;
+        let month = p2;
+
+        if (p2 > 12) {
+            // p2 is day, p1 is month (e.g. 5/31/2025 -> May 31, 2025)
+            month = p1;
+            day = p2;
+        } else if (p1 > 12) {
+            // p1 is day, p2 is month (e.g. 31-05-2025 -> May 31, 2025)
+            day = p1;
+            month = p2;
+        } else if (s.includes('/')) {
+            // Slash format typically M/D/YYYY
+            month = p1;
+            day = p2;
+        } else {
+            // Dash format typically D-M-YYYY
+            day = p1;
+            month = p2;
+        }
+
+        return new Date(year, month - 1, day).getTime() || 0;
     }
+
     const parsed = new Date(s).getTime();
     return isNaN(parsed) ? 0 : parsed;
 }
