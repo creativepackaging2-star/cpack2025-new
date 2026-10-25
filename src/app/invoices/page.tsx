@@ -422,11 +422,11 @@ export default function SalesInvoicesPage() {
                                     <th className="py-3.5 px-4 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 text-xs">
+                            <tbody className="divide-y divide-slate-200 text-xs">
                                 {sortedInvoices.map((inv, idx) => {
                                     const isViewing = viewingInvoiceNo === inv.invoice_number;
                                     return (
-                                        <tr key={inv.invoice_number || idx} className="hover:bg-slate-50/80 transition-colors">
+                                        <tr key={inv.invoice_number || idx} className="hover:bg-slate-50/80 transition-colors border-b border-slate-200 last:border-b-0">
                                             {/* Date */}
                                             <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap font-medium">
                                                 <div className="flex items-center gap-1.5">
