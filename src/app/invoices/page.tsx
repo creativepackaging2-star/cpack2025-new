@@ -270,7 +270,7 @@ export default function SalesInvoicesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
+        <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6" style={{ fontFamily: "'Montserrat', sans-serif" }}>
 
             {/* Header & Quick Action */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
