@@ -530,12 +530,21 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
                                                                     <div className="text-xs font-bold text-slate-800">{item.quantity.toLocaleString()} {item.uom || 'NOS'}</div>
                                                                 </div>
                                                             )}
-                                                            {item.rate && (
-                                                                <div>
-                                                                    <div className="text-[10px] text-slate-400 uppercase font-medium">Rate</div>
-                                                                    <div className="text-xs font-bold text-emerald-700">₹{item.rate}</div>
+                                                            <div>
+                                                                <div className="text-[10px] text-slate-400 uppercase font-medium">Rate (₹)</div>
+                                                                <div className="mt-0.5">
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        value={item.rate ?? ''}
+                                                                        onChange={e => {
+                                                                            const val = parseFloat(e.target.value);
+                                                                            setItems(prev => prev.map((it, i) => i === idx ? { ...it, rate: isNaN(val) ? 0 : val } : it));
+                                                                        }}
+                                                                        className="w-20 px-2 py-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded text-right focus:bg-white focus:outline-none focus:border-emerald-400"
+                                                                    />
                                                                 </div>
-                                                            )}
+                                                            </div>
                                                         </div>
                                                     </div>
 
