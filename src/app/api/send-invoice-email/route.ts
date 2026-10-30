@@ -66,9 +66,14 @@ export async function POST(req: NextRequest) {
             ? 'Creative Printers'
             : ((company || '').toLowerCase().includes('enter') ? 'Creative Enterprise' : 'Creative Packaging');
 
-        const effectivePlant = plant || (customerName && customerName.toLowerCase().includes('halol')
-            ? 'BDR Halol'
-            : (customerName && customerName.toLowerCase().includes('padra') ? 'BDR Padra' : customerName)) || 'BDR Pharmaceuticals';
+        const effectivePlant = plant || (() => {
+            const low = ((customerName || '') + ' ' + (invoiceNo || '')).toLowerCase();
+            if (low.includes('halol')) return 'BDR Halol';
+            if (low.includes('padra')) return 'BDR Padra';
+            if (low.includes('samrudh') || low.includes('boisar') || low.includes('tarapur')) return 'Samrudh Boisar';
+            if (low.includes('bhiwandi')) return 'BDR Bhiwandi';
+            return customerName || 'BDR Pharmaceuticals';
+        })();
 
         // 3. Clean HTML Email Body
         const htmlContent = `

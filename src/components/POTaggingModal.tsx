@@ -32,6 +32,41 @@ interface OrderOption {
     packing_detail?: string;
 }
 
+function getUnitBadgeColor(unit: string) {
+    const u = (unit || '').toLowerCase();
+    if (u.includes('padra')) return 'bg-amber-100 text-amber-800 border-amber-200';
+    if (u.includes('halol')) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (u.includes('bhiwandi')) return 'bg-purple-100 text-purple-800 border-purple-200';
+    if (u.includes('samrudh') || u.includes('boisar') || u.includes('tarapur')) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (u.includes('vapi')) return 'bg-teal-100 text-teal-800 border-teal-200';
+    if (u.includes('daman')) return 'bg-cyan-100 text-cyan-800 border-cyan-200';
+    if (u.includes('same as bill to')) return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+    if (u === 'unknown') return 'bg-slate-100 text-slate-600 border-slate-200';
+    return 'bg-indigo-50 text-indigo-700 border-indigo-100';
+}
+
+function detectUnitFromText(text: string): string {
+    if (!text) return 'Unknown';
+    const lower = text.toLowerCase();
+    if (lower.includes('padra') || lower.includes('luna')) return 'Padra';
+    if (lower.includes('halol') || lower.includes('tajpura') || lower.includes('vanseti')) return 'Halol';
+    if (lower.includes('bhiwandi') || lower.includes('pimplas') || lower.includes('bhoomi world')) return 'Bhiwandi';
+    if (lower.includes('samrudh') || lower.includes('boisar') || lower.includes('tarapur')) return 'Samrudh Boisar';
+    if (lower.includes('inject care') || lower.includes('vapi')) return 'Inject Care Vapi';
+    if (lower.includes('indasi') || lower.includes('daman') || lower.includes('kadaiya') || lower.includes('bhimpore')) return 'Indasi Daman';
+    if (lower.includes('bajaj') || lower.includes('manjusar') || lower.includes('savli')) return 'Bajaj Manjusar';
+    if (lower.includes('lyka') || lower.includes('ankleshwar')) return 'Lyka Ankleshwar';
+    if (lower.includes('j.duncan') || lower.includes('atgaon')) return 'J.Duncan Atgaon';
+    if (lower.includes('khandelwal') || lower.includes('wagle')) return 'Khandelwal Thane';
+    if (lower.includes('kamla') && lower.includes('tarapur')) return 'Kamla Tarapur';
+    if (lower.includes('mepromax') || lower.includes('selaqui') || lower.includes('dehradun')) return 'Mepromax Dehradun';
+    if (lower.includes('revacure') || lower.includes('jabalpur')) return 'Revacure Jabalpur';
+    if (lower.includes('sovereign') && (lower.includes('daman') || lower.includes('bhimpore'))) return 'Sovereign Daman';
+    if (lower.includes('vhb') || lower.includes('rudrapur') || lower.includes('pant nagar')) return 'VHB Rudrapur';
+    if (lower.includes('sharda chambers') || lower.includes('marine lines')) return 'Mumbai HO';
+    return 'Registered Site';
+}
+
 export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTaggingModalProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
@@ -44,33 +79,45 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
     const [poNumber, setPoNumber] = useState('');
     const [poDate, setPoDate] = useState('');
     const [billFrom, setBillFrom] = useState<'Creative Packaging' | 'Creative Printers' | 'Creative Enterprise'>('Creative Packaging');
-    const [billToUnit, setBillToUnit] = useState<'Padra' | 'Halol' | 'Unknown'>('Unknown');
-    const [shipToUnit, setShipToUnit] = useState<'Padra' | 'Halol' | 'Same as Bill To' | 'Unknown'>('Unknown');
+    const [billToUnit, setBillToUnit] = useState<string>('Unknown');
+    const [shipToUnit, setShipToUnit] = useState<string>('Unknown');
     const [billToText, setBillToText] = useState('');
     const [shipToText, setShipToText] = useState('');
+    const [billToStatutory, setBillToStatutory] = useState<{ gstin?: string; pan?: string }>({});
+    const [shipToStatutory, setShipToStatutory] = useState<{ gstin?: string; pan?: string }>({});
 
     const [items, setItems] = useState<ParsedPoItem[]>([]);
     const [availableOrders, setAvailableOrders] = useState<OrderOption[]>([]);
+    const [deliveryAddresses, setDeliveryAddresses] = useState<{ id: number; name: string }[]>([]);
     const [taggedOrders, setTaggedOrders] = useState<Record<number, string | number>>({}); // index -> orderId
 
-    // Pre-fetch ONLY OPEN orders from Supabase as soon as modal opens
+    // Pre-fetch ONLY OPEN orders and delivery addresses from Supabase as soon as modal opens
     useEffect(() => {
         if (!isOpen) return;
         (async () => {
-            const { data } = await supabase
-                .from('orders')
-                .select('id, order_id, product_name, artwork_code, quantity, rate, packing_detail, customer_name, from_our_company, remarks, status')
-                .neq('status', 'Complete')
-                .neq('status', 'Delivered')
-                .order('id', { ascending: false })
-                .limit(250);
+            const [ordersRes, addrsRes] = await Promise.all([
+                supabase
+                    .from('orders')
+                    .select('id, order_id, product_name, artwork_code, quantity, rate, packing_detail, customer_name, from_our_company, remarks, status')
+                    .neq('status', 'Complete')
+                    .neq('status', 'Delivered')
+                    .order('id', { ascending: false })
+                    .limit(250),
+                supabase
+                    .from('delivery_addresses')
+                    .select('id, name')
+                    .order('name')
+            ]);
 
-            if (data && data.length > 0) {
-                const openOnly = data.filter(o => {
+            if (ordersRes.data && ordersRes.data.length > 0) {
+                const openOnly = ordersRes.data.filter(o => {
                     const s = (o.status || '').toLowerCase().trim();
                     return !s.includes('complete') && s !== 'delivered';
                 });
                 setAvailableOrders(openOnly);
+            }
+            if (addrsRes.data && addrsRes.data.length > 0) {
+                setDeliveryAddresses(addrsRes.data);
             }
         })();
     }, [isOpen]);
@@ -116,8 +163,18 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
                 }
                 setBillToUnit(data.billTo?.unit || 'Unknown');
                 setShipToUnit(data.shipTo?.unit || 'Unknown');
-                setBillToText(data.billTo?.raw || '');
-                setShipToText(data.shipTo?.raw || '');
+                setBillToText(data.billTo?.cleanAddress || data.billTo?.raw || '');
+
+                // Prioritize matched database delivery address, fallback to clean address or raw
+                const bestShipTo = data.shipTo?.matchedDeliveryAddress || data.shipTo?.cleanAddress || data.shipTo?.raw || '';
+                setShipToText(bestShipTo);
+
+                setBillToStatutory({ gstin: data.billTo?.gstin, pan: data.billTo?.pan });
+                setShipToStatutory({ gstin: data.shipTo?.gstin, pan: data.shipTo?.pan });
+
+                if (json.deliveryAddresses && json.deliveryAddresses.length > 0) {
+                    setDeliveryAddresses(json.deliveryAddresses);
+                }
 
                 setItems(data.items || []);
                 if (json.availableOrders && json.availableOrders.length > 0) {
@@ -341,36 +398,91 @@ export default function POTaggingModal({ isOpen, onClose, onSuccess }: POTagging
 
                                 {/* Bill To & Ship To Keywords */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                                    <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                                        <div className="flex items-center justify-between mb-1">
+                                    {/* Bill To */}
+                                    <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
+                                        <div className="flex items-center justify-between">
                                             <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                                                <MapPin className="w-3 h-3 text-blue-600" /> Bill To Unit
+                                                <MapPin className="w-3.5 h-3.5 text-blue-600" /> Bill To Unit
                                             </span>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                                billToUnit === 'Padra' ? 'bg-amber-100 text-amber-800' :
-                                                billToUnit === 'Halol' ? 'bg-emerald-100 text-emerald-800' :
-                                                'bg-slate-100 text-slate-600'
-                                            }`}>
+                                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${getUnitBadgeColor(billToUnit)}`}>
                                                 {billToUnit}
                                             </span>
                                         </div>
-                                        <p className="text-[11px] text-slate-600 line-clamp-2">{billToText || 'Standard Bill To'}</p>
+                                        <textarea
+                                            value={billToText}
+                                            onChange={e => {
+                                                setBillToText(e.target.value);
+                                                setBillToUnit(detectUnitFromText(e.target.value));
+                                            }}
+                                            rows={3}
+                                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 font-medium leading-relaxed focus:bg-white focus:outline-none focus:border-indigo-400 transition-colors"
+                                            placeholder="Bill To Address..."
+                                        />
+                                        {(billToStatutory.gstin || billToStatutory.pan) && (
+                                            <div className="flex items-center gap-3 text-[10px] text-slate-400 pt-0.5">
+                                                {billToStatutory.gstin && (
+                                                    <span>GSTIN: <strong className="text-slate-700 font-mono">{billToStatutory.gstin}</strong></span>
+                                                )}
+                                                {billToStatutory.pan && (
+                                                    <span>PAN: <strong className="text-slate-700 font-mono">{billToStatutory.pan}</strong></span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                                        <div className="flex items-center justify-between mb-1">
+                                    {/* Ship To */}
+                                    <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
+                                        <div className="flex items-center justify-between">
                                             <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                                                <MapPin className="w-3 h-3 text-emerald-600" /> Ship To Unit
+                                                <MapPin className="w-3.5 h-3.5 text-emerald-600" /> Ship To Unit (Delivery Address)
                                             </span>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                                shipToUnit === 'Padra' ? 'bg-amber-100 text-amber-800' :
-                                                shipToUnit === 'Halol' ? 'bg-emerald-100 text-emerald-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            }`}>
+                                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${getUnitBadgeColor(shipToUnit)}`}>
                                                 {shipToUnit}
                                             </span>
                                         </div>
-                                        <p className="text-[11px] text-slate-600 line-clamp-2">{shipToText || 'Same as Bill To'}</p>
+
+                                        {/* Quick select from Registered Delivery Addresses */}
+                                        {deliveryAddresses.length > 0 && (
+                                            <select
+                                                onChange={e => {
+                                                    const chosen = e.target.value;
+                                                    if (chosen) {
+                                                        setShipToText(chosen);
+                                                        setShipToUnit(detectUnitFromText(chosen));
+                                                    }
+                                                }}
+                                                className="w-full px-2 py-1 bg-emerald-50/70 border border-emerald-200 rounded-md text-[11px] font-semibold text-emerald-900 cursor-pointer"
+                                                defaultValue=""
+                                            >
+                                                <option value="" disabled>-- Or pick from Registered Delivery Addresses --</option>
+                                                {deliveryAddresses.map(da => (
+                                                    <option key={da.id} value={da.name}>
+                                                        {da.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+
+                                        <textarea
+                                            value={shipToText}
+                                            onChange={e => {
+                                                setShipToText(e.target.value);
+                                                setShipToUnit(detectUnitFromText(e.target.value));
+                                            }}
+                                            rows={3}
+                                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 font-medium leading-relaxed focus:bg-white focus:outline-none focus:border-indigo-400 transition-colors"
+                                            placeholder="Ship To / Delivery Address..."
+                                        />
+                                        {(shipToStatutory.gstin || shipToStatutory.pan) && (
+                                            <div className="flex items-center gap-3 text-[10px] text-slate-400 pt-0.5">
+                                                {shipToStatutory.gstin && (
+                                                    <span>GSTIN: <strong className="text-slate-700 font-mono">{shipToStatutory.gstin}</strong></span>
+                                                )}
+                                                {shipToStatutory.pan && (
+                                                    <span>PAN: <strong className="text-slate-700 font-mono">{shipToStatutory.pan}</strong></span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

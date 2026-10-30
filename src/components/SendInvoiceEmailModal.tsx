@@ -55,6 +55,8 @@ export function detectPlant(shipToAddress?: string | null, customerName?: string
     const combined = `${shipToAddress || ''} ${customerName || ''}`.toLowerCase();
     if (combined.includes('halol')) return 'BDR Halol';
     if (combined.includes('padra')) return 'BDR Padra';
+    if (combined.includes('samrudh') || combined.includes('boisar') || combined.includes('tarapur')) return 'Samrudh Boisar';
+    if (combined.includes('bhiwandi')) return 'BDR Bhiwandi';
 
     const cust = (customerName || '').trim();
     if (combined.includes('bdr')) {

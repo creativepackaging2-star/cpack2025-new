@@ -22,14 +22,97 @@ export interface ParsedPoData {
     billFromCompany: 'Creative Packaging' | 'Creative Printers' | 'Creative Enterprise' | 'Unknown';
     billTo: {
         raw: string;
-        unit: 'Padra' | 'Halol' | 'Unknown';
+        cleanAddress: string;
+        unit: string;
+        gstin?: string;
+        pan?: string;
     };
     shipTo: {
         raw: string;
-        unit: 'Padra' | 'Halol' | 'Same as Bill To' | 'Unknown';
+        cleanAddress: string;
+        unit: string;
+        matchedDeliveryAddress?: string;
+        gstin?: string;
+        pan?: string;
     };
     items: ParsedPoItem[];
+    deliveryAddresses?: { id: number; name: string }[];
     rawTextPreview?: string;
+}
+
+function cleanAddressOnly(raw: string): string {
+    if (!raw) return '';
+    const beforeStatutory = raw.split(/(?:PAN|GSTIN|GST|CIN|DL\d?|MFG\s*License)\s*[:]/i)[0];
+    return beforeStatutory
+        .replace(/\s+/g, ' ')
+        .replace(/\s*,\s*/g, ', ')
+        .replace(/,\s*,/g, ',')
+        .replace(/,\s*$/g, '')
+        .trim();
+}
+
+function extractStatutory(text: string): { gstin?: string; pan?: string } {
+    if (!text) return {};
+    const gstin = text.match(/GSTIN\s*[:\s]*([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})/i)?.[1];
+    const pan = text.match(/PAN\s*[:\s]*([A-Z]{5}[0-9]{4}[A-Z]{1})/i)?.[1];
+    return { gstin, pan };
+}
+
+export function detectUnitName(text: string): string {
+    if (!text) return 'Unknown';
+    const lower = text.toLowerCase();
+    if (lower.includes('padra') || lower.includes('luna')) return 'Padra';
+    if (lower.includes('halol') || lower.includes('tajpura') || lower.includes('vanseti')) return 'Halol';
+    if (lower.includes('bhiwandi') || lower.includes('pimplas') || lower.includes('bhoomi world')) return 'Bhiwandi';
+    if (lower.includes('samrudh') || lower.includes('boisar') || lower.includes('tarapur')) return 'Samrudh Boisar';
+    if (lower.includes('inject care') || lower.includes('vapi')) return 'Inject Care Vapi';
+    if (lower.includes('indasi') || lower.includes('daman') || lower.includes('kadaiya') || lower.includes('bhimpore')) return 'Indasi Daman';
+    if (lower.includes('bajaj') || lower.includes('manjusar') || lower.includes('savli')) return 'Bajaj Manjusar';
+    if (lower.includes('lyka') || lower.includes('ankleshwar')) return 'Lyka Ankleshwar';
+    if (lower.includes('j.duncan') || lower.includes('atgaon')) return 'J.Duncan Atgaon';
+    if (lower.includes('khandelwal') || lower.includes('wagle')) return 'Khandelwal Thane';
+    if (lower.includes('kamla') && lower.includes('tarapur')) return 'Kamla Tarapur';
+    if (lower.includes('mepromax') || lower.includes('selaqui') || lower.includes('dehradun')) return 'Mepromax Dehradun';
+    if (lower.includes('revacure') || lower.includes('jabalpur')) return 'Revacure Jabalpur';
+    if (lower.includes('sovereign') && (lower.includes('daman') || lower.includes('bhimpore'))) return 'Sovereign Daman';
+    if (lower.includes('vhb') || lower.includes('rudrapur') || lower.includes('pant nagar')) return 'VHB Rudrapur';
+    if (lower.includes('sharda chambers') || lower.includes('marine lines')) return 'Mumbai HO';
+
+    const firstLine = text.split(/[\r\n,]/)[0].trim();
+    if (firstLine && firstLine.length > 3 && firstLine.length < 35) {
+        return firstLine;
+    }
+    return 'Other';
+}
+
+function matchDbAddress(rawText: string, dbAddrs: { id: number; name: string }[]): string | null {
+    if (!rawText || !dbAddrs || dbAddrs.length === 0) return null;
+    const lower = rawText.toLowerCase();
+    let bestMatch: string | null = null;
+    let maxScore = 0;
+
+    const keywords = [
+        'padra', 'luna', 'halol', 'vanseti', 'tajpura', 'samrudh', 'tarapur', 'boisar',
+        'bhiwandi', 'vapi', 'daman', 'manjusar', 'savli', 'ankleshwar', 'thane', 'atgaon',
+        'selaqui', 'dehradun', 'jabalpur', 'rudrapur', 'kamla', 'sovereign', 'inject care',
+        'indasi', 'bajaj', 'lyka'
+    ];
+
+    for (const da of dbAddrs) {
+        const daLow = (da.name || '').toLowerCase();
+        let score = 0;
+        for (const kw of keywords) {
+            if (lower.includes(kw) && daLow.includes(kw)) {
+                score += 10;
+            }
+        }
+        if (score > maxScore) {
+            maxScore = score;
+            bestMatch = da.name;
+        }
+    }
+
+    return maxScore >= 10 ? bestMatch : null;
 }
 
 function extractPdfText(doc: PDFDocument): string {
@@ -112,17 +195,40 @@ export async function POST(req: NextRequest) {
             billFromCompany = 'Creative Enterprise';
         }
 
-        // 5. Detect Bill To & Ship To (Padra vs Halol)
-        let billToUnit: 'Padra' | 'Halol' | 'Unknown' = 'Unknown';
-        let shipToUnit: 'Padra' | 'Halol' | 'Same as Bill To' | 'Unknown' = 'Unknown';
+        // 5. Extract and Detect Bill To & Ship To dynamically from PO
+        let billToRaw = '';
+        const billToMatch = fullText.match(/Bill\s*To\s*[:\s]*([\s\S]*?)(?=Ship\s*To|Payment\s*Terms|Inco\s*Terms|Item\s*Details|Material\s*Code)/i);
+        if (billToMatch) {
+            billToRaw = billToMatch[1].trim();
+        }
 
-        const isPadra = lowerText.includes('padra');
-        const isHalol = lowerText.includes('halol');
+        let shipToRaw = '';
+        const shipToMatch = fullText.match(/Ship\s*To\s*[:\s]*([\s\S]*?)(?=Payment\s*Terms|Inco\s*Terms|Mode\s*Of\s*Dispatch|Currency|Port\s*Of\s*Discharge|Freight\s*Terms|Indenter|Remarks|Item\s*Details|Material\s*Code)/i);
+        if (shipToMatch) {
+            shipToRaw = shipToMatch[1].trim();
+        }
 
-        if (isPadra) billToUnit = 'Padra';
-        else if (isHalol) billToUnit = 'Halol';
+        // If no explicit Ship To block found, fallback to Bill To
+        if (!shipToRaw && billToRaw) {
+            shipToRaw = billToRaw;
+        }
 
-        shipToUnit = billToUnit === 'Unknown' ? 'Unknown' : 'Same as Bill To';
+        const billToClean = cleanAddressOnly(billToRaw);
+        const shipToClean = cleanAddressOnly(shipToRaw);
+
+        const billToStatutory = extractStatutory(billToRaw);
+        const shipToStatutory = extractStatutory(shipToRaw);
+
+        const billToUnit = detectUnitName(billToRaw);
+        let shipToUnit = detectUnitName(shipToRaw);
+
+        if (shipToClean && billToClean && shipToClean.toLowerCase() === billToClean.toLowerCase()) {
+            shipToUnit = 'Same as Bill To';
+        }
+
+        // Fetch registered delivery addresses from Supabase for exact matching
+        const { data: dbAddrs } = await supabase.from('delivery_addresses').select('id, name').order('name');
+        const matchedShipToAddress = matchDbAddress(shipToRaw || shipToClean, dbAddrs || []);
 
         // 6. Extract Line Items
         const items: ParsedPoItem[] = [];
@@ -265,14 +371,22 @@ export async function POST(req: NextRequest) {
             poDate: poDate || '',
             billFromCompany,
             billTo: {
-                raw: 'BDR Pharmaceuticals International Private Limited, Luna, Padra',
+                raw: billToRaw,
+                cleanAddress: billToClean || billToRaw,
                 unit: billToUnit,
+                gstin: billToStatutory.gstin,
+                pan: billToStatutory.pan,
             },
             shipTo: {
-                raw: 'BDR Pharmaceuticals International Private Limited, Luna, Padra',
+                raw: shipToRaw,
+                cleanAddress: shipToClean || shipToRaw,
                 unit: shipToUnit,
+                matchedDeliveryAddress: matchedShipToAddress || undefined,
+                gstin: shipToStatutory.gstin,
+                pan: shipToStatutory.pan,
             },
             items,
+            deliveryAddresses: dbAddrs || [],
             rawTextPreview: fullText.slice(0, 1000),
         };
 
@@ -280,6 +394,7 @@ export async function POST(req: NextRequest) {
             success: true,
             data: parsedData,
             availableOrders: recentOrders || [],
+            deliveryAddresses: dbAddrs || [],
         });
 
     } catch (err: any) {
