@@ -4,7 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
-import { normalizeCompany, parseOrderPoInfo, CompanyName } from '@/components/GenerateDocsModal';
+import { normalizeCompany, parseOrderPoInfo, CompanyName } from '@/utils/orderUtils';
 
 export const dynamic = 'force-dynamic';
 
