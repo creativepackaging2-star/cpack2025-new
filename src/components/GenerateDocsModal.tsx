@@ -19,7 +19,8 @@ import {
     Download,
     ExternalLink,
     Mail,
-    RefreshCw
+    RefreshCw,
+    Trash2
 } from 'lucide-react';
 import SendInvoiceEmailModal from '@/components/SendInvoiceEmailModal';
 
@@ -337,6 +338,39 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
         }
     };
 
+        const handleUnlinkOrderInvoice = async (orderId: number, invoiceNo?: string) => {
+        const confirmMsg = invoiceNo
+            ? `Are you sure you want to unlink invoice "${invoiceNo}" from this order? Use this if the invoice was deleted in Zoho Books or assigned by mistake.`
+            : 'Are you sure you want to unlink this invoice?';
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({
+                    invoice_no: null,
+                    billed: 'false',
+                })
+                .eq('id', orderId);
+
+            if (error) throw error;
+
+            // Update local orders state
+            setOrders(prev => prev.map(o => {
+                if (o.id === orderId) {
+                    return {
+                        ...o,
+                        invoice_no: null,
+                        billed: 'false',
+                    };
+                }
+                return o;
+            }));
+        } catch (err: any) {
+            alert('Failed to unlink invoice: ' + err.message);
+        }
+    };
+
     const handleGenerateDocs = () => {
         if (selectedIds.length === 0) return;
         if (selectedValidationErrors.length > 0) return;
@@ -545,10 +579,24 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                                 {/* Company & Invoice Badges */}
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     {val.hasInvoice && (
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-                                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                                            Invoice Generated: {val.invoiceNo}
-                                                        </span>
+                                                        <div className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-full pl-2.5 pr-1.5 py-0.5 shadow-xs">
+                                                            <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-800">
+                                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                                                Invoice: {val.invoiceNo}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleUnlinkOrderInvoice(order.id, val.invoiceNo);
+                                                                }}
+                                                                title="Unlink invoice (e.g. if deleted in Zoho Books or assigned by mistake)"
+                                                                className="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 text-[10px] font-bold text-red-700 bg-red-100 hover:bg-red-200 border border-red-300 rounded-full transition-colors cursor-pointer"
+                                                            >
+                                                                <Trash2 className="w-2.5 h-2.5" />
+                                                                Unlink
+                                                            </button>
+                                                        </div>
                                                     )}
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         <Building2 className="w-3 h-3 text-slate-500" />

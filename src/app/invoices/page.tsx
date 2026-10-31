@@ -18,7 +18,8 @@ import {
     Eye,
     ArrowUpDown,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Trash2
 } from 'lucide-react';
 import SendInvoiceEmailModal, { formatToDDMMYYYY } from '@/components/SendInvoiceEmailModal';
 
@@ -238,6 +239,26 @@ export default function SalesInvoicesPage() {
             alert('Failed to retrieve Zoho invoice link: ' + err.message);
         } finally {
             setViewingInvoiceNo(null);
+        }
+    };
+
+    const handleUnlinkInvoice = async (inv: SalesInvoiceRecord) => {
+        if (!confirm(`Are you sure you want to unlink invoice ${inv.invoice_number} from its orders?\n\nThis will remove it from the Sales Invoices list and allow its orders to be selected for a new invoice in Generate Documents.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/invoices?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to unlink invoice.');
+
+            // Remove from state immediately
+            setInvoices(prev => prev.filter(item => item.invoice_number !== inv.invoice_number));
+            alert(`Invoice ${inv.invoice_number} unlinked successfully. You can now re-generate documents.`);
+        } catch (err: any) {
+            alert('Failed to unlink invoice: ' + err.message);
         }
     };
 
@@ -485,13 +506,15 @@ export default function SalesInvoicesPage() {
                                             {/* Status Badge */}
                                             <td className="py-3.5 px-4 text-center whitespace-nowrap">
                                                 <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                                                    inv.status === 'paid'
+                                                    inv.status === 'deleted_in_zoho'
+                                                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                                        : inv.status === 'paid'
                                                         ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                         : inv.status === 'draft'
                                                         ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                                         : 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                                                 }`}>
-                                                    {inv.status}
+                                                    {inv.status === 'deleted_in_zoho' ? 'Deleted in Zoho' : (inv.status || 'Active')}
                                                 </span>
                                             </td>
 
@@ -538,6 +561,16 @@ export default function SalesInvoicesPage() {
                                                         title="Email Invoice & COAs to Customer"
                                                     >
                                                         <Mail className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* 4. Unlink / Delete Invoice */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUnlinkInvoice(inv)}
+                                                        className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-all cursor-pointer"
+                                                        title="Unlink Invoice from Orders (Use if deleted in Zoho)"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </td>

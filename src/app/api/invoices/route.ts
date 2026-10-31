@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
 
         // 2. Fetch live invoices from Zoho Books for both Creative Printers and Creative Packaging
         let zohoInvoices: any[] = [];
+        let zohoFetchSuccess = false;
         try {
             const tokenRes = await fetch(`https://accounts.zoho.com/oauth/v2/token?refresh_token=${zohoRefreshToken}&client_id=${zohoClientId}&client_secret=${zohoClientSecret}&grant_type=refresh_token`, {
                 method: 'POST'
@@ -125,6 +126,7 @@ export async function GET(req: NextRequest) {
                                 inv._orgId = org.id;
                                 zohoInvoices.push(inv);
                             });
+                            zohoFetchSuccess = true;
                         }
                     } catch (orgErr) {
                         console.warn(`Zoho fetch error for ${org.company}:`, orgErr);
@@ -169,6 +171,15 @@ export async function GET(req: NextRequest) {
                     invoice_url: '',
                 };
             }
+        }
+
+        // Detect any invoice from Supabase that no longer exists in Zoho
+        if (zohoFetchSuccess) {
+            Object.values(invoiceMap).forEach((inv: any) => {
+                if (!inv.zoho_id && inv.source === 'supabase') {
+                    inv.status = 'deleted_in_zoho';
+                }
+            });
         }
 
         // 3. Check for generated unified PDF files in public/downloads
@@ -239,5 +250,41 @@ export async function GET(req: NextRequest) {
     } catch (err: any) {
         console.error('Error in /api/invoices:', err);
         return NextResponse.json({ error: err.message || 'Failed to list sales invoices' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const invoiceNumber = searchParams.get('invoiceNumber');
+
+        if (!invoiceNumber) {
+            return NextResponse.json({ error: 'Invoice number is required.' }, { status: 400 });
+        }
+
+        const trimmed = invoiceNumber.trim();
+
+        // 1. Unlink in Supabase orders
+        const { error: dbError } = await supabase
+            .from('orders')
+            .update({ invoice_no: null, billed: 'false' })
+            .eq('invoice_no', trimmed);
+
+        if (dbError) throw dbError;
+
+        // 2. Remove local generated dispatch PDF if exists
+        const publicDownloadsDir = path.join(process.cwd(), 'public', 'downloads');
+        const pdfFile = path.join(publicDownloadsDir, `Dispatch_Documents_${trimmed}.pdf`);
+        if (fs.existsSync(pdfFile)) {
+            try { fs.unlinkSync(pdfFile); } catch {}
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: `Invoice ${trimmed} successfully unlinked from orders.`
+        });
+    } catch (err: any) {
+        console.error('Error unlinking invoice:', err);
+        return NextResponse.json({ error: err.message || 'Failed to unlink invoice.' }, { status: 500 });
     }
 }
