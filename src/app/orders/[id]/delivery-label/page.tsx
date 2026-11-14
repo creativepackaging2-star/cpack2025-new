@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
 import DeliveryLabelTemplate from '@/components/DeliveryLabelTemplate';
+import SendDeliveryLabelModal from '@/components/SendDeliveryLabelModal';
+import { Mail } from 'lucide-react';
 
 export default function DeliveryLabelPage() {
     const params = useParams();
@@ -14,6 +16,7 @@ export default function DeliveryLabelPage() {
     const [selectedCompany, setSelectedCompany] = useState<'Enterprise' | 'Printers' | 'Packaging'>('Enterprise');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -111,6 +114,13 @@ export default function DeliveryLabelPage() {
     if (error) return <div className="p-20 text-center text-red-500 font-bold">Error: {error}</div>;
     if (!order) return <div className="p-20 text-center text-gray-500">Order not found.</div>;
 
+    const isLabelProduct = Boolean(
+        order?.product_name?.toLowerCase().includes('label') ||
+        order?.artwork_code?.toLowerCase().includes('lbl') ||
+        order?.artwork_code?.toLowerCase().includes('label') ||
+        (order as any)?.products?.product_name?.toLowerCase().includes('label')
+    );
+
     return (
         <div className="min-h-screen bg-slate-100 py-4 md:py-10 print:p-0 print:bg-white flex flex-col items-center print:block">
             {/* Action Bar */}
@@ -139,6 +149,16 @@ export default function DeliveryLabelPage() {
                     >
                         PDF
                     </button>
+                    {isLabelProduct && (
+                        <button
+                            onClick={() => setIsEmailModalOpen(true)}
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-6 py-2 bg-indigo-600 text-white rounded-full font-bold text-sm hover:bg-indigo-700 shadow-lg active:scale-95 transition-all cursor-pointer"
+                            title="Send Delivery Label by Email"
+                        >
+                            <Mail className="w-4 h-4" />
+                            Send
+                        </button>
+                    )}
                     <button
                         onClick={() => window.close()}
                         className="px-6 py-2 bg-white text-slate-600 rounded-full font-bold text-sm border border-slate-200 hover:bg-slate-50 transition-colors"
@@ -151,6 +171,18 @@ export default function DeliveryLabelPage() {
             <div className="bg-white shadow-2xl print:shadow-none mx-2 md:mx-0 overflow-x-auto max-w-full">
                 <DeliveryLabelTemplate order={order} companyType={selectedCompany} />
             </div>
+
+            {/* Email Modal */}
+            {isLabelProduct && (
+                <SendDeliveryLabelModal
+                    isOpen={isEmailModalOpen}
+                    onClose={() => setIsEmailModalOpen(false)}
+                    productName={order.product_name || ''}
+                    deliveryAddress={order.delivery_address || undefined}
+                    invoiceNo={order.invoice_no || undefined}
+                    company={selectedCompany}
+                />
+            )}
         </div>
     );
 }

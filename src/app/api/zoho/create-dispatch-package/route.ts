@@ -397,8 +397,9 @@ export async function POST(req: NextRequest) {
             }
             finalInvoiceNumber = `${prefix}${maxNum + 1}`;
 
-            // Resolve contact ID
+            // Resolve contact ID & Place of Supply
             let customerId = isPackaging ? '687997000000062001' : '874645000000060001';
+            let contactPlaceOfSupply = 'MH';
             try {
                 const searchKeyword = customerName.replace(/[^a-zA-Z0-9\s]/g, ' ').trim().split(/\s+/)[0] || 'BDR';
                 const searchRes = await fetch(`https://www.zohoapis.com/books/v3/contacts?organization_id=${zohoOrgId}&search_text=${encodeURIComponent(searchKeyword)}`, {
@@ -406,17 +407,31 @@ export async function POST(req: NextRequest) {
                 });
                 const searchData = await searchRes.json();
                 if (searchData.contacts && searchData.contacts.length > 0) {
+                    let matchedContact = searchData.contacts[0];
                     if (isPackaging && deliveryAddress.toLowerCase().includes('padra')) {
                         const padra = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('padra'));
-                        customerId = padra ? padra.contact_id : searchData.contacts[0].contact_id;
-                    } else {
-                        customerId = searchData.contacts[0].contact_id;
+                        if (padra) matchedContact = padra;
+                    } else if (!isPackaging) {
+                        if (deliveryAddress.toLowerCase().includes('halol') || deliveryAddress.toLowerCase().includes('tajpura')) {
+                            const halol = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('halol'));
+                            if (halol) matchedContact = halol;
+                        } else if (deliveryAddress.toLowerCase().includes('baroda') || deliveryAddress.toLowerCase().includes('vadodara')) {
+                            const baroda = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('baroda'));
+                            if (baroda) matchedContact = baroda;
+                        }
                     }
+                    customerId = matchedContact.contact_id;
+                    contactPlaceOfSupply = matchedContact.place_of_contact || (matchedContact.gst_no?.startsWith('24') ? 'GJ' : 'MH');
                 }
             } catch {}
 
+            // Determine Interstate vs Intrastate
+            // Both Creative Packaging & Creative Printers are registered in Maharashtra (MH) in Zoho Books.
+            // When customer's Place of Supply is MH -> Intrastate (CGST + SGST)
+            // When customer's Place of Supply is outside MH (e.g. GJ) -> Interstate (IGST)
+            const isInterState = contactPlaceOfSupply !== 'MH';
+
             // Line items
-            const isInterState = true;
             const lineItems: any[] = [];
             for (const o of orders) {
                 const poInfo = parseOrderPoInfo(o.remarks, o.rate);
@@ -440,17 +455,26 @@ export async function POST(req: NextRequest) {
                 if (isPackaging) {
                     if (isLabel) {
                         catalogItemId = '687997000000078025'; // LABELS
-                        taxId = '687997000000059078'; // IGST 18%
+                        taxId = isInterState ? '687997000000059078' : '687997000000059084'; // IGST 18% vs Standard Rate(18)
                     } else if (isInsert) {
                         catalogItemId = '687997000000069007'; // LEAFLET
-                        taxId = '687997000000059054'; // IGST 5%
+                        taxId = isInterState ? '687997000000059054' : '687997000000059068'; // IGST 5% vs Reduced Rate(5)
                     } else {
                         catalogItemId = '687997000000061011'; // CARTON
-                        taxId = '687997000000059054'; // IGST 5%
+                        taxId = isInterState ? '687997000000059054' : '687997000000059068'; // IGST 5% vs Reduced Rate(5)
                     }
                 } else {
-                    catalogItemId = isLabel ? '874645000002219014' : '874645000002219003';
-                    taxId = isLabel ? '874645000000060043' : '874645000000060037';
+                    // Creative Printers
+                    if (isLabel) {
+                        catalogItemId = '874645000002219014'; // Label
+                        taxId = isInterState ? '874645000000060433' : '874645000000060439'; // IGST 18% vs GST 18%
+                    } else if (isInsert) {
+                        catalogItemId = '874645000002219025'; // LEAFLET
+                        taxId = isInterState ? '874645000000060417' : '874645000000060423'; // IGST 5% vs GST 5%
+                    } else {
+                        catalogItemId = '874645000002219003'; // Cartons
+                        taxId = isInterState ? '874645000000060417' : '874645000000060423'; // IGST 5% vs GST 5%
+                    }
                 }
 
                 lineItems.push({
@@ -461,14 +485,14 @@ export async function POST(req: NextRequest) {
                     quantity: qty,
                     hsn_or_sac: hsnGst.hsn,
                     ...(taxId ? { tax_id: taxId } : {}),
-                    tax_name: isInterState ? `IGST [${hsnGst.gstRate}%]` : `GST [${hsnGst.gstRate}%]`,
-                    tax_percentage: hsnGst.gstRate,
                 });
             }
 
             // Optional processing charge
             if (hasProcessing && Number(procAmount) > 0) {
-                const procTaxId = isPackaging ? '687997000000059078' : '874645000000060043';
+                const procTaxId = isPackaging
+                    ? (isInterState ? '687997000000059078' : '687997000000059084')
+                    : (isInterState ? '874645000000060433' : '874645000000060439');
                 const procItemId = isPackaging ? '687997000000078025' : '874645000002219014';
                 lineItems.push({
                     item_id: procItemId,
@@ -478,8 +502,6 @@ export async function POST(req: NextRequest) {
                     quantity: Number(procQty) || 1,
                     hsn_or_sac: '48211020',
                     tax_id: procTaxId,
-                    tax_name: isInterState ? 'IGST [18%]' : 'GST [18%]',
-                    tax_percentage: 18,
                 });
             }
 
