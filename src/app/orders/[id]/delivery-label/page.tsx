@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase/client';
 import { Order } from '@/types';
 import DeliveryLabelTemplate from '@/components/DeliveryLabelTemplate';
 import SendDeliveryLabelModal from '@/components/SendDeliveryLabelModal';
-import { Mail } from 'lucide-react';
+import { Mail, CheckCircle2 } from 'lucide-react';
 
 export default function DeliveryLabelPage() {
     const params = useParams();
@@ -17,6 +17,7 @@ export default function DeliveryLabelPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [sentNotice, setSentNotice] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -123,6 +124,14 @@ export default function DeliveryLabelPage() {
 
     return (
         <div className="min-h-screen bg-slate-100 py-4 md:py-10 print:p-0 print:bg-white flex flex-col items-center print:block">
+            {/* Sent Success Banner */}
+            {sentNotice && (
+                <div className="mb-4 flex items-center gap-2.5 px-6 py-3 bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-full text-sm font-bold shadow-md animate-in fade-in print:hidden">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <span>{sentNotice}</span>
+                </div>
+            )}
+
             {/* Action Bar */}
             <div className="mb-6 flex flex-wrap justify-center gap-3 md:gap-4 print:hidden items-center px-4 max-w-full">
                 {/* Company Selector */}
@@ -181,6 +190,9 @@ export default function DeliveryLabelPage() {
                     deliveryAddress={order.delivery_address || undefined}
                     invoiceNo={order.invoice_no || undefined}
                     company={selectedCompany}
+                    onEmailSentSuccess={(sentTo) => {
+                        setSentNotice(`Email sent successfully to: ${sentTo.join(', ')}`);
+                    }}
                 />
             )}
         </div>

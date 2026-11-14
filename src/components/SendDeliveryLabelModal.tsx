@@ -10,6 +10,7 @@ interface SendDeliveryLabelModalProps {
     deliveryAddress?: string | null;
     invoiceNo?: string | null;
     company?: 'Enterprise' | 'Printers' | 'Packaging';
+    onEmailSentSuccess?: (recipients: string[]) => void;
 }
 
 export default function SendDeliveryLabelModal({
@@ -18,7 +19,8 @@ export default function SendDeliveryLabelModal({
     productName,
     deliveryAddress,
     invoiceNo,
-    company = 'Packaging'
+    company = 'Packaging',
+    onEmailSentSuccess,
 }: SendDeliveryLabelModalProps) {
     // Default recipient is siddhilabels@gmail.com (user can edit/remove/add more)
     const [recipients, setRecipients] = useState<string[]>(['siddhilabels@gmail.com']);
@@ -30,7 +32,8 @@ export default function SendDeliveryLabelModal({
 
     const [isSending, setIsSending] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const [isSentSuccess, setIsSentSuccess] = useState(false);
+    const [sentRecipients, setSentRecipients] = useState<string[]>([]);
 
     if (!isOpen) return null;
 
@@ -38,7 +41,6 @@ export default function SendDeliveryLabelModal({
         const trimmed = newEmailInput.trim();
         if (!trimmed) return;
 
-        // Split by comma or space if multiple were pasted
         const parts = trimmed.split(/[,;\s]+/).filter(Boolean);
         const validEmails = parts.filter(p => p.includes('@'));
 
@@ -63,7 +65,6 @@ export default function SendDeliveryLabelModal({
     };
 
     const handleSend = async () => {
-        // Automatically incorporate any email still in the input
         let finalRecipients = [...recipients];
         const pendingInput = newEmailInput.trim();
         if (pendingInput && pendingInput.includes('@') && !finalRecipients.includes(pendingInput)) {
@@ -79,7 +80,6 @@ export default function SendDeliveryLabelModal({
 
         setIsSending(true);
         setErrorMsg(null);
-        setSuccessMsg(null);
 
         try {
             const res = await fetch('/api/send-delivery-label-email', {
@@ -101,17 +101,23 @@ export default function SendDeliveryLabelModal({
                 throw new Error(data.error || 'Failed to send email.');
             }
 
-            setSuccessMsg(`Delivery label sent successfully to ${finalRecipients.join(', ')}!`);
-            setTimeout(() => {
-                onClose();
-                setSuccessMsg(null);
-            }, 1800);
+            setSentRecipients(finalRecipients);
+            setIsSentSuccess(true);
+            if (onEmailSentSuccess) {
+                onEmailSentSuccess(finalRecipients);
+            }
         } catch (err: any) {
             console.error('Send error:', err);
             setErrorMsg(err.message || 'An error occurred while sending the email.');
         } finally {
             setIsSending(false);
         }
+    };
+
+    const handleClose = () => {
+        setIsSentSuccess(false);
+        setErrorMsg(null);
+        onClose();
     };
 
     const safeFilename = `${productName.replace(/[^a-zA-Z0-9_-]/g, '_')}_DeliveryLabel.pdf`;
@@ -131,7 +137,7 @@ export default function SendDeliveryLabelModal({
                         </div>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         disabled={isSending}
                         className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
                     >
@@ -139,148 +145,171 @@ export default function SendDeliveryLabelModal({
                     </button>
                 </div>
 
-                {/* Body Form */}
-                <div className="p-6 overflow-y-auto space-y-4 flex-1">
-                    {/* Status Alerts */}
-                    {successMsg && (
-                        <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                            <span>{successMsg}</span>
+                {/* Body: Success State or Input Form */}
+                {isSentSuccess ? (
+                    <div className="p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shadow-inner">
+                            <CheckCircle2 className="w-10 h-10" />
                         </div>
-                    )}
-                    {errorMsg && (
-                        <div className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold">
-                            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                            <span>{errorMsg}</span>
+                        <div className="space-y-1">
+                            <h4 className="text-xl font-black text-slate-900">Email Sent Successfully!</h4>
+                            <p className="text-sm text-slate-600 max-w-sm">
+                                Dispatch box label for <span className="font-bold text-indigo-700">{productName}</span> has been emailed in official A4 paper format to:
+                            </p>
                         </div>
-                    )}
-
-                    {/* Recipients Section */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Recipients
-                        </label>
-                        <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[44px] items-center">
-                            {recipients.map(email => (
-                                <span
-                                    key={email}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-semibold"
-                                >
-                                    <span>{email}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveRecipient(email)}
-                                        className="text-indigo-400 hover:text-rose-600 transition-colors cursor-pointer"
-                                        title="Remove recipient"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
+                        <div className="flex flex-wrap justify-center gap-1.5 p-3 bg-emerald-50 border border-emerald-200 rounded-xl max-w-md">
+                            {sentRecipients.map(e => (
+                                <span key={e} className="px-3 py-1 bg-white text-emerald-800 border border-emerald-300 rounded-full text-xs font-bold shadow-xs">
+                                    {e}
                                 </span>
                             ))}
-                            {recipients.length === 0 && (
-                                <span className="text-xs text-slate-400 italic px-2">No recipients added yet</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            className="mt-4 px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg active:scale-95 transition-all cursor-pointer"
+                        >
+                            Done
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                            {errorMsg && (
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold">
+                                    <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                                    <span>{errorMsg}</span>
+                                </div>
                             )}
+
+                            {/* Recipients Section */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Recipients
+                                </label>
+                                <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[44px] items-center">
+                                    {recipients.map(email => (
+                                        <span
+                                            key={email}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-semibold"
+                                        >
+                                            <span>{email}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveRecipient(email)}
+                                                className="text-indigo-400 hover:text-rose-600 transition-colors cursor-pointer"
+                                                title="Remove recipient"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    {recipients.length === 0 && (
+                                        <span className="text-xs text-slate-400 italic px-2">No recipients added yet</span>
+                                    )}
+                                </div>
+
+                                {/* Add custom email input */}
+                                <div className="mt-2 flex gap-2">
+                                    <input
+                                        type="email"
+                                        value={newEmailInput}
+                                        onChange={e => setNewEmailInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' || e.key === ',') {
+                                                e.preventDefault();
+                                                handleAddRecipient();
+                                            }
+                                        }}
+                                        placeholder="Add custom email (e.g. party@example.com)"
+                                        className="flex-1 px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddRecipient}
+                                        className="inline-flex items-center gap-1 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        Add
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-1">Default is siddhilabels@gmail.com. You can remove it or add multiple custom recipients.</p>
+                            </div>
+
+                            {/* Subject */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Subject
+                                </label>
+                                <input
+                                    type="text"
+                                    value={subject}
+                                    onChange={e => setSubject(e.target.value)}
+                                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
+                                />
+                            </div>
+
+                            {/* Message Body */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Message
+                                </label>
+                                <textarea
+                                    rows={6}
+                                    value={message}
+                                    onChange={e => setMessage(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-700 resize-none font-mono"
+                                />
+                            </div>
+
+                            {/* Attachment preview */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Attachment (A4 Format)
+                                </label>
+                                <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg border border-rose-100">
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-slate-800 truncate">{safeFilename}</p>
+                                        <p className="text-[11px] text-slate-500">Official dispatch box delivery label (A4 Sheet PDF)</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Add custom email input */}
-                        <div className="mt-2 flex gap-2">
-                            <input
-                                type="email"
-                                value={newEmailInput}
-                                onChange={e => setNewEmailInput(e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter' || e.key === ',') {
-                                        e.preventDefault();
-                                        handleAddRecipient();
-                                    }
-                                }}
-                                placeholder="Add custom email (e.g. party@example.com)"
-                                className="flex-1 px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                            />
+                        {/* Footer Controls */}
+                        <div className="flex items-center justify-end gap-2.5 px-6 py-4 bg-slate-50 border-t border-slate-100">
                             <button
                                 type="button"
-                                onClick={handleAddRecipient}
-                                className="inline-flex items-center gap-1 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer"
+                                onClick={handleClose}
+                                disabled={isSending}
+                                className="px-5 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
                             >
-                                <Plus className="w-3.5 h-3.5" />
-                                Add
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSend}
+                                disabled={isSending || recipients.length === 0}
+                                className="inline-flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSending ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="w-4 h-4" />
+                                        Send Email
+                                    </>
+                                )}
                             </button>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-1">Default is siddhilabels@gmail.com. You can remove it or add multiple custom recipients.</p>
-                    </div>
-
-                    {/* Subject */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Subject
-                        </label>
-                        <input
-                            type="text"
-                            value={subject}
-                            onChange={e => setSubject(e.target.value)}
-                            className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-800"
-                        />
-                    </div>
-
-                    {/* Message Body */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Message
-                        </label>
-                        <textarea
-                            rows={6}
-                            value={message}
-                            onChange={e => setMessage(e.target.value)}
-                            className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium text-slate-700 resize-none font-mono"
-                        />
-                    </div>
-
-                    {/* Attachment preview */}
-                    <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Attachment
-                        </label>
-                        <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg border border-rose-100">
-                                <FileText className="w-5 h-5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-800 truncate">{safeFilename}</p>
-                                <p className="text-[11px] text-slate-500">Official dispatch box delivery label (PDF)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer Controls */}
-                <div className="flex items-center justify-end gap-2.5 px-6 py-4 bg-slate-50 border-t border-slate-100">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={isSending}
-                        className="px-5 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSend}
-                        disabled={isSending || recipients.length === 0}
-                        className="inline-flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isSending ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Sending...
-                            </>
-                        ) : (
-                            <>
-                                <Mail className="w-4 h-4" />
-                                Send Email
-                            </>
-                        )}
-                    </button>
-                </div>
+                    </>
+                )}
             </div>
         </div>
     );

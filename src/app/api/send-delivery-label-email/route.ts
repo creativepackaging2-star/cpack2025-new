@@ -4,7 +4,8 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 export const dynamic = 'force-dynamic';
 
-async function generateDeliveryLabelPdfBuffer(orderData: {
+// Generates the delivery label PDF in exact A4 paper format
+async function generateDeliveryLabelA4PdfBuffer(orderData: {
     productName?: string;
     deliveryAddress?: string;
     invoiceNo?: string;
@@ -35,26 +36,34 @@ async function generateDeliveryLabelPdfBuffer(orderData: {
     const branding = brandConfig[company || 'Packaging'] || brandConfig['Packaging'];
 
     const pdfDoc = await PDFDocument.create();
-    const width = 5.6 * 72; // 403.2 points
-    const height = 4 * 72;  // 288 points
-    const page = pdfDoc.addPage([width, height]);
+    // Standard A4 dimensions in points: 595.28 x 841.89 pt (8.27 x 11.69 inches)
+    const A4_WIDTH = 595.28;
+    const A4_HEIGHT = 841.89;
+    const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Padding & dimensions
-    const pad = 12;
-    const footerH = 34;
-    const bodyW = width - pad * 2;
-    const bodyH = height - pad * 2 - footerH;
-    const bodyY = pad + footerH;
+    // Box label dimensions: 5.6in x 4.0in
+    const labelW = 5.6 * 72; // 403.2 pt
+    const labelH = 4.0 * 72; // 288 pt
 
-    // Left box (flex ~ 1.5) and Right box (flex ~ 1)
-    const leftW = Math.round(bodyW * 0.6);
+    // Position label at top-left of A4 page (matches browser print to A4)
+    const startX = 25;
+    const startY = A4_HEIGHT - 25 - labelH;
+
+    const pad = 12;
+    const footerH = 32;
+    const bodyW = labelW - pad * 2;
+    const bodyH = labelH - pad * 2 - footerH;
+    const bodyY = startY + pad + footerH;
+
+    const leftW = Math.round(bodyW * 0.58);
     const rightW = bodyW - leftW;
 
     // 1. Left Box: Delivery Address
     page.drawRectangle({
-        x: pad,
+        x: startX + pad,
         y: bodyY,
         width: leftW,
         height: bodyH,
@@ -63,10 +72,10 @@ async function generateDeliveryLabelPdfBuffer(orderData: {
     });
 
     page.drawText('DELIVERY ADDRESS:', {
-        x: pad + 8,
-        y: bodyY + bodyH - 18,
-        size: 8.5,
-        font: fontRegular,
+        x: startX + pad + 8,
+        y: bodyY + bodyH - 16,
+        size: 8,
+        font: fontBold,
         color: rgb(0.35, 0.35, 0.35),
     });
 
@@ -76,7 +85,7 @@ async function generateDeliveryLabelPdfBuffer(orderData: {
     let curLine = '';
     for (const w of words) {
         const test = curLine ? `${curLine} ${w}` : w;
-        if (fontRegular.widthOfTextAtSize(test, 9.5) > leftW - 16) {
+        if (fontRegular.widthOfTextAtSize(test, 9) > leftW - 16) {
             if (curLine) lines.push(curLine);
             curLine = w;
         } else {
@@ -85,22 +94,22 @@ async function generateDeliveryLabelPdfBuffer(orderData: {
     }
     if (curLine) lines.push(curLine);
 
-    let addrY = bodyY + bodyH - 34;
+    let addrY = bodyY + bodyH - 32;
     for (const line of lines) {
-        if (addrY < bodyY + 8) break;
+        if (addrY < bodyY + 6) break;
         page.drawText(line, {
-            x: pad + 8,
+            x: startX + pad + 8,
             y: addrY,
-            size: 9.5,
+            size: 9,
             font: fontRegular,
             color: rgb(0, 0, 0),
         });
-        addrY -= 14;
+        addrY -= 13;
     }
 
     // 2. Right Box: 6 rows (Product / Qty / Invoice No)
     page.drawRectangle({
-        x: pad + leftW,
+        x: startX + pad + leftW,
         y: bodyY,
         width: rightW,
         height: bodyH,
@@ -111,19 +120,19 @@ async function generateDeliveryLabelPdfBuffer(orderData: {
     const rowH = bodyH / 6;
     for (let i = 1; i < 6; i++) {
         page.drawLine({
-            start: { x: pad + leftW, y: bodyY + bodyH - i * rowH },
-            end: { x: pad + bodyW, y: bodyY + bodyH - i * rowH },
+            start: { x: startX + pad + leftW, y: bodyY + bodyH - i * rowH },
+            end: { x: startX + pad + bodyW, y: bodyY + bodyH - i * rowH },
             thickness: 1,
             color: rgb(0, 0, 0),
         });
     }
 
-    const drawCenteredText = (text: string, rowIndex: number, font: any, size: number, color: any) => {
-        const yCenter = bodyY + bodyH - (rowIndex + 0.5) * rowH;
+    const drawCentered = (text: string, rowIdx: number, font: any, size: number, color: any) => {
+        const yCenter = bodyY + bodyH - (rowIdx + 0.5) * rowH;
         const textW = font.widthOfTextAtSize(text, size);
-        const x = pad + leftW + (rightW - textW) / 2;
+        const x = startX + pad + leftW + (rightW - textW) / 2;
         page.drawText(text, {
-            x: Math.max(pad + leftW + 4, x),
+            x: Math.max(startX + pad + leftW + 4, x),
             y: yCenter - size / 3,
             size,
             font,
@@ -131,63 +140,56 @@ async function generateDeliveryLabelPdfBuffer(orderData: {
         });
     };
 
-    // Row 0: Header
-    drawCenteredText('PRODUCT', 0, fontRegular, 8.5, rgb(0.35, 0.35, 0.35));
+    drawCentered('PRODUCT', 0, fontRegular, 8, rgb(0.35, 0.35, 0.35));
 
-    // Row 1: Product Name
     const pName = (productName || '<<[Product Name]>>').toUpperCase();
-    drawCenteredText(pName.length > 22 ? pName.slice(0, 22) + '...' : pName, 1, fontBold, 9.5, rgb(0, 0, 0));
+    drawCentered(pName.length > 22 ? pName.slice(0, 22) + '...' : pName, 1, fontBold, 9, rgb(0, 0, 0));
 
-    // Row 2: Header
-    drawCenteredText('QTY', 2, fontRegular, 8.5, rgb(0.35, 0.35, 0.35));
+    drawCentered('QTY', 2, fontRegular, 8, rgb(0.35, 0.35, 0.35));
 
-    // Row 3: Empty
+    drawCentered('INVOICE NO', 4, fontRegular, 8, rgb(0.35, 0.35, 0.35));
 
-    // Row 4: Header
-    drawCenteredText('INVOICE NO', 4, fontRegular, 8.5, rgb(0.35, 0.35, 0.35));
-
-    // Row 5: Invoice No value
     const invText = invoiceNo || '<<[Inv No]>>';
-    drawCenteredText(invText, 5, fontRegular, 9, rgb(0, 0, 0));
+    drawCentered(invText, 5, fontRegular, 9, rgb(0, 0, 0));
 
     // 3. Footer Branding
     page.drawLine({
-        start: { x: pad, y: pad + footerH },
-        end: { x: width - pad, y: pad + footerH },
+        start: { x: startX + pad, y: startY + pad + footerH },
+        end: { x: startX + pad + bodyW, y: startY + pad + footerH },
         thickness: 1,
         color: rgb(0, 0, 0),
     });
 
-    const fNameW = fontBold.widthOfTextAtSize(branding.name, 9);
+    const compW = fontBold.widthOfTextAtSize(branding.name, 8.5);
     page.drawText(branding.name, {
-        x: (width - fNameW) / 2,
-        y: pad + 22,
-        size: 9,
+        x: startX + (labelW - compW) / 2,
+        y: startY + pad + 20,
+        size: 8.5,
         font: fontBold,
         color: rgb(0, 0, 0),
     });
 
-    const fAddrW = fontRegular.widthOfTextAtSize(branding.address, 7);
+    const addrW = fontRegular.widthOfTextAtSize(branding.address, 6.5);
     page.drawText(branding.address, {
-        x: (width - fAddrW) / 2,
-        y: pad + 12,
-        size: 7,
+        x: startX + (labelW - addrW) / 2,
+        y: startY + pad + 11,
+        size: 6.5,
         font: fontRegular,
         color: rgb(0.15, 0.15, 0.15),
     });
 
     const contactStr = `M: ${branding.mobile} | ${branding.email}`;
-    const fContactW = fontRegular.widthOfTextAtSize(contactStr, 7);
+    const contactW = fontRegular.widthOfTextAtSize(contactStr, 6.5);
     page.drawText(contactStr, {
-        x: (width - fContactW) / 2,
-        y: pad + 3,
-        size: 7,
+        x: startX + (labelW - contactW) / 2,
+        y: startY + pad + 3,
+        size: 6.5,
         font: fontRegular,
         color: rgb(0.15, 0.15, 0.15),
     });
 
-    const pdfBytes = await pdfDoc.save();
-    return Buffer.from(pdfBytes);
+    const bytes = await pdfDoc.save();
+    return Buffer.from(bytes);
 }
 
 export async function POST(req: NextRequest) {
@@ -201,7 +203,6 @@ export async function POST(req: NextRequest) {
             deliveryAddress,
             invoiceNo,
             company = 'Packaging',
-            pdfBase64,
         } = body;
 
         // 1. Validate recipients
@@ -216,19 +217,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 2. Generate PDF in-memory (100% serverless safe, no disk writes)
-        let pdfBuffer: Buffer;
-        if (pdfBase64 && typeof pdfBase64 === 'string' && pdfBase64.startsWith('data:application/pdf;base64,')) {
-            const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
-            pdfBuffer = Buffer.from(cleanBase64, 'base64');
-        } else {
-            pdfBuffer = await generateDeliveryLabelPdfBuffer({
-                productName,
-                deliveryAddress,
-                invoiceNo,
-                company,
-            });
-        }
+        // 2. Generate A4 PDF in-memory (100% serverless safe, exact A4 sheet format)
+        const pdfBuffer = await generateDeliveryLabelA4PdfBuffer({
+            productName,
+            deliveryAddress,
+            invoiceNo,
+            company,
+        });
 
         const safeName = (productName || 'Product').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
         const attachmentFilename = `${safeName}_DeliveryLabel.pdf`;
@@ -253,7 +248,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // 4. Default message body
+        // 4. Clean message body (NO delivery address in email body as requested)
         const defaultText = `Dear Sir / madam,\n\nPlease find attached dispatch box label for ${productName || 'product'}.\n\nThanks,\nCreative Packaging`;
         const emailText = (message || defaultText).trim();
 
@@ -270,11 +265,6 @@ export async function POST(req: NextRequest) {
     .header p { margin: 4px 0 0; font-size: 12px; color: #94a3b8; }
     .content { padding: 24px; }
     .message-box { font-size: 14px; line-height: 1.6; color: #334155; margin-bottom: 20px; white-space: pre-wrap; }
-    .meta-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 18px 0; font-size: 13px; }
-    .meta-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .meta-row:last-child { margin-bottom: 0; }
-    .meta-label { color: #64748b; font-weight: 600; }
-    .meta-val { color: #0f172a; font-weight: 700; }
     .badge { display: inline-flex; align-items: center; background: #e0e7ff; color: #3730a3; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; border: 1px solid #c7d2fe; }
     .footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
   </style>
@@ -287,14 +277,7 @@ export async function POST(req: NextRequest) {
     </div>
     <div class="content">
       <div class="message-box">${emailText.replace(/\n/g, '<br>')}</div>
-
-      <div class="meta-card">
-        <div class="meta-row"><span class="meta-label">Product:</span><span class="meta-val">${productName || '-'}</span></div>
-        ${invoiceNo && invoiceNo !== '<<[Inv No]>>' ? `<div class="meta-row"><span class="meta-label">Invoice No:</span><span class="meta-val">${invoiceNo}</span></div>` : ''}
-        ${deliveryAddress ? `<div class="meta-row"><span class="meta-label">Delivery Address:</span><span class="meta-val">${deliveryAddress}</span></div>` : ''}
-      </div>
-
-      <div style="margin-top: 16px;">
+      <div style="margin-top: 20px;">
         <span class="badge">📎 Attached: ${attachmentFilename}</span>
       </div>
     </div>
