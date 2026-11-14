@@ -63,7 +63,16 @@ export default function SendDeliveryLabelModal({
     };
 
     const handleSend = async () => {
-        if (recipients.length === 0) {
+        // Automatically incorporate any email still in the input
+        let finalRecipients = [...recipients];
+        const pendingInput = newEmailInput.trim();
+        if (pendingInput && pendingInput.includes('@') && !finalRecipients.includes(pendingInput)) {
+            finalRecipients.push(pendingInput);
+            setRecipients(finalRecipients);
+            setNewEmailInput('');
+        }
+
+        if (finalRecipients.length === 0) {
             setErrorMsg('Please specify at least one recipient email address.');
             return;
         }
@@ -73,37 +82,17 @@ export default function SendDeliveryLabelModal({
         setSuccessMsg(null);
 
         try {
-            // Attempt client-side PDF capture from DOM element if present
-            let pdfBase64: string | undefined = undefined;
-            try {
-                const labelElement = document.querySelector('.label-container') as HTMLElement | null;
-                if (labelElement && typeof window !== 'undefined') {
-                    const html2pdf = (await import('html2pdf.js')).default;
-                    const opt: any = {
-                        margin: 0,
-                        filename: `${productName}_DeliveryLabel.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, logging: false },
-                        jsPDF: { unit: 'in', format: [5.6, 4.0], orientation: 'landscape' }
-                    };
-                    pdfBase64 = await html2pdf().from(labelElement).set(opt).outputPdf('datauristring');
-                }
-            } catch (pdfCaptureErr) {
-                console.warn('Client-side PDF capture skipped/fallback to server:', pdfCaptureErr);
-            }
-
             const res = await fetch('/api/send-delivery-label-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    recipients,
+                    recipients: finalRecipients,
                     subject,
                     message,
                     productName,
                     deliveryAddress,
                     invoiceNo,
                     company,
-                    pdfBase64,
                 }),
             });
 
@@ -112,7 +101,7 @@ export default function SendDeliveryLabelModal({
                 throw new Error(data.error || 'Failed to send email.');
             }
 
-            setSuccessMsg(`Delivery label sent successfully to ${recipients.join(', ')}!`);
+            setSuccessMsg(`Delivery label sent successfully to ${finalRecipients.join(', ')}!`);
             setTimeout(() => {
                 onClose();
                 setSuccessMsg(null);

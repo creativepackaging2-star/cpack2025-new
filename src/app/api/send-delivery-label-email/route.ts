@@ -236,9 +236,127 @@ export async function POST(req: NextRequest) {
             const tempDir = path.resolve(process.cwd(), 'temp_build');
             fs.mkdirSync(tempDir, { recursive: true });
             tempPdfPath = path.join(tempDir, `label_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
-            convertHtmlToPdf(labelHtml, tempPdfPath);
-            if (fs.existsSync(tempPdfPath)) {
-                pdfBuffer = fs.readFileSync(tempPdfPath);
+            
+            try {
+                convertHtmlToPdf(labelHtml, tempPdfPath);
+                if (fs.existsSync(tempPdfPath)) {
+                    pdfBuffer = fs.readFileSync(tempPdfPath);
+                }
+            } catch (edgeErr) {
+                console.warn('Headless browser PDF generation failed, falling back to pdf-lib:', edgeErr);
+            }
+
+            if (!pdfBuffer || pdfBuffer.length === 0) {
+                // Guaranteed fallback: Generate clean vector PDF via pdf-lib
+                const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib');
+                const pdfDoc = await PDFDocument.create();
+                const width = 5.6 * 72; // 403.2
+                const height = 4 * 72;  // 288
+                const page = pdfDoc.addPage([width, height]);
+                const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+                page.drawRectangle({
+                    x: 14,
+                    y: 14,
+                    width: width - 28,
+                    height: height - 28,
+                    borderColor: rgb(0, 0, 0),
+                    borderWidth: 1,
+                });
+
+                const contentY = 46;
+                const contentH = height - 28 - contentY;
+                const leftW = (width - 28) * 0.58;
+                const rightW = (width - 28) - leftW;
+
+                page.drawRectangle({
+                    x: 14,
+                    y: contentY,
+                    width: leftW,
+                    height: contentH,
+                    borderColor: rgb(0, 0, 0),
+                    borderWidth: 1,
+                });
+
+                page.drawRectangle({
+                    x: 14 + leftW,
+                    y: contentY,
+                    width: rightW,
+                    height: contentH,
+                    borderColor: rgb(0, 0, 0),
+                    borderWidth: 1,
+                });
+
+                page.drawText('DELIVERY ADDRESS:', {
+                    x: 20,
+                    y: height - 32,
+                    size: 8,
+                    font: fontBold,
+                    color: rgb(0.3, 0.3, 0.3),
+                });
+
+                const addrLines = (deliveryAddress || '<<[Delivery Address]>>').split('\n');
+                let curY = height - 48;
+                for (const line of addrLines) {
+                    if (curY < contentY + 10) break;
+                    page.drawText(line.slice(0, 45), {
+                        x: 20,
+                        y: curY,
+                        size: 9,
+                        font: fontRegular,
+                        color: rgb(0, 0, 0),
+                    });
+                    curY -= 13;
+                }
+
+                const rowH = contentH / 6;
+                for (let r = 0; r < 6; r++) {
+                    const rowY = contentY + contentH - (r + 1) * rowH;
+                    if (r < 5) {
+                        page.drawLine({
+                            start: { x: 14 + leftW, y: rowY },
+                            end: { x: width - 14, y: rowY },
+                            thickness: 1,
+                            color: rgb(0, 0, 0),
+                        });
+                    }
+                    if (r === 0) {
+                        page.drawText('PRODUCT', { x: 14 + leftW + 15, y: rowY + rowH / 2 - 3, size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
+                    } else if (r === 1) {
+                        page.drawText((productName || '').slice(0, 24), { x: 14 + leftW + 8, y: rowY + rowH / 2 - 4, size: 8.5, font: fontBold, color: rgb(0, 0, 0) });
+                    } else if (r === 2) {
+                        page.drawText('QTY', { x: 14 + leftW + 15, y: rowY + rowH / 2 - 3, size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
+                    } else if (r === 4) {
+                        page.drawText('INVOICE NO', { x: 14 + leftW + 15, y: rowY + rowH / 2 - 3, size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
+                    } else if (r === 5) {
+                        page.drawText((invoiceNo || '<<[Inv No]>>').slice(0, 20), { x: 14 + leftW + 8, y: rowY + rowH / 2 - 4, size: 8.5, font: fontRegular, color: rgb(0, 0, 0) });
+                    }
+                }
+
+                page.drawText(branding.name, {
+                    x: width / 2 - (branding.name.length * 2.8),
+                    y: 34,
+                    size: 9,
+                    font: fontBold,
+                    color: rgb(0, 0, 0),
+                });
+                page.drawText(branding.address, {
+                    x: 20,
+                    y: 24,
+                    size: 7,
+                    font: fontRegular,
+                    color: rgb(0.2, 0.2, 0.2),
+                });
+                page.drawText(`M: ${branding.mobile} | ${branding.email}`, {
+                    x: width / 2 - 70,
+                    y: 16,
+                    size: 7,
+                    font: fontRegular,
+                    color: rgb(0.2, 0.2, 0.2),
+                });
+
+                pdfBuffer = Buffer.from(await pdfDoc.save());
             }
         }
 
