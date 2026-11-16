@@ -154,12 +154,6 @@ export async function POST(req: NextRequest) {
         </table>
       </div>
       ` : ''}
-
-      ${pdfBuffer ? `
-      <div>
-        <span class="attach-badge">📎 Attached: ${attachmentFilename} (Tax Invoice, Certificates of Analysis & E-way Bill)</span>
-      </div>
-      ` : ''}
     </div>
     <div class="footer">
       Sent via ${effectiveCompany} • Accounts Department
@@ -170,21 +164,7 @@ export async function POST(req: NextRequest) {
         `;
 
         // 4. Construct plain text fallback
-        let plainText = `${message || 'Please find attached the Tax Invoice, Certificates of Analysis & E-way Bill.'}\n\n`;
-        plainText += `Invoice Details:\n`;
-        plainText += `Invoice No: ${sanitizedInvNo}\n`;
-        plainText += `Invoice Date: ${invoiceDate}\n`;
-        plainText += `Plant: ${effectivePlant}\n`;
-        if (poNumber) plainText += `PO Number: ${poNumber}\n`;
-        if (products.length > 0) {
-            plainText += `\nDispatched Products:\n`;
-            products.forEach((p: any) => {
-                plainText += `- ${p.name || p.product_name}: ${Number(p.quantity || p.qty_delivered || 0).toLocaleString()} pcs (${p.packing || p.packing_detail || '-'})\n`;
-            });
-            plainText += `\n`;
-        }
-        if (totalBoxes) plainText += `Total Boxes: ${totalBoxes} Boxes\n\n`;
-        plainText += `Kindly acknowledge receipt.\n\nRegards,\nAccounts Department\n${effectiveCompany}`;
+        let plainText = message || `Please find attached the Tax Invoice, Certificates of Analysis & E-way Bill.\n\nInvoice Details:\nInvoice No: ${sanitizedInvNo}\nInvoice Date: ${invoiceDate}\nPlant: ${effectivePlant}\n${poNumber ? `PO Number: ${poNumber}\n` : ''}${totalBoxes ? `Total Boxes: ${totalBoxes} Boxes\n` : ''}\nKindly acknowledge receipt.\n\nRegards,\nAccounts Department\n${effectiveCompany}`;
 
         // 5. Send mail
         const mailOptions: any = {

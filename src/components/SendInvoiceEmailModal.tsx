@@ -107,16 +107,6 @@ export default function SendInvoiceEmailModal({ isOpen, onClose, invoice }: Send
 
             setSubject(`Dispatch Documents & Tax Invoice ${invNo} - ${plant}`);
 
-            // Build products text list
-            let productsText = '';
-            if (invoice.orders && invoice.orders.length > 0) {
-                productsText = invoice.orders.map(o => {
-                    const qty = Number(o.qty_delivered || o.quantity || 0).toLocaleString();
-                    const pack = o.packing_detail ? ` (Packing: ${o.packing_detail})` : '';
-                    return `- ${o.product_name}: ${qty} pcs${pack}`;
-                }).join('\n');
-            }
-
             const exactMsg = `Dear Team,
 
 Please find attached the Tax Invoice, Certificates of Analysis & E-way Bill.
@@ -125,9 +115,6 @@ Invoice Details:
 Invoice No: ${invNo}
 Invoice Date: ${formattedDate}
 Plant: ${plant}
-
-Dispatched Products:
-${productsText || '- Dispatched products as per invoice'}
 
 Kindly acknowledge receipt.
 
