@@ -368,10 +368,11 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                 throw new Error(data.error || 'Failed to create invoice & dispatch package.');
             }
 
-            // Automatically trigger browser download of unified PDF
-            if (data.downloadUrl) {
+            // Automatically trigger browser download of unified PDF (supports in-memory base64 & URL)
+            const downloadHref = data.pdfBase64 || data.downloadUrl;
+            if (downloadHref) {
                 const link = document.createElement('a');
-                link.href = data.downloadUrl;
+                link.href = downloadHref;
                 link.download = `Dispatch_Documents_${data.invoiceNumber}.pdf`;
                 document.body.appendChild(link);
                 link.click();
