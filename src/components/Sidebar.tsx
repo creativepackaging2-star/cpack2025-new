@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2, CheckSquare, ShoppingBag } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -14,6 +14,7 @@ const navigation = [
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
     { name: 'Sales Invoices', href: '/invoices', icon: FileText },
+    { name: 'Purchases', href: '/purchases', icon: ShoppingBag },
     { name: 'Production', href: '/production', icon: LayoutDashboard },
     { name: 'Quotations', href: '/quotations', icon: FileText },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },

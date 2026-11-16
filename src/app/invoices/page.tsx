@@ -19,7 +19,8 @@ import {
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
-    Trash2
+    Trash2,
+    ShoppingBag
 } from 'lucide-react';
 import SendInvoiceEmailModal, { formatToDDMMYYYY } from '@/components/SendInvoiceEmailModal';
 
@@ -342,6 +343,18 @@ export default function SalesInvoicesPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <a
+                        href="https://zohoinvoicesync.vercel.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
+                        title="Open Zoho Purchases & InvoiceSync Portal"
+                    >
+                        <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Purchases Portal</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
+                    </a>
+
                     <button
                         type="button"
                         onClick={() => fetchInvoices(true)}

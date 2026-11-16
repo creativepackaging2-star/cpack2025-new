@@ -15,7 +15,9 @@ import {
     FileText,
     Layers,
     PackageCheck,
-    ArrowRightLeft
+    ArrowRightLeft,
+    ShoppingBag,
+    ExternalLink
 } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { format } from 'date-fns';
@@ -930,8 +932,21 @@ export default function InventoryPage() {
                     </button>
                 </div>
 
-                <div className="text-xs text-slate-500 font-medium">
-                    Showing all paper purchases from Oct 2026 onwards (including fully used stock)
+                <div className="flex items-center gap-3">
+                    <a
+                        href="https://zohoinvoicesync.vercel.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
+                        title="Open Zoho Purchases & InvoiceSync Portal"
+                    >
+                        <ShoppingBag className="w-4 h-4 text-indigo-600" />
+                        <span>Purchases Portal</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
+                    </a>
+                    <div className="text-xs text-slate-500 font-medium hidden lg:block">
+                        Showing all paper purchases from Oct 2026 onwards
+                    </div>
                 </div>
             </div>
 

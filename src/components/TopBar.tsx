@@ -3,7 +3,7 @@
 import { useState, memo, useCallback, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, ClipboardList, User, LogOut, FileText, Menu, X, Tally2 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, ClipboardList, User, LogOut, FileText, ShoppingBag, Menu, X, Tally2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { useAuth } from './AuthProvider';
 import { useLayout } from './LayoutContext';
@@ -12,6 +12,8 @@ const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
+    { name: 'Sales Invoices', href: '/invoices', icon: FileText },
+    { name: 'Purchases', href: '/purchases', icon: ShoppingBag },
     { name: 'Production', href: '/orders/offline', icon: LayoutDashboard },
     { name: 'Quotations', href: '/quotations', icon: FileText },
     { name: 'Inventory', href: '/inventory', icon: ClipboardList },
