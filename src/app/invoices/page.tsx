@@ -214,7 +214,7 @@ export default function SalesInvoicesPage() {
         const totalCount = filteredInvoices.length;
         const totalQty = filteredInvoices.reduce((acc, inv) => acc + (inv.total_delivered_qty || 0), 0);
         const totalValue = filteredInvoices.reduce((acc, inv) => acc + (inv.total_amount || 0), 0);
-        const readyPdfs = filteredInvoices.filter(inv => inv.pdf_available).length;
+        const readyPdfs = filteredInvoices.length;
         return { totalCount, totalQty, totalValue, readyPdfs };
     }, [filteredInvoices]);
 
@@ -458,9 +458,17 @@ export default function SalesInvoicesPage() {
 
                                             {/* Invoice Number */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <span className="font-bold text-indigo-600 text-sm tracking-tight">
-                                                    {inv.invoice_number}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <a
+                                                        href={`/api/invoices/download?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`}
+                                                        download={`Dispatch_Documents_${inv.invoice_number}.pdf`}
+                                                        className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline text-sm tracking-tight flex items-center gap-1 group"
+                                                        title={`Click to download 3-copy invoice + COAs for ${inv.invoice_number}`}
+                                                    >
+                                                        <span>{inv.invoice_number}</span>
+                                                        <Download className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 transition-colors" />
+                                                    </a>
+                                                </div>
                                             </td>
 
                                             {/* Customer */}
@@ -533,25 +541,14 @@ export default function SalesInvoicesPage() {
                                                     </button>
 
                                                     {/* 2. Download Dispatch Package (3 Invoices + COAs) */}
-                                                    {inv.pdf_available ? (
-                                                        <a
-                                                            href={inv.pdf_url}
-                                                            download={`Dispatch_Documents_${inv.invoice_number}.pdf`}
-                                                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-all cursor-pointer inline-flex items-center"
-                                                            title="Download Unified PDF (3 Invoices + COAs)"
-                                                        >
-                                                            <Download className="w-4 h-4" />
-                                                        </a>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => alert(`Unified PDF has not been generated yet for ${inv.invoice_number}. You can generate it by clicking Generate Documents on the Orders page.`)}
-                                                            className="p-1.5 text-slate-300 border border-slate-200 rounded-lg cursor-not-allowed opacity-50"
-                                                            title="Unified PDF not yet generated"
-                                                        >
-                                                            <Download className="w-4 h-4" />
-                                                        </button>
-                                                    )}
+                                                    <a
+                                                        href={`/api/invoices/download?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`}
+                                                        download={`Dispatch_Documents_${inv.invoice_number}.pdf`}
+                                                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-all cursor-pointer inline-flex items-center"
+                                                        title="Download Unified PDF (3 Invoices + COAs)"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                    </a>
 
                                                     {/* 3. Email Invoice & COAs */}
                                                     <button
