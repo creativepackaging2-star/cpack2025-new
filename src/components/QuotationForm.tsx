@@ -52,6 +52,11 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
 
         // Other
         extra_cost: '',
+        hamali: initialData?.hamali !== undefined
+            ? initialData.hamali
+            : (initialData?.punch_cost !== null && initialData?.punch_cost !== undefined && initialData?.punch_cost !== ''
+                ? initialData.punch_cost
+                : 300),
         packing_rate: '',
         interest_pc: 3,
         profit_pc: 11,
@@ -125,7 +130,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
             printing_ups, printing_rate, aqua_rt, punching_rt,
             plate_rate, pasting_rate, foil_pc, extra_cost, interest_pc,
             profit_pc, colour, packing_rate, print_size_h, print_size_w,
-            punch_rate
+            punch_rate, hamali
         } = formData;
 
         // Helper to safely get number (default to 0 if blank/NaN)
@@ -155,8 +160,9 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
         const plateAmt = val(plate_rate) * val(colour);
         const pastingAmt = (paperOrderQty * nUps / 1000) * val(pasting_rate);
         const foilAmt = printingQty * val(foil_pc);
+        const hamaliAmt = val(hamali);
 
-        const subtotal = paperCost + packingAmt + printingAmt + aquaAmt + punchingAmt + punchRateAmt + plateAmt + pastingAmt + foilAmt + val(extra_cost);
+        const subtotal = paperCost + packingAmt + printingAmt + aquaAmt + punchingAmt + punchRateAmt + plateAmt + pastingAmt + foilAmt + val(extra_cost) + hamaliAmt;
 
         // Standard Sequential Logic:
         // 1. Interest on Subtotal (Costs)
@@ -179,6 +185,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
         const pastingPcs = pastingAmt / divisorQty;
         const packingPcs = packingAmt / divisorQty;
         const extraPcs = val(extra_cost) / divisorQty;
+        const hamaliPcs = hamaliAmt / divisorQty;
         const subtotalPcs = subtotal / divisorQty;
         const foilPcs = foilAmt / divisorQty;
         const profitPcs = profitAmt / divisorQty;
@@ -201,6 +208,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
             plateAmt,
             pastingAmt,
             foilAmt,
+            hamaliAmt,
             subtotal,
             interestAmt,
             profitAmt,
@@ -210,7 +218,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 paperPcs, printingPcs, platePcs, coatingPcs, punchingPcs,
                 punchRatePcs: punchRateAmt / divisorQty,
                 pastingPcs, packingPcs, subtotalPcs, foilPcs, profitPcs,
-                interestPcs, extraPcs
+                interestPcs, extraPcs, hamaliPcs
             }
         });
     };
@@ -284,6 +292,10 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 interest_pc: num(formData.interest_pc),
                 profit_pc: num(formData.profit_pc),
 
+                // Store hamali in existing numeric column punch_cost and punch_only_pcs for per-pc
+                punch_cost: num(formData.hamali),
+                punch_only_pcs: calculations.breakdown?.hamaliPcs || 0,
+
                 // Safe breakdown access
                 subtotal_pcs: calculations.breakdown?.subtotalPcs || 0,
                 paper_pcs: calculations.breakdown?.paperPcs || 0,
@@ -299,7 +311,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                 packing_pcs: calculations.breakdown?.packingPcs || 0,
                 extra_pcs: calculations.breakdown?.extraPcs || 0,
             };
-            // delete dataToSave.breakdown; // No longer needed as we didn't spread calculations
+            delete dataToSave.hamali; // Avoid PGRST204 column missing error if hamali column not yet in Supabase schema
 
             const { error } = await supabase.from('quotations').upsert(dataToSave);
             if (error) throw error;
@@ -471,11 +483,26 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                         </div>
                     </div>
 
-                    {/* Margins & Taxes - 3 Columns (No GST) */}
-                    <div className="bg-[#f8fafc] border border-slate-300 rounded-lg p-2 shadow-sm grid grid-cols-3 gap-2">
+                    {/* Margins & Taxes - 4 Columns (Extra Cost, Hamali, Interest %, Profit %) */}
+                    <div className="bg-[#f8fafc] border border-slate-300 rounded-lg p-2 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <div className="space-y-1">
                             <label className="text-[9px] font-bold text-indigo-900 uppercase tracking-widest">Extra Cost</label>
                             <input type="number" name="extra_cost" value={formData.extra_cost} onChange={handleChange} className="w-full px-2 py-1 bg-indigo-50 border border-indigo-300 rounded text-xs outline-none font-bold text-indigo-950 shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-amber-900 uppercase tracking-widest flex items-center justify-between">
+                                <span>Hamali</span>
+                                <span className="text-[8px] text-amber-700 font-semibold lowercase">default ₹300</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                name="hamali" 
+                                value={formData.hamali} 
+                                onChange={handleChange} 
+                                placeholder="300" 
+                                className="w-full px-2 py-1 bg-amber-50/60 border border-amber-300 rounded text-xs outline-none font-bold text-amber-950 shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                            />
                         </div>
 
                         <div className="space-y-1">
@@ -510,6 +537,7 @@ export default function QuotationForm({ initialData }: { initialData?: any }) {
                                     <BreakdownRow label="Punching Amt" total={calculations.punchingAmt} perPc={calculations.breakdown?.punchingPcs} />
                                     <BreakdownRow label="Pasting Amt" total={calculations.pastingAmt} perPc={calculations.breakdown?.pastingPcs} />
                                     <BreakdownRow label="Foil Amt" total={calculations.foilAmt} perPc={calculations.breakdown?.foilPcs} />
+                                    <BreakdownRow label="Hamali" total={Number(formData.hamali) || 0} perPc={calculations.breakdown?.hamaliPcs} color="text-amber-900 font-bold" />
                                     <BreakdownRow label="Packing" total={calculations.packingAmt} perPc={calculations.breakdown?.packingPcs} />
                                     <BreakdownRow label="Extra Cost" total={Number(formData.extra_cost) || 0} perPc={calculations.breakdown?.extraPcs} />
 
