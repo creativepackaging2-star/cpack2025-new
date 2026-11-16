@@ -6,6 +6,15 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+export function isLabelCategory(categoryName?: string | null, productName?: string | null, categoryId?: number | null): boolean {
+    const cat = (categoryName || '').toLowerCase().trim();
+    if (cat.includes('label') || cat === 'lbl') return true;
+    if (categoryId === 4) return true;
+    const prod = (productName || '').toLowerCase().trim();
+    if (/\blabels?\b/i.test(prod) || /\blbl\b/i.test(prod)) return true;
+    return false;
+}
+
 /**
  * Determines if an ink string is CMYK or standard process ink (no check needed).
  * Rule: Skip check if ink is CMYK, process colors, Black, or standard varnish.
@@ -59,10 +68,14 @@ export async function POST(req: NextRequest) {
         .select(`
             id,
             order_id,
+            product_name,
+            category_name,
             printer_name,
             ink,
             plate_no,
             products (
+                product_name,
+                category_id,
                 ink,
                 plate_no
             )
@@ -73,6 +86,12 @@ export async function POST(req: NextRequest) {
     if (orderErr || !order) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
+
+    const isLabel = isLabelCategory(
+        (order as any).category_name,
+        (order as any).product_name || (order as any).products?.product_name,
+        (order as any).products?.category_id
+    );
 
     const ink = (order as any).products?.ink || (order as any).ink;
     const plateNo = (order as any).products?.plate_no || (order as any).plate_no;
@@ -93,39 +112,52 @@ export async function POST(req: NextRequest) {
     const todos: Record<string, any>[] = [];
     let sort = 1;
 
-    // 1. Send artwork for approval — always
-    todos.push({ order_id, task_key: 'send_artwork', label: 'Send artwork for approval', sort_order: sort++, parent_key: null, meta: {} });
+    // For Label category orders, task steps are strictly:
+    // 1. send for approval
+    // 2. rec approval
+    // 3. send for printing
+    // 4. send box label
+    if (isLabel) {
+        todos.push({ order_id, task_key: 'send_for_approval', label: 'Send for approval', sort_order: sort++, parent_key: null, meta: {} });
+        todos.push({ order_id, task_key: 'rec_approval',      label: 'Rec approval',        sort_order: sort++, parent_key: null, meta: {} });
+        todos.push({ order_id, task_key: 'send_for_printing', label: 'Send for printing',   sort_order: sort++, parent_key: null, meta: {} });
+        todos.push({ order_id, task_key: 'send_box_label',    label: 'Send box label',      sort_order: sort++, parent_key: null, meta: {} });
+    } else {
+        // Standard Carton / Insert steps:
+        // 1. Send artwork for approval — always
+        todos.push({ order_id, task_key: 'send_artwork', label: 'Send artwork for approval', sort_order: sort++, parent_key: null, meta: {} });
 
-    // 2. Order paper — always
-    todos.push({ order_id, task_key: 'order_paper', label: 'Order paper', sort_order: sort++, parent_key: null, meta: {} });
+        // 2. Order paper — always
+        todos.push({ order_id, task_key: 'order_paper', label: 'Order paper', sort_order: sort++, parent_key: null, meta: {} });
 
-    // 3. Check ink — only if special ink (not plain CMYK)
-    if (needsInkCheck) {
-        todos.push({ order_id, task_key: 'check_ink', label: 'Check ink availability', sort_order: sort++, parent_key: null, meta: { ink, is_check: true, check_type: 'ink' } });
-        todos.push({ order_id, task_key: 'order_ink', label: 'Order ink', sort_order: sort++, parent_key: 'check_ink', meta: { hidden: true } });
-        todos.push({ order_id, task_key: 'followup_ink', label: 'Follow up for ink', sort_order: sort++, parent_key: 'check_ink', meta: { hidden: true } });
-        todos.push({ order_id, task_key: 'rec_ink', label: 'Rec ink', sort_order: sort++, parent_key: 'check_ink', meta: { hidden: true } });
+        // 3. Check ink — only if special ink (not plain CMYK)
+        if (needsInkCheck) {
+            todos.push({ order_id, task_key: 'check_ink', label: 'Check ink availability', sort_order: sort++, parent_key: null, meta: { ink, is_check: true, check_type: 'ink' } });
+            todos.push({ order_id, task_key: 'order_ink', label: 'Order ink', sort_order: sort++, parent_key: 'check_ink', meta: { hidden: true } });
+            todos.push({ order_id, task_key: 'followup_ink', label: 'Follow up for ink', sort_order: sort++, parent_key: 'check_ink', meta: { hidden: true } });
+            todos.push({ order_id, task_key: 'rec_ink', label: 'Rec ink', sort_order: sort++, parent_key: 'check_ink', meta: { hidden: true } });
+        }
+
+        // 4. Rec artwork approval — always
+        todos.push({ order_id, task_key: 'rec_artwork', label: 'Rec artwork approval', sort_order: sort++, parent_key: null, meta: {} });
+
+        // 5. Plate check — always
+        todos.push({ order_id, task_key: 'check_plate', label: 'Plate there?', sort_order: sort++, parent_key: null, meta: { plate_no: plateNo, is_check: true, check_type: 'plate' } });
+        todos.push({ order_id, task_key: 'send_for_plate', label: 'Send for plate', sort_order: sort++, parent_key: 'check_plate', meta: { hidden: true } });
+        todos.push({ order_id, task_key: 'rec_plate', label: 'Rec plate', sort_order: sort++, parent_key: 'check_plate', meta: { hidden: true } });
+
+        // 6. Send order to printer — always
+        todos.push({ order_id, task_key: 'send_to_printer', label: `Send order details to ${printerName}`, sort_order: sort++, parent_key: null, meta: { printer_name: printerName } });
+
+        // 7. Send qty to punching/pasting vendor — always
+        todos.push({ order_id, task_key: 'send_to_punching', label: 'Send qty to punching/pasting vendor', sort_order: sort++, parent_key: null, meta: {} });
+
+        // 8. Check punch — always
+        todos.push({ order_id, task_key: 'check_punch', label: 'Check if punch there', sort_order: sort++, parent_key: null, meta: { is_check: true, check_type: 'punch' } });
+        todos.push({ order_id, task_key: 'send_for_punch', label: 'Send for punch', sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
+        todos.push({ order_id, task_key: 'followup_punch', label: 'Follow up for punch', sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
+        todos.push({ order_id, task_key: 'rec_punch', label: 'Rec punch', sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
     }
-
-    // 4. Rec artwork approval — always
-    todos.push({ order_id, task_key: 'rec_artwork', label: 'Rec artwork approval', sort_order: sort++, parent_key: null, meta: {} });
-
-    // 5. Plate check — always
-    todos.push({ order_id, task_key: 'check_plate', label: 'Plate there?', sort_order: sort++, parent_key: null, meta: { plate_no: plateNo, is_check: true, check_type: 'plate' } });
-    todos.push({ order_id, task_key: 'send_for_plate', label: 'Send for plate', sort_order: sort++, parent_key: 'check_plate', meta: { hidden: true } });
-    todos.push({ order_id, task_key: 'rec_plate', label: 'Rec plate', sort_order: sort++, parent_key: 'check_plate', meta: { hidden: true } });
-
-    // 6. Send order to printer — always
-    todos.push({ order_id, task_key: 'send_to_printer', label: `Send order details to ${printerName}`, sort_order: sort++, parent_key: null, meta: { printer_name: printerName } });
-
-    // 7. Send qty to punching/pasting vendor — always
-    todos.push({ order_id, task_key: 'send_to_punching', label: 'Send qty to punching/pasting vendor', sort_order: sort++, parent_key: null, meta: {} });
-
-    // 8. Check punch — always
-    todos.push({ order_id, task_key: 'check_punch', label: 'Check if punch there', sort_order: sort++, parent_key: null, meta: { is_check: true, check_type: 'punch' } });
-    todos.push({ order_id, task_key: 'send_for_punch', label: 'Send for punch', sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
-    todos.push({ order_id, task_key: 'followup_punch', label: 'Follow up for punch', sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
-    todos.push({ order_id, task_key: 'rec_punch', label: 'Rec punch', sort_order: sort++, parent_key: 'check_punch', meta: { hidden: true } });
 
     const { error: insertError } = await supabase.from('order_todos').insert(todos);
 
