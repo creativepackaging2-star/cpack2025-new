@@ -459,15 +459,21 @@ export default function SalesInvoicesPage() {
                                             {/* Invoice Number */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
-                                                    <a
-                                                        href={`/api/invoices/download?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`}
-                                                        download={`Dispatch_Documents_${inv.invoice_number}.pdf`}
-                                                        className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline text-sm tracking-tight flex items-center gap-1 group"
-                                                        title={`Click to download 3-copy invoice + COAs for ${inv.invoice_number}`}
-                                                    >
-                                                        <span>{inv.invoice_number}</span>
-                                                        <Download className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 transition-colors" />
-                                                    </a>
+                                                    <span className="font-bold text-indigo-600 text-sm tracking-tight">
+                                                        {inv.invoice_number}
+                                                    </span>
+                                                    {inv.orders && inv.orders.length > 0 && (
+                                                        <a
+                                                            href={`/orders/summary/coa?ids=${inv.orders.map(o => o.id).join(',')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="px-2 py-0.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-md text-[10px] font-extrabold flex items-center gap-1 transition-all"
+                                                            title="Open official system COAs in your exact original layout"
+                                                        >
+                                                            <FileText className="w-3 h-3 text-sky-600" />
+                                                            <span>COAs</span>
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </td>
 
@@ -550,7 +556,20 @@ export default function SalesInvoicesPage() {
                                                         <Download className="w-4 h-4" />
                                                     </a>
 
-                                                    {/* 3. Email Invoice & COAs */}
+                                                    {/* 3. Open Official System COAs */}
+                                                    {inv.orders && inv.orders.length > 0 && (
+                                                        <a
+                                                            href={`/orders/summary/coa?ids=${inv.orders.map(o => o.id).join(',')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 border border-sky-200 rounded-lg transition-all cursor-pointer inline-flex items-center"
+                                                            title="Open official system COAs in your exact original layout"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                        </a>
+                                                    )}
+
+                                                    {/* 4. Email Invoice & COAs */}
                                                     <button
                                                         type="button"
                                                         onClick={() => setEmailModalInvoice(inv)}
