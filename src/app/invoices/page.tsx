@@ -99,8 +99,11 @@ function parseDateToTimestamp(dateStr?: string | null): number {
     return isNaN(parsed) ? 0 : parsed;
 }
 
+const CACHE_STORAGE_KEY = 'cpack_cached_sales_invoices_v1';
+
 export default function SalesInvoicesPage() {
     const [loading, setLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [invoices, setInvoices] = useState<SalesInvoiceRecord[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -116,24 +119,49 @@ export default function SalesInvoicesPage() {
     // View Loading state
     const [viewingInvoiceNo, setViewingInvoiceNo] = useState<string | null>(null);
 
-    const fetchInvoices = async () => {
-        setLoading(true);
+    const fetchInvoices = async (forceRefresh = false) => {
+        if (invoices.length === 0) {
+            setLoading(true);
+        } else {
+            setIsRefreshing(true);
+        }
         setErrorMsg(null);
         try {
-            const res = await fetch('/api/invoices');
+            const url = forceRefresh ? '/api/invoices?refresh=true' : '/api/invoices';
+            const res = await fetch(url);
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to load invoices.');
-            setInvoices(data.invoices || []);
+            const list = data.invoices || [];
+            setInvoices(list);
+            try {
+                localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(list));
+            } catch {}
         } catch (err: any) {
             console.error('Error fetching invoices:', err);
-            setErrorMsg(err.message || 'Failed to fetch sales invoices.');
+            if (invoices.length === 0) {
+                setErrorMsg(err.message || 'Failed to fetch sales invoices.');
+            }
         } finally {
             setLoading(false);
+            setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
-        fetchInvoices();
+        // 1. Immediately hydrate from cache for instantaneous 0ms display
+        try {
+            const cached = localStorage.getItem(CACHE_STORAGE_KEY);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setInvoices(parsed);
+                    setLoading(false);
+                }
+            }
+        } catch {}
+
+        // 2. Fetch fresh data in the background
+        fetchInvoices(false);
     }, []);
 
     const handleSort = (field: SortField) => {
@@ -255,7 +283,13 @@ export default function SalesInvoicesPage() {
             if (!res.ok) throw new Error(data.error || 'Failed to unlink invoice.');
 
             // Remove from state immediately
-            setInvoices(prev => prev.filter(item => item.invoice_number !== inv.invoice_number));
+            setInvoices(prev => {
+                const nextList = prev.filter(item => item.invoice_number !== inv.invoice_number);
+                try {
+                    localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(nextList));
+                } catch {}
+                return nextList;
+            });
             alert(`Invoice ${inv.invoice_number} unlinked successfully. You can now re-generate documents.`);
         } catch (err: any) {
             alert('Failed to unlink invoice: ' + err.message);
@@ -310,13 +344,13 @@ export default function SalesInvoicesPage() {
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        onClick={fetchInvoices}
-                        disabled={loading}
+                        onClick={() => fetchInvoices(true)}
+                        disabled={loading || isRefreshing}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                        title="Refresh invoices from Zoho & Database"
+                        title="Force refresh invoices from Zoho Books & Database"
                     >
-                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                        <span>Refresh Invoices</span>
+                        <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || (loading && invoices.length === 0) ? 'animate-spin' : ''}`} />
+                        <span>{isRefreshing ? 'Refreshing...' : 'Refresh Invoices'}</span>
                     </button>
                 </div>
             </div>
@@ -412,12 +446,12 @@ export default function SalesInvoicesPage() {
 
             {/* Invoices Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                {loading ? (
+                {loading && invoices.length === 0 ? (
                     <div className="py-24 flex flex-col items-center justify-center text-center">
                         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
                         <p className="text-xs font-bold text-slate-600">Loading invoices from Zoho Books & Database...</p>
                     </div>
-                ) : errorMsg ? (
+                ) : errorMsg && invoices.length === 0 ? (
                     <div className="p-8 text-center text-rose-600 bg-rose-50/50">
                         <AlertCircle className="w-8 h-8 mx-auto mb-2 text-rose-500" />
                         <p className="text-sm font-bold">{errorMsg}</p>

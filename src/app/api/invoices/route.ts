@@ -19,46 +19,97 @@ function resolveCompany(invNum: string, dbCompany?: string): string {
     return 'Creative Printers';
 }
 
+// In-memory cache for Zoho Access Token (valid for 60 mins; re-use for 50 mins)
+let cachedZohoToken: { token: string; expiresAt: number } | null = null;
+
+async function getZohoAccessToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string | null> {
+    const now = Date.now();
+    if (cachedZohoToken && cachedZohoToken.expiresAt > now) {
+        return cachedZohoToken.token;
+    }
+    try {
+        const tokenRes = await fetch(
+            `https://accounts.zoho.com/oauth/v2/token?refresh_token=${refreshToken}&client_id=${clientId}&client_secret=${clientSecret}&grant_type=refresh_token`,
+            {
+                method: 'POST',
+                signal: AbortSignal.timeout(5000), // 5s timeout
+            }
+        );
+        const tokenData = await tokenRes.json();
+        if (tokenData.access_token) {
+            const ttlMs = (tokenData.expires_in ? tokenData.expires_in - 300 : 3000) * 1000;
+            cachedZohoToken = {
+                token: tokenData.access_token,
+                expiresAt: now + ttlMs,
+            };
+            return tokenData.access_token;
+        }
+    } catch (err) {
+        console.warn('Failed to refresh Zoho token:', err);
+    }
+    return null;
+}
+
+// In-memory response cache for lightning-fast loads (<5ms)
+let invoicesCache: { data: any; timestamp: number } | null = null;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 export async function GET(req: NextRequest) {
     try {
+        const { searchParams } = new URL(req.url);
+        const forceRefresh = searchParams.get('refresh') === 'true';
+
+        // 1. Serve immediately from in-memory cache if fresh
+        const now = Date.now();
+        if (!forceRefresh && invoicesCache && (now - invoicesCache.timestamp < CACHE_TTL_MS)) {
+            return NextResponse.json({
+                ...invoicesCache.data,
+                cached: true,
+                cacheAgeMs: now - invoicesCache.timestamp,
+            });
+        }
+
         const zohoClientId = process.env.ZOHO_CLIENT_ID || '1000.KQGYJ0LFL0T9WADU4SCLRN3EW2QQIK';
         const zohoClientSecret = process.env.ZOHO_CLIENT_SECRET || '4830f463f279d0aa784dcede69553d81307437d76d';
-        const zohoOrgId = process.env.ZOHO_ORG_ID || '651108650';
         const zohoRefreshToken = process.env.ZOHO_REFRESH_TOKEN || '1000.a1389a71ee7491506a5800d9ddcb7c44.fcdb49d63bcba81f27489c06e92d1d7c';
 
-        // 1. Fetch invoiced orders from Supabase
-        const { data: dbOrders, error: dbError } = await supabase
-            .from('orders')
-            .select(`
-                id,
-                order_id,
-                product_name,
-                artwork_code,
-                quantity,
-                qty_delivered,
-                rate,
-                packing_detail,
-                from_our_company,
-                customer_name,
-                remarks,
-                status,
-                delivery_date,
-                delivery_address,
-                created_at,
-                invoice_no
-            `)
-            .not('invoice_no', 'is', null)
-            .neq('invoice_no', '')
-            .order('id', { ascending: false });
+        // 2. Fetch Supabase orders and Zoho access token concurrently
+        const [ordersRes, accessToken] = await Promise.all([
+            supabase
+                .from('orders')
+                .select(`
+                    id,
+                    order_id,
+                    product_name,
+                    artwork_code,
+                    quantity,
+                    qty_delivered,
+                    rate,
+                    packing_detail,
+                    from_our_company,
+                    customer_name,
+                    remarks,
+                    status,
+                    delivery_date,
+                    delivery_address,
+                    created_at,
+                    invoice_no
+                `)
+                .not('invoice_no', 'is', null)
+                .neq('invoice_no', '')
+                .order('id', { ascending: false }),
+            getZohoAccessToken(zohoClientId, zohoClientSecret, zohoRefreshToken),
+        ]);
 
-        if (dbError) {
-            console.error('Database fetch error:', dbError);
+        const dbOrders = ordersRes.data || [];
+        if (ordersRes.error) {
+            console.error('Database fetch error:', ordersRes.error);
         }
 
         // Group Supabase orders by invoice_no
         const invoiceMap: Record<string, any> = {};
 
-        (dbOrders || []).forEach(ord => {
+        dbOrders.forEach(ord => {
             const rawInv = (ord.invoice_no || '').trim();
             if (!rawInv || rawInv === '-' || rawInv.toLowerCase() === 'null') return;
 
@@ -100,41 +151,46 @@ export async function GET(req: NextRequest) {
             invoiceMap[rawInv].total_amount += amt;
         });
 
-        // 2. Fetch live invoices from Zoho Books for both Creative Printers and Creative Packaging
+        // 3. Fetch live invoices from Zoho Books in PARALLEL for both orgs with 5s timeout
         let zohoInvoices: any[] = [];
         let zohoFetchSuccess = false;
-        try {
-            const tokenRes = await fetch(`https://accounts.zoho.com/oauth/v2/token?refresh_token=${zohoRefreshToken}&client_id=${zohoClientId}&client_secret=${zohoClientSecret}&grant_type=refresh_token`, {
-                method: 'POST'
-            });
-            const tokenData = await tokenRes.json();
-            if (tokenData.access_token) {
-                const orgs = [
-                    { id: '651108650', company: 'Creative Printers' },
-                    { id: '649079892', company: 'Creative Packaging' }
-                ];
 
-                for (const org of orgs) {
-                    try {
-                        const zRes = await fetch(`https://www.zohoapis.com/books/v3/invoices?organization_id=${org.id}&sort_column=created_time&sort_order=D&per_page=50`, {
-                            headers: { 'Authorization': `Zoho-oauthtoken ${tokenData.access_token}` }
-                        });
-                        const zData = await zRes.json();
-                        if (zData.invoices) {
-                            zData.invoices.forEach((inv: any) => {
-                                inv._orgCompany = org.company;
-                                inv._orgId = org.id;
-                                zohoInvoices.push(inv);
-                            });
-                            zohoFetchSuccess = true;
+        if (accessToken) {
+            const orgs = [
+                { id: '651108650', company: 'Creative Printers' },
+                { id: '649079892', company: 'Creative Packaging' }
+            ];
+
+            const orgPromises = orgs.map(async (org) => {
+                try {
+                    const zRes = await fetch(
+                        `https://www.zohoapis.com/books/v3/invoices?organization_id=${org.id}&sort_column=created_time&sort_order=D&per_page=50`,
+                        {
+                            headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` },
+                            signal: AbortSignal.timeout(5000), // 5s timeout so user never waits
                         }
-                    } catch (orgErr) {
-                        console.warn(`Zoho fetch error for ${org.company}:`, orgErr);
+                    );
+                    const zData = await zRes.json();
+                    if (zData.invoices && Array.isArray(zData.invoices)) {
+                        return zData.invoices.map((inv: any) => ({
+                            ...inv,
+                            _orgCompany: org.company,
+                            _orgId: org.id
+                        }));
                     }
+                } catch (orgErr) {
+                    console.warn(`Zoho fetch error for ${org.company}:`, orgErr);
                 }
-            }
-        } catch (zErr) {
-            console.warn('Zoho Books fetch warning:', zErr);
+                return [];
+            });
+
+            const results = await Promise.all(orgPromises);
+            results.forEach(arr => {
+                if (arr && arr.length > 0) {
+                    zohoInvoices.push(...arr);
+                    zohoFetchSuccess = true;
+                }
+            });
         }
 
         // Merge Zoho Books data into invoiceMap or add new Zoho invoices
@@ -182,29 +238,30 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        // 3. Check for generated unified PDF files in public/downloads
+        // 4. Fast O(1) in-memory check for generated PDF files in public/downloads
         const publicDownloadsDir = path.join(process.cwd(), 'public', 'downloads');
+        let downloadedFiles = new Set<string>();
+        try {
+            if (fs.existsSync(publicDownloadsDir)) {
+                downloadedFiles = new Set(fs.readdirSync(publicDownloadsDir));
+            }
+        } catch {}
+
         const invoicesList = Object.values(invoiceMap);
 
         for (const inv of invoicesList) {
             const sanitizedNum = inv.invoice_number.trim();
             const fileName = `Dispatch_Documents_${sanitizedNum}.pdf`;
-            const filePath = path.join(publicDownloadsDir, fileName);
+            const altFileName = `Dispatch_Package_${sanitizedNum}.pdf`;
 
-            if (fs.existsSync(filePath)) {
+            if (downloadedFiles.has(fileName)) {
                 inv.pdf_available = true;
                 inv.pdf_url = `/downloads/${fileName}`;
-            } else {
-                // Check fallback alternative
-                const altFileName = `Dispatch_Package_${sanitizedNum}.pdf`;
-                const altFilePath = path.join(publicDownloadsDir, altFileName);
-                if (fs.existsSync(altFilePath)) {
-                    inv.pdf_available = true;
-                    inv.pdf_url = `/downloads/${altFileName}`;
-                }
+            } else if (downloadedFiles.has(altFileName)) {
+                inv.pdf_available = true;
+                inv.pdf_url = `/downloads/${altFileName}`;
             }
 
-            // Default status if missing
             if (!inv.status) {
                 inv.status = 'generated';
             }
@@ -241,11 +298,19 @@ export async function GET(req: NextRequest) {
             return numB - numA;
         });
 
-        return NextResponse.json({
+        const responsePayload = {
             success: true,
             invoices: invoicesList,
             count: invoicesList.length
-        });
+        };
+
+        // Save to in-memory cache
+        invoicesCache = {
+            data: responsePayload,
+            timestamp: Date.now()
+        };
+
+        return NextResponse.json(responsePayload);
 
     } catch (err: any) {
         console.error('Error in /api/invoices:', err);
@@ -263,6 +328,9 @@ export async function DELETE(req: NextRequest) {
         }
 
         const trimmed = invoiceNumber.trim();
+
+        // Invalidate cache immediately
+        invoicesCache = null;
 
         // 1. Unlink in Supabase orders
         const { error: dbError } = await supabase
