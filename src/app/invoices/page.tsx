@@ -301,24 +301,24 @@ export default function SalesInvoicesPage() {
         const isActive = sortField === field;
         return (
             <th
-                className={`py-3.5 px-4 cursor-pointer select-none transition-colors hover:bg-slate-100 ${
+                className={`py-2 px-2.5 cursor-pointer select-none transition-colors hover:bg-slate-100 ${
                     align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
-                } ${isActive ? 'text-indigo-700 font-bold' : 'text-slate-500 font-medium'}`}
+                } ${isActive ? 'text-indigo-700 font-bold' : 'text-slate-500 font-semibold'}`}
                 onClick={() => handleSort(field)}
-                title={`Click to sort by ${label} (${isActive && sortOrder === 'desc' ? 'currently descending' : 'currently ascending'})`}
+                title={`Click to sort by ${label}`}
             >
-                <div className={`inline-flex items-center gap-1.5 ${
+                <div className={`inline-flex items-center gap-1 text-[11px] uppercase tracking-wider ${
                     align === 'right' ? 'justify-end w-full' : align === 'center' ? 'justify-center w-full' : 'justify-start'
                 }`}>
                     <span>{label}</span>
                     {isActive ? (
                         sortOrder === 'desc' ? (
-                            <ArrowDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                            <ArrowDown className="w-3 h-3 text-indigo-600 stroke-[2.5]" />
                         ) : (
-                            <ArrowUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                            <ArrowUp className="w-3 h-3 text-indigo-600 stroke-[2.5]" />
                         )
                     ) : (
-                        <ArrowUpDown className="w-3.5 h-3.5 text-slate-300 opacity-60 hover:opacity-100" />
+                        <ArrowUpDown className="w-3 h-3 text-slate-300 opacity-60 hover:opacity-100" />
                     )}
                 </div>
             </th>
@@ -326,95 +326,60 @@ export default function SalesInvoicesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+        <div className="min-h-screen bg-slate-50 p-2.5 sm:p-3.5 space-y-2.5" style={{ fontFamily: "'Montserrat', sans-serif" }}>
 
-            {/* Header & Quick Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/20">
-                        <ReceiptText className="w-6 h-6" />
+            {/* Ultra-compact Header & Quick Stats Row */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-xs">
+                            <ReceiptText className="w-4 h-4" />
+                        </div>
+                        <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">Sales Invoices</h1>
                     </div>
-                    <div>
-                        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Sales Invoices</h1>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Manage generated invoices, view Zoho Books documents, download 3-copy packages + official COAs, and email client contacts.
-                        </p>
+
+                    {/* Compact KPI Pills in single horizontal strip */}
+                    <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                        <span><strong className="text-slate-900 font-bold">{stats.totalCount}</strong> Invoices</span>
+                        <span className="text-slate-300">•</span>
+                        <span><strong className="text-purple-700 font-bold">{stats.totalQty >= 1000000 ? (stats.totalQty / 1000000).toFixed(2) + 'M' : stats.totalQty.toLocaleString()}</strong> pcs</span>
+                        <span className="text-slate-300">•</span>
+                        <span><strong className="text-emerald-700 font-bold">₹{stats.totalValue >= 10000000 ? (stats.totalValue / 10000000).toFixed(2) + ' Cr' : stats.totalValue >= 100000 ? (stats.totalValue / 100000).toFixed(2) + ' L' : Math.round(stats.totalValue).toLocaleString()}</strong></span>
+                        <span className="text-slate-300">•</span>
+                        <span><strong className="text-blue-700 font-bold">{stats.readyPdfs}</strong> PDFs Ready</span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 ml-auto">
                     <a
                         href="https://zohoinvoicesync.vercel.app/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-2xs active:scale-95"
                         title="Open Zoho Purchases & InvoiceSync Portal"
                     >
                         <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />
                         <span>Purchases Portal</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
+                        <ExternalLink className="w-3 h-3 text-indigo-500" />
                     </a>
 
                     <button
                         type="button"
                         onClick={() => fetchInvoices(true)}
                         disabled={loading || isRefreshing}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
                         title="Force refresh invoices from Zoho Books & Database"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || (loading && invoices.length === 0) ? 'animate-spin' : ''}`} />
-                        <span>{isRefreshing ? 'Refreshing...' : 'Refresh Invoices'}</span>
+                        <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
                     </button>
                 </div>
             </div>
 
-            {/* Top KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-                    <div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Invoices</p>
-                        <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.totalCount}</h3>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                        <FileText className="w-5 h-5" />
-                    </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-                    <div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Quantity</p>
-                        <h3 className="text-2xl font-black text-slate-900 mt-1">{stats.totalQty.toLocaleString()}</h3>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
-                        <Package className="w-5 h-5" />
-                    </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-                    <div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Invoiced (₹)</p>
-                        <h3 className="text-2xl font-black text-emerald-600 mt-1">₹{Math.round(stats.totalValue).toLocaleString()}</h3>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                        <span className="font-black text-base">₹</span>
-                    </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-                    <div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unified PDFs Ready</p>
-                        <h3 className="text-2xl font-black text-blue-600 mt-1">{stats.readyPdfs}</h3>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                        <Download className="w-5 h-5" />
-                    </div>
-                </div>
-            </div>
-
             {/* Filter & Sorting Toolbar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+            <div className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap gap-2 items-center justify-between">
                 {/* Company Tabs */}
-                <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-bold overflow-x-auto">
+                <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg text-xs font-bold overflow-x-auto">
                     {(['All', 'Creative Printers', 'Creative Packaging', 'Creative Enterprise'] as const).map(c => {
                         const active = companyFilter === c;
                         return (
@@ -422,9 +387,9 @@ export default function SalesInvoicesPage() {
                                 key={c}
                                 type="button"
                                 onClick={() => setCompanyFilter(c)}
-                                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer whitespace-nowrap text-xs ${
                                     active
-                                        ? 'bg-white text-slate-900 shadow-xs font-black'
+                                        ? 'bg-white text-slate-900 shadow-2xs font-black'
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
@@ -435,78 +400,78 @@ export default function SalesInvoicesPage() {
                 </div>
 
                 {/* Search & Sort Indicator */}
-                <div className="flex items-center gap-2.5">
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200">
-                        <span>Sorted by:</span>
+                <div className="flex items-center gap-2 ml-auto">
+                    <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                        <span>Sort:</span>
                         <strong className="text-indigo-700 capitalize">
                             {sortField === 'date' ? 'Dispatch Date' : sortField.replace('_', ' ')}
                         </strong>
-                        <span className="text-[10px] text-slate-400">({sortOrder === 'desc' ? 'Latest first' : 'Oldest first'})</span>
+                        <span className="text-[10px] text-slate-400">({sortOrder === 'desc' ? 'Latest' : 'Oldest'})</span>
                     </span>
 
-                    <div className="relative md:w-72">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <div className="relative w-48 sm:w-64">
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Search invoice #, product, customer..."
+                            placeholder="Search invoice, product, customer..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
+                            className="w-full pl-8 pr-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Invoices Table */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
                 {loading && invoices.length === 0 ? (
-                    <div className="py-24 flex flex-col items-center justify-center text-center">
-                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
+                    <div className="py-20 flex flex-col items-center justify-center text-center">
+                        <Loader2 className="w-7 h-7 text-indigo-600 animate-spin mb-2" />
                         <p className="text-xs font-bold text-slate-600">Loading invoices from Zoho Books & Database...</p>
                     </div>
                 ) : errorMsg && invoices.length === 0 ? (
-                    <div className="p-8 text-center text-rose-600 bg-rose-50/50">
-                        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-rose-500" />
-                        <p className="text-sm font-bold">{errorMsg}</p>
+                    <div className="p-6 text-center text-rose-600 bg-rose-50/50">
+                        <AlertCircle className="w-7 h-7 mx-auto mb-2 text-rose-500" />
+                        <p className="text-xs font-bold">{errorMsg}</p>
                     </div>
                 ) : sortedInvoices.length === 0 ? (
-                    <div className="py-20 text-center text-slate-500">
-                        <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                        <p className="text-sm font-bold text-slate-700">No matching invoices found</p>
-                        <p className="text-xs text-slate-400 mt-1">Try clearing your search query or company filter.</p>
+                    <div className="py-16 text-center text-slate-500">
+                        <AlertCircle className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-slate-700">No matching invoices found</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Try clearing your search query or company filter.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-300 bg-slate-50 text-xs font-medium uppercase text-slate-500 tracking-wider">
+                                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase text-slate-500 tracking-wider">
                                     {renderSortableHeader('Dispatch Date', 'date')}
                                     {renderSortableHeader('Invoice No', 'invoice_number')}
                                     {renderSortableHeader('Customer', 'customer_name')}
-                                    <th className="py-3.5 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">Products & Delivered Qty</th>
+                                    <th className="py-2 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Products & Delivered Qty</th>
                                     {renderSortableHeader('Company', 'company')}
                                     {renderSortableHeader('Amount (₹)', 'total_amount', 'right')}
                                     {renderSortableHeader('Status', 'status', 'center')}
-                                    <th className="py-3.5 px-4 text-center text-xs font-medium uppercase tracking-wider text-slate-500">Actions</th>
+                                    <th className="py-2 px-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-300 text-xs">
+                            <tbody className="divide-y divide-slate-100 text-xs">
                                 {sortedInvoices.map((inv, idx) => {
                                     const isViewing = viewingInvoiceNo === inv.invoice_number;
                                     return (
-                                        <tr key={inv.invoice_number || idx} className="hover:bg-slate-50/90 transition-colors border-b border-slate-300 last:border-b-0">
+                                        <tr key={inv.invoice_number || idx} className="hover:bg-indigo-50/20 transition-colors border-b border-slate-100 last:border-b-0">
                                             {/* Date */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                                                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                            <td className="py-1.5 px-2.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1 text-[11px] font-medium text-slate-700">
+                                                    <Calendar className="w-3 h-3 text-slate-400" />
                                                     <span>{formatToDDMMYYYY(inv.date) || '-'}</span>
                                                 </div>
                                             </td>
 
                                             {/* Invoice Number */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-indigo-600 text-sm tracking-tight">
+                                            <td className="py-1.5 px-2.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-bold text-indigo-700 text-xs tracking-tight">
                                                         {inv.invoice_number}
                                                     </span>
                                                     {inv.orders && inv.orders.length > 0 && (
@@ -514,10 +479,10 @@ export default function SalesInvoicesPage() {
                                                             href={`/orders/summary/coa?ids=${inv.orders.map(o => o.id).join(',')}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="px-2 py-0.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-md text-[10px] font-extrabold flex items-center gap-1 transition-all"
+                                                            className="px-1.5 py-0.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded text-[9px] font-black flex items-center gap-0.5 transition-all"
                                                             title="Open official system COAs in your exact original layout"
                                                         >
-                                                            <FileText className="w-3 h-3 text-sky-600" />
+                                                            <FileText className="w-2.5 h-2.5 text-sky-600" />
                                                             <span>COAs</span>
                                                         </a>
                                                     )}
@@ -525,48 +490,48 @@ export default function SalesInvoicesPage() {
                                             </td>
 
                                             {/* Customer */}
-                                            <td className="py-3.5 px-4 max-w-[200px]">
-                                                <div className="text-sm font-semibold text-slate-900 truncate" title={inv.customer_name}>
+                                            <td className="py-1.5 px-2.5 max-w-[200px]">
+                                                <div className="text-xs font-semibold text-slate-900 truncate" title={inv.customer_name}>
                                                     {inv.customer_name}
                                                 </div>
                                             </td>
 
                                             {/* Products & Delivered Quantities */}
-                                            <td className="py-3.5 px-4 max-w-[320px]">
+                                            <td className="py-1.5 px-2.5 max-w-[340px]">
                                                 {inv.orders && inv.orders.length > 0 ? (
-                                                    <div className="space-y-1.5">
+                                                    <div className="space-y-0.5">
                                                         {inv.orders.map((ord, oIdx) => (
-                                                            <div key={ord.id || oIdx} className="flex items-center justify-between gap-2 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
-                                                                <span className="text-xs font-semibold text-slate-800 truncate" title={ord.product_name}>
+                                                            <div key={ord.id || oIdx} className="flex items-center justify-between gap-2 text-xs leading-tight">
+                                                                <span className="text-[11px] font-medium text-slate-800 truncate" title={ord.product_name}>
                                                                     {ord.product_name}
                                                                 </span>
-                                                                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 shrink-0 whitespace-nowrap">
+                                                                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100/60 shrink-0 whitespace-nowrap">
                                                                     {Number(ord.qty_delivered || ord.quantity || 0).toLocaleString()} pcs
                                                                 </span>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-slate-400 italic">Zoho line items</span>
+                                                    <span className="text-[11px] text-slate-400 italic">Zoho line items</span>
                                                 )}
                                             </td>
 
                                             {/* Company */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                                    <Building2 className="w-3 h-3 text-slate-500" />
+                                            <td className="py-1.5 px-2.5 whitespace-nowrap">
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                                    <Building2 className="w-2.5 h-2.5 text-slate-500" />
                                                     {inv.company}
                                                 </span>
                                             </td>
 
                                             {/* Total Amount */}
-                                            <td className="py-3.5 px-4 text-right whitespace-nowrap font-bold text-slate-900 text-sm">
+                                            <td className="py-1.5 px-2.5 text-right whitespace-nowrap font-bold text-slate-900 text-xs">
                                                 ₹{Number(inv.total_amount || 0).toLocaleString()}
                                             </td>
 
                                             {/* Status Badge */}
-                                            <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                            <td className="py-1.5 px-2.5 text-center whitespace-nowrap">
+                                                <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
                                                     inv.status === 'deleted_in_zoho'
                                                         ? 'bg-rose-100 text-rose-800 border border-rose-300'
                                                         : inv.status === 'paid'
@@ -575,32 +540,32 @@ export default function SalesInvoicesPage() {
                                                         ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                                         : 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                                                 }`}>
-                                                    {inv.status === 'deleted_in_zoho' ? 'Deleted in Zoho' : (inv.status || 'Active')}
+                                                    {inv.status === 'deleted_in_zoho' ? 'Deleted' : (inv.status || 'Active')}
                                                 </span>
                                             </td>
 
                                             {/* Actions */}
-                                            <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                                                <div className="flex items-center justify-center gap-1.5">
+                                            <td className="py-1.5 px-2.5 text-center whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-1">
                                                     {/* 1. View Invoice */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleViewInvoice(inv)}
                                                         disabled={isViewing}
-                                                        className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-all cursor-pointer"
+                                                        className="p-1 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded transition-all cursor-pointer"
                                                         title="View Invoice in Zoho Books"
                                                     >
-                                                        {isViewing ? <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> : <Eye className="w-4 h-4" />}
+                                                        {isViewing ? <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" /> : <Eye className="w-3.5 h-3.5" />}
                                                     </button>
 
                                                     {/* 2. Download Dispatch Package (3 Invoices + COAs) */}
                                                     <a
                                                         href={`/api/invoices/download?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`}
                                                         download={`Dispatch_Documents_${inv.invoice_number}.pdf`}
-                                                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-all cursor-pointer inline-flex items-center"
+                                                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded transition-all cursor-pointer inline-flex items-center"
                                                         title="Download Unified PDF (3 Invoices + COAs)"
                                                     >
-                                                        <Download className="w-4 h-4" />
+                                                        <Download className="w-3.5 h-3.5" />
                                                     </a>
 
                                                     {/* 3. Open Official System COAs */}
@@ -609,10 +574,10 @@ export default function SalesInvoicesPage() {
                                                             href={`/orders/summary/coa?ids=${inv.orders.map(o => o.id).join(',')}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 border border-sky-200 rounded-lg transition-all cursor-pointer inline-flex items-center"
+                                                            className="p-1 text-sky-600 hover:text-sky-700 hover:bg-sky-50 border border-sky-200 rounded transition-all cursor-pointer inline-flex items-center"
                                                             title="Open official system COAs in your exact original layout"
                                                         >
-                                                            <FileText className="w-4 h-4" />
+                                                            <FileText className="w-3.5 h-3.5" />
                                                         </a>
                                                     )}
 
@@ -620,20 +585,20 @@ export default function SalesInvoicesPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setEmailModalInvoice(inv)}
-                                                        className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-emerald-200 rounded-lg transition-all cursor-pointer"
+                                                        className="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-emerald-200 rounded transition-all cursor-pointer"
                                                         title="Email Invoice & COAs to Customer"
                                                     >
-                                                        <Mail className="w-4 h-4" />
+                                                        <Mail className="w-3.5 h-3.5" />
                                                     </button>
 
-                                                    {/* 4. Unlink / Delete Invoice */}
+                                                    {/* 5. Unlink / Delete Invoice */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleUnlinkInvoice(inv)}
-                                                        className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-all cursor-pointer"
+                                                        className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded transition-all cursor-pointer"
                                                         title="Unlink Invoice from Orders (Use if deleted in Zoho)"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        <Trash2 className="w-3.5 h-3.5" />
                                                     </button>
                                                 </div>
                                             </td>

@@ -15,12 +15,34 @@ import { useDataStore } from './DataStoreProvider';
 import ProductForm from './ProductForm';
 
 // ── Todo Generation (runs client-side with auth session) ──────────────────────
-function inkNeedsCheck(ink: string | null | undefined): boolean {
-    if (!ink) return false;
+function isCmykOrStandardInk(ink: string | null | undefined): boolean {
+    if (!ink) return true;
     const clean = ink.trim();
-    if (/^(CMYK|4C|4\s*COLOU?R)$/i.test(clean)) return false;
-    if (/\d/.test(clean)) return true;
-    return true;
+    if (!clean || clean === '-' || clean.toLowerCase() === 'null') return true;
+
+    const s = clean.toUpperCase();
+    const stripped = s
+        .replace(/CMYK/g, '')
+        .replace(/CYAN/g, '')
+        .replace(/MAGENTA/g, '')
+        .replace(/YELLOW/g, '')
+        .replace(/BLACK/g, '')
+        .replace(/WHITE/g, '')
+        .replace(/PROCESS/g, '')
+        .replace(/4\s*COLOU?R/g, '')
+        .replace(/4C/g, '')
+        .replace(/1C/g, '')
+        .replace(/UV/g, '')
+        .replace(/INK/g, '')
+        .replace(/AQUA/g, '')
+        .replace(/VARNISH/g, '')
+        .replace(/[\s,\+\/\-\(\)]/g, '');
+
+    return (!stripped || !/\d/.test(stripped));
+}
+
+function inkNeedsCheck(ink: string | null | undefined): boolean {
+    return !isCmykOrStandardInk(ink);
 }
 
 async function generateOrderTodos(orderId: number, ink: string | null, plateNo: string | null, printerName: string | null) {
@@ -434,6 +456,14 @@ export default function OrderForm({ initialData, productId: initialProductId }: 
             if (initialData?.id) {
                 const { error: updErr } = await supabase.from('orders').update(payload).eq('id', initialData.id);
                 if (updErr) throw updErr;
+                // If marked complete, remove all tasks for this order
+                if ((payload.status || '').toLowerCase() === 'complete') {
+                    (async () => {
+                        try {
+                            await supabase.from('order_todos').delete().eq('order_id', initialData.id);
+                        } catch {}
+                    })();
+                }
             } else {
                 const { data: inserted, error: insErr } = await supabase
                     .from('orders')

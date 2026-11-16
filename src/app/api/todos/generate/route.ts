@@ -7,18 +7,38 @@ const supabase = createClient(
 );
 
 /**
- * Determines if an ink string requires a special ink check.
- * Rule: skip check if ink is ONLY plain CMYK — include if there's a number or specific PMS code.
+ * Determines if an ink string is CMYK or standard process ink (no check needed).
+ * Rule: Skip check if ink is CMYK, process colors, Black, or standard varnish.
+ * Only require ink check if there is a specific Pantone/PMS code or special spot ink.
  */
-function inkNeedsCheck(ink: string | null | undefined): boolean {
-    if (!ink) return false;
+export function isCmykOrStandardInk(ink: string | null | undefined): boolean {
+    if (!ink) return true;
     const clean = ink.trim();
-    // If it's exactly CMYK variants with no number → no check needed
-    if (/^(CMYK|4C|4\s*COLOU?R)$/i.test(clean)) return false;
-    // If there's any digit → special ink exists → needs check
-    if (/\d/.test(clean)) return true;
-    // Anything beyond plain CMYK
-    return true;
+    if (!clean || clean === '-' || clean.toLowerCase() === 'null') return true;
+
+    const s = clean.toUpperCase();
+    const stripped = s
+        .replace(/CMYK/g, '')
+        .replace(/CYAN/g, '')
+        .replace(/MAGENTA/g, '')
+        .replace(/YELLOW/g, '')
+        .replace(/BLACK/g, '')
+        .replace(/WHITE/g, '')
+        .replace(/PROCESS/g, '')
+        .replace(/4\s*COLOU?R/g, '')
+        .replace(/4C/g, '')
+        .replace(/1C/g, '')
+        .replace(/UV/g, '')
+        .replace(/INK/g, '')
+        .replace(/AQUA/g, '')
+        .replace(/VARNISH/g, '')
+        .replace(/[\s,\+\/\-\(\)]/g, '');
+
+    return (!stripped || !/\d/.test(stripped));
+}
+
+function inkNeedsCheck(ink: string | null | undefined): boolean {
+    return !isCmykOrStandardInk(ink);
 }
 
 /**

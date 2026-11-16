@@ -249,6 +249,13 @@ export default function OrderFormV2({ initialData, productId: initialProductId }
 
             if (initialData?.id) {
                 await supabase.from('orders').update(payload).eq('id', initialData.id);
+                if ((payload.status || '').toLowerCase() === 'complete') {
+                    (async () => {
+                        try {
+                            await supabase.from('order_todos').delete().eq('order_id', initialData.id);
+                        } catch {}
+                    })();
+                }
             } else {
                 await supabase.from('orders').insert([payload]);
             }
