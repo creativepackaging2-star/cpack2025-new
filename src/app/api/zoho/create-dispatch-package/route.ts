@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase/client';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import { normalizeCompany, parseOrderPoInfo, CompanyName } from '@/utils/orderUtils';
+import { appendCoaPageToMergedDoc, getCompanyBranding } from '@/utils/generateCoaPdf';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,130 +36,6 @@ function detectDefaultHsnAndGst(productName: string, artworkCode?: string) {
         return { hsn: '48211020', gstRate: 18 };
     }
     return { hsn: '48192010', gstRate: 5 }; // Carton
-}
-
-async function appendCoaPageToMergedDoc(mergedDoc: PDFDocument, ord: any, companyConfig: any) {
-    const A4_WIDTH = 595.28;
-    const A4_HEIGHT = 841.89;
-    const page = mergedDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-    const fontRegular = await mergedDoc.embedFont(StandardFonts.Helvetica);
-    const fontBold = await mergedDoc.embedFont(StandardFonts.HelveticaBold);
-
-    const pad = 36;
-    const width = A4_WIDTH - pad * 2;
-    let y = A4_HEIGHT - pad;
-
-    // Header: Company
-    page.drawText(companyConfig.name, { x: pad, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.2) });
-    y -= 14;
-    page.drawText(companyConfig.address, { x: pad, y, size: 8, font: fontRegular, color: rgb(0.3, 0.3, 0.3) });
-    y -= 11;
-    page.drawText(`Email: ${companyConfig.email} | M: ${companyConfig.mobile} | GSTN: ${companyConfig.gstn}`, { x: pad, y, size: 8, font: fontRegular, color: rgb(0.3, 0.3, 0.3) });
-    y -= 10;
-
-    page.drawLine({ start: { x: pad, y }, end: { x: pad + width, y }, thickness: 1.5, color: rgb(0.1, 0.1, 0.2) });
-    y -= 22;
-
-    // Title: CERTIFICATE OF ANALYSIS
-    const title = 'CERTIFICATE OF ANALYSIS';
-    const titleW = fontBold.widthOfTextAtSize(title, 14);
-    page.drawText(title, { x: pad + (width - titleW) / 2, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.3) });
-    y -= 18;
-
-    page.drawLine({ start: { x: pad + 80, y }, end: { x: pad + width - 80, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
-    y -= 18;
-
-    // Customer
-    page.drawText('Customer Name:', { x: pad, y, size: 9, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText(ord.customer_name || 'BDR Pharmaceuticals International Pvt. Ltd.', { x: pad + 90, y, size: 9, font: fontRegular, color: rgb(0, 0, 0) });
-    y -= 14;
-    page.drawText('Address:', { x: pad, y, size: 9, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
-    const addr = (ord.delivery_address || '').slice(0, 80);
-    page.drawText(addr, { x: pad + 90, y, size: 8.5, font: fontRegular, color: rgb(0, 0, 0) });
-    y -= 20;
-
-    // Grid details
-    const gridH = 68;
-    const colW = width / 2;
-    page.drawRectangle({ x: pad, y: y - gridH, width, height: gridH, borderColor: rgb(0.6, 0.6, 0.6), borderWidth: 1 });
-    page.drawLine({ start: { x: pad + colW, y }, end: { x: pad + colW, y: y - gridH }, thickness: 1, color: rgb(0.6, 0.6, 0.6) });
-
-    const d = new Date();
-    const todayFormatted = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-    const dateStr = ord.delivery_date ? ord.delivery_date.split('-').reverse().join('/') : todayFormatted;
-
-    const leftFields = [
-        ['Date:', dateStr],
-        ['Invoice No:', ord.invoice_no || '-'],
-        ['Batch No:', ord.batch_no || '-'],
-        ['Mfg Date:', dateStr]
-    ];
-    const rightFields = [
-        ['Item Name:', (ord.product_name || '-').slice(0, 32)],
-        ['Quantity:', Number(ord.qty_delivered || ord.quantity || 0).toLocaleString()],
-        ['Artwork Code:', ord.artwork_code || '-']
-    ];
-
-    let rowY = y - 13;
-    for (const [lbl, val] of leftFields) {
-        page.drawText(lbl, { x: pad + 8, y: rowY, size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-        page.drawText(val, { x: pad + 70, y: rowY, size: 8, font: fontRegular, color: rgb(0, 0, 0) });
-        rowY -= 15;
-    }
-
-    rowY = y - 13;
-    for (const [lbl, val] of rightFields) {
-        page.drawText(lbl, { x: pad + colW + 8, y: rowY, size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-        page.drawText(val, { x: pad + colW + 80, y: rowY, size: 8, font: fontRegular, color: rgb(0, 0, 0) });
-        rowY -= 15;
-    }
-    y -= (gridH + 20);
-
-    // Tests Table
-    const col1 = 35;  // SR NO
-    const col2 = 110; // TEST
-    const col3 = width - col1 - col2 - 80; // SPECIFICATION
-    const col4 = 80;  // RESULT
-
-    page.drawRectangle({ x: pad, y: y - 18, width, height: 18, color: rgb(0.93, 0.95, 0.97), borderColor: rgb(0.6, 0.6, 0.6), borderWidth: 1 });
-    page.drawText('SR NO', { x: pad + 6, y: y - 13, size: 8, font: fontBold });
-    page.drawText('TEST', { x: pad + col1 + 8, y: y - 13, size: 8, font: fontBold });
-    page.drawText('SPECIFICATION', { x: pad + col1 + col2 + 8, y: y - 13, size: 8, font: fontBold });
-    page.drawText('RESULT', { x: pad + col1 + col2 + col3 + 12, y: y - 13, size: 8, font: fontBold });
-    y -= 18;
-
-    const tests = [
-        ['1', 'Description', (ord.specification || ord.specs || ord.product_name || 'Standard specification').slice(0, 45), 'Complies'],
-        ['2', 'GSM', ord.gsm_value ? `${ord.gsm_value} +/- 5%` : 'Standard +/- 5%', 'Complies'],
-        ['3', 'Construction', (ord.construction_type || ord.construction || 'As per approved specimen').slice(0, 40), 'Complies'],
-        ['4', 'Dimensions', ord.dimension ? `${ord.dimension} mm +/-2mm` : 'Standard mm +/-2mm', 'Complies'],
-        ['5', 'Shade', 'Will comply with shade', 'Complies'],
-    ];
-
-    for (const [sr, testName, spec, res] of tests) {
-        page.drawRectangle({ x: pad, y: y - 20, width, height: 20, borderColor: rgb(0.6, 0.6, 0.6), borderWidth: 1 });
-        page.drawText(sr, { x: pad + 14, y: y - 14, size: 8, font: fontRegular });
-        page.drawText(testName, { x: pad + col1 + 8, y: y - 14, size: 8, font: fontRegular });
-        page.drawText(spec, { x: pad + col1 + col2 + 8, y: y - 14, size: 8, font: fontRegular });
-        page.drawText(res, { x: pad + col1 + col2 + col3 + 14, y: y - 14, size: 8, font: fontBold, color: rgb(0.02, 0.5, 0.2) });
-        y -= 20;
-    }
-
-    y -= 40;
-
-    // Signatures
-    page.drawText('Prepared By', { x: pad + 20, y, size: 9, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText('Approved By', { x: pad + width - 120, y, size: 9, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
-    y -= 15;
-    page.drawText('Quality Assurance', { x: pad + 20, y, size: 8, font: fontRegular, color: rgb(0.4, 0.4, 0.4) });
-    page.drawText('Works Manager', { x: pad + width - 120, y, size: 8, font: fontRegular, color: rgb(0.4, 0.4, 0.4) });
-
-    y -= 30;
-    page.drawLine({ start: { x: pad + width - 160, y }, end: { x: pad + width, y }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
-    y -= 12;
-    page.drawText(`For ${companyConfig.name}`, { x: pad + width - 150, y, size: 8, font: fontBold, color: rgb(0.1, 0.2, 0.7) });
-    y -= 10;
-    page.drawText(companyConfig.proprietor_label || 'Authorised Signatory', { x: pad + width - 140, y, size: 7.5, font: fontRegular, color: rgb(0.3, 0.3, 0.3) });
 }
 
 export async function POST(req: NextRequest) {
@@ -445,20 +322,13 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Add official client COAs for physical products
-        const companyConfig = {
-            name: isPackaging ? 'CREATIVE PACKAGING' : 'CREATIVE PRINTERS',
-            address: '14, Parshva Sadan, 228 Dr. Annie Besant Road, Worli, Mumbai 400030 INDIA',
-            email: 'creativepackaging@outlook.com',
-            mobile: '8097032001',
-            gstn: isPackaging ? '27AAPFS8382R1ZL' : '27CGTPS8217E1ZT',
-            proprietor_label: 'Proprietor',
-        };
+        // Add official client COAs for physical products matching COATemplate.tsx
+        const brand = getCompanyBranding(finalInvoiceNumber);
 
         for (const ord of orders) {
             ord.invoice_no = finalInvoiceNumber;
             try {
-                await appendCoaPageToMergedDoc(mergedDoc, ord, companyConfig);
+                await appendCoaPageToMergedDoc(mergedDoc, ord, brand);
             } catch (coaErr) {
                 console.error(`Error appending in-memory COA for order ${ord.id}:`, coaErr);
             }
