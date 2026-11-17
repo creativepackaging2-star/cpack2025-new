@@ -1522,113 +1522,111 @@ function OrdersList() {
 
             <PageHeader
                 title="Orders"
-                icon={<ShoppingCart className="w-6 h-6" />}
+                icon={<ShoppingCart className="w-5 h-5 text-[#036989]" />}
                 actions={
-                    <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-                        {/* Stats - Compact on Mobile */}
-                        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                            <span className="text-[10px] md:text-sm font-normal text-slate-300 bg-slate-800 px-2 py-0.5 md:py-1 rounded-full">{filteredOrders.length}</span>
-                            <span className="text-[10px] md:text-sm font-bold text-emerald-300 bg-emerald-900 px-2 md:px-3 py-0.5 md:py-1 rounded-full border border-emerald-700 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+                        {/* Stats */}
+                        <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-xs font-bold text-[#11253E] bg-[#E6F2F7] px-2 py-0.5 rounded-full border border-[#036989]/20" title="Total Orders">
+                                {filteredOrders.length}
+                            </span>
+                            <span className="text-xs font-bold text-[#14804A] bg-[#E3F5EB] px-2 py-0.5 rounded-full border border-[#14804A]/20 whitespace-nowrap" title="Total Value">
                                 ₹{totalValue.toLocaleString()}
                             </span>
                         </div>
 
-                        {/* Divider */}
-                        <div className="h-4 w-[1px] bg-slate-300 mx-1 md:mx-2 shrink-0"></div>
-
-                        {/* Action Buttons Scrollable Container */}
-                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-1 md:flex-none justify-end">
-                            {/* Reports Group */}
-                            <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-0.5 shadow-sm shrink-0">
-                                <Link
-                                    href="/orders/summary/printer"
-                                    title="Printer Summary"
-                                    className="flex items-center justify-center w-8 h-7 md:w-auto md:h-auto md:px-3 md:py-1 text-slate-300 hover:bg-slate-700 hover:text-indigo-400 rounded transition-all"
-                                >
-                                    <Printer className="w-3.5 h-3.5" />
-                                    <span className="hidden md:inline ml-1.5 text-[13px] font-bold">Printers</span>
-                                </Link>
-                                <div className="w-[1px] h-3 bg-slate-700 mx-0.5"></div>
-                                <Link
-                                    href="/orders/summary/paper"
-                                    title="Paper Order Summary"
-                                    className="flex items-center justify-center w-8 h-7 md:w-auto md:h-auto md:px-3 md:py-1 text-slate-300 hover:bg-slate-700 hover:text-emerald-400 rounded transition-all"
-                                >
-                                    <Truck className="w-3.5 h-3.5" />
-                                    <span className="hidden md:inline ml-1.5 text-[13px] font-bold">Paper</span>
-                                </Link>
-                                <div className="w-[1px] h-3 bg-slate-700 mx-0.5"></div>
-                                <Link
-                                    href="/orders/summary/punching"
-                                    title="Punching Summary"
-                                    className="flex items-center justify-center w-8 h-7 md:w-auto md:h-auto md:px-3 md:py-1 text-slate-300 hover:bg-slate-700 hover:text-rose-400 rounded transition-all"
-                                >
-                                    <Palette className="w-3.5 h-3.5" />
-                                    <span className="hidden md:inline ml-1.5 text-[13px] font-bold">Punching</span>
-                                </Link>
-                                <div className="w-[1px] h-3 bg-slate-700 mx-0.5"></div>
-                                <Link
-                                    href="/production"
-                                    title="Production Board"
-                                    className="flex items-center justify-center w-8 h-7 md:w-auto md:h-auto md:px-3 md:py-1 text-amber-100 bg-amber-600 hover:bg-amber-500 rounded transition-all shadow-sm"
-                                >
-                                    <Database className="w-3.5 h-3.5" />
-                                    <span className="hidden md:inline ml-1.5 text-[13px] font-bold uppercase tracking-tight">Production Board</span>
-                                </Link>
-                            </div>
-
-                            {/* Toggles */}
-                            <div className="flex items-center gap-1.5 shrink-0">
-                                <label className="flex items-center justify-center w-8 h-8 md:w-auto md:h-auto md:gap-1.5 text-slate-300 bg-slate-800 md:px-3 md:py-1.5 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 select-none transition-colors" title="Show Completed Orders">
-                                    <input
-                                        type="checkbox"
-                                        checked={showCompleted}
-                                        onChange={e => handleToggleCompleted(e.target.checked)}
-                                        className="hidden md:block w-3 h-3 md:w-4 md:h-4 rounded text-indigo-600 focus:ring-indigo-500"
-                                    />
-                                    <span className="md:hidden text-[10px] font-bold text-slate-400">{showCompleted ? '✓' : 'Done'}</span>
-                                    <span className="hidden md:inline text-[13px]">Done</span>
-                                </label>
-                                <label className="flex items-center justify-center w-8 h-8 md:w-auto md:h-auto md:gap-1.5 text-slate-300 bg-slate-800 md:px-3 md:py-1.5 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-700 select-none transition-colors" title="Group by Category">
-                                    <input
-                                        type="checkbox"
-                                        checked={groupByCategory}
-                                        onChange={e => handleToggleGrouping(e.target.checked)}
-                                        className="hidden md:block w-3 h-3 md:w-4 md:h-4 rounded text-indigo-600 focus:ring-indigo-500"
-                                    />
-                                    <span className="md:hidden text-[10px] font-bold text-slate-400">Grp</span>
-                                    <span className="hidden md:inline text-[13px]">Group</span>
-                                </label>
-                            </div>
-
-                            {/* Upload PO Button */}
-                            <button
-                                type="button"
-                                onClick={() => setShowPoModal(true)}
-                                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 w-8 h-8 md:w-auto md:h-auto md:px-3.5 md:py-2 text-white transition-colors shadow-sm shrink-0 cursor-pointer"
-                                title="Upload & Parse Purchase Order"
+                        {/* Reports Group */}
+                        <div className="flex items-center bg-[#F4F6F9] border border-[#E2E8F0] rounded-lg p-0.5 shadow-2xs shrink-0">
+                            <Link
+                                href="/orders/summary/printer"
+                                title="Printer Summary"
+                                className="flex items-center px-1.5 py-0.5 text-[#3B556E] hover:bg-white hover:text-[#036989] rounded transition-all gap-1 text-[11px] font-semibold"
                             >
-                                <UploadCloud className="h-4 w-4 md:mr-1.5" />
-                                <span className="hidden md:inline text-xs font-bold">Upload PO</span>
-                            </button>
-
-                            {/* Generate Documents Button */}
-                            <button
-                                type="button"
-                                onClick={() => setShowGenerateDocsModal(true)}
-                                className="inline-flex items-center justify-center rounded-lg bg-purple-600 hover:bg-purple-500 w-8 h-8 md:w-auto md:h-auto md:px-3.5 md:py-2 text-white transition-colors shadow-sm shrink-0 cursor-pointer"
-                                title="Generate Invoice in Triplicate & COAs"
+                                <Printer className="w-3 h-3 text-[#3B556E]" />
+                                <span className="hidden sm:inline">Printers</span>
+                            </Link>
+                            <div className="w-[1px] h-3 bg-[#E2E8F0] mx-0.5"></div>
+                            <Link
+                                href="/orders/summary/paper"
+                                title="Paper Order Summary"
+                                className="flex items-center px-1.5 py-0.5 text-[#3B556E] hover:bg-white hover:text-[#036989] rounded transition-all gap-1 text-[11px] font-semibold"
                             >
-                                <FileText className="h-4 w-4 md:mr-1.5" />
-                                <span className="hidden md:inline text-xs font-bold">Generate Documents</span>
-                            </button>
-
-                            {/* New Order Button */}
-                            <Link href="/orders/new" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-2 text-white hover:bg-indigo-500 transition-colors shadow-sm shrink-0">
-                                <Plus className="h-4 w-4 md:mr-2" />
-                                <span className="hidden md:inline text-sm font-bold">New Order</span>
+                                <Truck className="w-3 h-3 text-[#3B556E]" />
+                                <span className="hidden sm:inline">Paper</span>
+                            </Link>
+                            <div className="w-[1px] h-3 bg-[#E2E8F0] mx-0.5"></div>
+                            <Link
+                                href="/orders/summary/punching"
+                                title="Punching Summary"
+                                className="flex items-center px-1.5 py-0.5 text-[#3B556E] hover:bg-white hover:text-[#036989] rounded transition-all gap-1 text-[11px] font-semibold"
+                            >
+                                <Palette className="w-3 h-3 text-[#3B556E]" />
+                                <span className="hidden sm:inline">Punching</span>
+                            </Link>
+                            <div className="w-[1px] h-3 bg-[#E2E8F0] mx-0.5"></div>
+                            <Link
+                                href="/production"
+                                title="Production Board"
+                                className="flex items-center px-2 py-0.5 text-white bg-[#036989] hover:bg-[#11395D] rounded transition-all shadow-2xs gap-1 text-[11px] font-bold"
+                            >
+                                <Database className="w-3 h-3" />
+                                <span>Board</span>
                             </Link>
                         </div>
+
+                        {/* Toggles */}
+                        <div className="flex items-center gap-1 shrink-0 text-xs">
+                            <label className="flex items-center gap-1 text-[#3B556E] bg-[#F4F6F9] px-1.5 py-0.5 rounded-lg border border-[#E2E8F0] cursor-pointer hover:bg-white select-none transition-colors" title="Show Completed Orders">
+                                <input
+                                    type="checkbox"
+                                    checked={showCompleted}
+                                    onChange={e => handleToggleCompleted(e.target.checked)}
+                                    className="w-3 h-3 rounded text-[#036989] focus:ring-[#036989]"
+                                />
+                                <span className="text-[11px] font-semibold">Done</span>
+                            </label>
+                            <label className="flex items-center gap-1 text-[#3B556E] bg-[#F4F6F9] px-1.5 py-0.5 rounded-lg border border-[#E2E8F0] cursor-pointer hover:bg-white select-none transition-colors" title="Group by Category">
+                                <input
+                                    type="checkbox"
+                                    checked={groupByCategory}
+                                    onChange={e => handleToggleGrouping(e.target.checked)}
+                                    className="w-3 h-3 rounded text-[#036989] focus:ring-[#036989]"
+                                />
+                                <span className="text-[11px] font-semibold">Group</span>
+                            </label>
+                        </div>
+
+                        {/* Upload PO Button */}
+                        <button
+                            type="button"
+                            onClick={() => setShowPoModal(true)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#14804A] hover:bg-[#116e3f] text-white text-[11px] font-bold transition-all shadow-2xs shrink-0 cursor-pointer"
+                            title="Upload & Parse Purchase Order"
+                        >
+                            <UploadCloud className="h-3 w-3" />
+                            <span>Upload PO</span>
+                        </button>
+
+                        {/* Generate Documents Button */}
+                        <button
+                            type="button"
+                            onClick={() => setShowGenerateDocsModal(true)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#036989] hover:bg-[#11395D] text-white text-[11px] font-bold transition-all shadow-2xs shrink-0 cursor-pointer"
+                            title="Generate Invoice in Triplicate & COAs"
+                        >
+                            <FileText className="h-3 w-3" />
+                            <span>Documents</span>
+                        </button>
+
+                        {/* New Order Button */}
+                        <Link
+                            href="/orders/new"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#036989] to-[#11395D] hover:from-[#11395D] hover:to-[#11395D] text-white text-[11px] font-bold transition-all shadow-2xs shrink-0"
+                            title="Create New Order"
+                        >
+                            <Plus className="h-3 w-3" />
+                            <span>New Order</span>
+                        </Link>
                     </div>
                 }
             />
