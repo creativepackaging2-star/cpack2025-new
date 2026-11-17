@@ -39,38 +39,38 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
     const categoryValue = catOrders.reduce((sum: number, o: any) => sum + (o.value || 0), 0);
     const catLower = (category || '').toLowerCase();
     
-    let borderTopColor = '#4338CA';
-    let headerBg = 'bg-[#EEF0FF]/60';
-    let categoryTextColor = 'text-[#322A9E]';
-    let badgeBorder = 'border-[#4338CA]/20';
+    let borderTopColor = '#11395D';
+    let headerBg = 'bg-[#E6F2F7]/60';
+    let categoryTextColor = 'text-[#11395D]';
+    let badgeBorder = 'border-[#11395D]/20';
 
     if (catLower.includes('carton')) {
-        borderTopColor = '#0E8FB8';
-        headerBg = 'bg-[#E4F4FA]/70';
-        categoryTextColor = 'text-[#0E8FB8]';
-        badgeBorder = 'border-[#0E8FB8]/25';
+        borderTopColor = '#036989';
+        headerBg = 'bg-[#E4F3F7]/70';
+        categoryTextColor = 'text-[#036989]';
+        badgeBorder = 'border-[#036989]/25';
     } else if (catLower.includes('insert')) {
-        borderTopColor = '#C42B7A';
-        headerBg = 'bg-[#FBE8F2]/70';
-        categoryTextColor = 'text-[#C42B7A]';
-        badgeBorder = 'border-[#C42B7A]/25';
+        borderTopColor = '#FD9B6C';
+        headerBg = 'bg-[#FFF1EB]/80';
+        categoryTextColor = 'text-[#C95922]';
+        badgeBorder = 'border-[#FD9B6C]/30';
     } else if (catLower.includes('label')) {
-        borderTopColor = '#B88400';
-        headerBg = 'bg-[#FFF4D6]/70';
-        categoryTextColor = 'text-[#B88400]';
-        badgeBorder = 'border-[#B88400]/25';
+        borderTopColor = '#DA3D27';
+        headerBg = 'bg-[#FDECE9]/70';
+        categoryTextColor = 'text-[#DA3D27]';
+        badgeBorder = 'border-[#DA3D27]/25';
     }
 
     return (
         <div
             style={{ borderTop: `3px solid ${borderTopColor}` }}
-            className="overflow-hidden rounded-xl border border-[#E6E8F0] bg-white shadow-xs mb-8"
+            className="overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-xs mb-8"
         >
-            <div className={`${headerBg} px-5 py-2.5 border-b border-[#E6E8F0] flex items-center justify-between`}>
+            <div className={`${headerBg} px-5 py-2.5 border-b border-[#E2E8F0] flex items-center justify-between`}>
                 <div className="flex items-center gap-3">
                     <h3 className={`text-sm font-bold tracking-tight uppercase ${categoryTextColor}`}>{category}</h3>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#4B5068] bg-white border border-[#E6E8F0] px-2 py-0.5 rounded-full shadow-xs">
+                        <span className="text-xs font-bold text-[#3B556E] bg-white border border-[#E2E8F0] px-2 py-0.5 rounded-full shadow-xs">
                             {catOrders.length}
                         </span>
                         <span className="text-xs font-bold text-[#14804A] bg-[#E3F5EB] border border-[#14804A]/20 px-2 py-0.5 rounded-full shadow-xs">
@@ -80,25 +80,25 @@ const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, hand
                 </div>
             </div>
             <div className="overflow-x-auto hidden md:block">
-                <table className="min-w-full divide-y divide-[#E6E8F0]">
-                    <thead className="bg-[#F3F4FB]">
-                        <tr className="bg-[#F3F4FB]">
+                <table className="min-w-full divide-y divide-[#E2E8F0]">
+                    <thead className="bg-[#F0F4F8]">
+                        <tr className="bg-[#F0F4F8]">
                             <th className="px-3 py-2.5 text-left w-[40px]">
                                 <input
                                     type="checkbox"
                                     aria-label="Select all orders in this group"
                                     checked={catOrders.every((o: any) => selectedIds.includes(o.id))}
                                     onChange={() => selectAll(catOrders.map((o: any) => o.id))}
-                                    className="rounded border-[#E6E8F0] text-[#4338CA] focus:ring-[#4338CA]"
+                                    className="rounded border-[#E2E8F0] text-[#036989] focus:ring-[#036989]"
                                 />
                             </th>
-                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Product</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Qty</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">U</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Specs</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Process</th>
-                            <th className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-[#4B5068] w-[100px]">Logos</th>
-                            <th className="px-3 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-[#4B5068] w-[110px]">Action</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">Product</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">Qty</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">U</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">Specs</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">Process</th>
+                            <th className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-[#3B556E] w-[100px]">Logos</th>
+                            <th className="px-3 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-[#3B556E] w-[110px]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300 bg-white">

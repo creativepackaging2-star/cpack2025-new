@@ -39,22 +39,22 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting, onSendArtw
     const isArchived = product.status === 'archived';
     const catName = (product.category_id && categories[product.category_id] ? categories[product.category_id] : '').toLowerCase();
     
-    let catPillClass = 'bg-[#EEF0FF] text-[#322A9E] border border-[#4338CA]/20';
-    let thumbClass = 'bg-[#EEF0FF]/40 border-[#4338CA]/20 text-[#322A9E]';
+    let catPillClass = 'bg-[#E6F2F7] text-[#024B62] border border-[#036989]/20';
+    let thumbClass = 'bg-[#E6F2F7]/50 border-[#036989]/25 text-[#024B62]';
 
     if (catName.includes('carton')) {
-        catPillClass = 'bg-[#E4F4FA] text-[#0E8FB8] border border-[#0E8FB8]/25';
-        thumbClass = 'bg-[#E4F4FA]/40 border-[#0E8FB8]/30 text-[#0E8FB8]';
+        catPillClass = 'bg-[#E4F3F7] text-[#036989] border border-[#036989]/25';
+        thumbClass = 'bg-[#E4F3F7]/50 border-[#036989]/30 text-[#036989]';
     } else if (catName.includes('insert')) {
-        catPillClass = 'bg-[#FBE8F2] text-[#C42B7A] border border-[#C42B7A]/25';
-        thumbClass = 'bg-[#FBE8F2]/40 border-[#C42B7A]/30 text-[#C42B7A]';
+        catPillClass = 'bg-[#FFF1EB] text-[#C95922] border border-[#FD9B6C]/40';
+        thumbClass = 'bg-[#FFF1EB]/60 border-[#FD9B6C]/40 text-[#C95922]';
     } else if (catName.includes('label')) {
-        catPillClass = 'bg-[#FFF4D6] text-[#B88400] border border-[#B88400]/25';
-        thumbClass = 'bg-[#FFF4D6]/40 border-[#B88400]/30 text-[#B88400]';
+        catPillClass = 'bg-[#FDECE9] text-[#DA3D27] border border-[#DA3D27]/25';
+        thumbClass = 'bg-[#FDECE9]/50 border-[#DA3D27]/30 text-[#DA3D27]';
     }
 
     return (
-        <tr className={`hover:bg-[#FAFAFE] transition-colors ${isArchived ? 'bg-slate-50/50 grayscale opacity-70' : ''}`}>
+        <tr className={`hover:bg-[#F4F6F9] transition-colors ${isArchived ? 'bg-slate-50/50 grayscale opacity-70' : ''}`}>
             {/* 1. Product Info */}
             <td className="px-6 py-2">
                 <div className="flex items-center">
@@ -67,10 +67,10 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting, onSendArtw
                     </div>
                     <div className="ml-4">
                         <div className="flex items-center gap-2">
-                            <div className="text-sm font-semibold text-[#171A2B]">{product.product_name || 'Unnamed Product'}</div>
+                            <div className="text-sm font-semibold text-[#11253E]">{product.product_name || 'Unnamed Product'}</div>
                             {isArchived && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Archived</span>}
                         </div>
-                        <div className="text-xs text-[#8A8FA6]">Code: {product.artwork_code || 'N/A'}</div>
+                        <div className="text-xs text-[#718A9E]">Code: {product.artwork_code || 'N/A'}</div>
                     </div>
                 </div>
             </td>
@@ -360,32 +360,32 @@ export default function ProductsPage() {
             </div>
 
             {/* Table (Desktop) */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-[#E6E8F0] bg-white shadow-xs">
+            <div className="hidden md:block overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-xs">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-[#E6E8F0]">
-                        <thead className="bg-[#F3F4FB]">
+                    <table className="min-w-full divide-y divide-[#E2E8F0]">
+                        <thead className="bg-[#F0F4F8]">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">
                                     Product Info
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">
                                     Category
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">
                                     U
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#3B556E]">
                                     Specs
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-[#4B5068]">
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-[#3B556E]">
                                     CDR/PDF
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#4B5068]">
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#3B556E]">
                                     Action
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#E6E8F0] bg-white">
+                        <tbody className="divide-y divide-[#E2E8F0] bg-white">
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-20 text-center text-slate-500">

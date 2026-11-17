@@ -11,15 +11,15 @@ const PROCESS_STEPS = [
 ];
 
 const STAGE_COLORS: Record<string, string> = {
-    'Paper': '#64748B',
-    'Plate': '#7C3AED',
-    'Print': '#2563EB',
-    'Varnish': '#0D9488',
-    'Foil': '#D97706',
-    'Pasting': '#4338CA',
-    'Folding': '#EA580C',
+    'Paper': '#718A9E',
+    'Plate': '#5999AF',
+    'Print': '#036989',
+    'Varnish': '#11395D',
+    'Foil': '#FD9B6C',
+    'Pasting': '#DA3D27',
+    'Folding': '#8D2F18',
     'Ready': '#14804A',
-    'Hold': '#BE2D3A',
+    'Hold': '#8D2F18',
 };
 
 export default function ProductionBoardGrid() {
@@ -120,65 +120,65 @@ export default function ProductionBoardGrid() {
 
         if (catName.includes('carton')) {
             return {
-                borderLeft: 'border-l-4 border-l-[#0E8FB8]',
-                bg: 'bg-[#E4F4FA]/50 hover:bg-[#E4F4FA]/80',
-                border: 'border-[#E6E8F0]',
-                text: 'text-[#171A2B]',
-                badge: 'text-[#0E8FB8]',
+                borderLeft: 'border-l-4 border-l-[#036989]',
+                bg: 'bg-[#E4F3F7]/60 hover:bg-[#E4F3F7]',
+                border: 'border-[#E2E8F0]',
+                text: 'text-[#11253E]',
+                badge: 'text-[#036989]',
             };
         } else if (catName.includes('insert')) {
             return {
-                borderLeft: 'border-l-4 border-l-[#C42B7A]',
-                bg: 'bg-[#FBE8F2]/50 hover:bg-[#FBE8F2]/80',
-                border: 'border-[#E6E8F0]',
-                text: 'text-[#171A2B]',
-                badge: 'text-[#C42B7A]',
+                borderLeft: 'border-l-4 border-l-[#FD9B6C]',
+                bg: 'bg-[#FFF1EB]/80 hover:bg-[#FFF1EB]',
+                border: 'border-[#E2E8F0]',
+                text: 'text-[#11253E]',
+                badge: 'text-[#C95922]',
             };
         } else if (catName.includes('label')) {
             return {
-                borderLeft: 'border-l-4 border-l-[#B88400]',
-                bg: 'bg-[#FFF4D6]/50 hover:bg-[#FFF4D6]/80',
-                border: 'border-[#E6E8F0]',
-                text: 'text-[#171A2B]',
-                badge: 'text-[#B88400]',
+                borderLeft: 'border-l-4 border-l-[#DA3D27]',
+                bg: 'bg-[#FDECE9]/70 hover:bg-[#FDECE9]',
+                border: 'border-[#E2E8F0]',
+                text: 'text-[#11253E]',
+                badge: 'text-[#DA3D27]',
             };
         }
         return {
-            borderLeft: 'border-l-4 border-l-[#4338CA]',
-            bg: 'bg-white hover:bg-[#F6F7FB]',
-            border: 'border-[#E6E8F0]',
-            text: 'text-[#171A2B]',
-            badge: 'text-[#4338CA]',
+            borderLeft: 'border-l-4 border-l-[#11395D]',
+            bg: 'bg-white hover:bg-[#F4F6F9]',
+            border: 'border-[#E2E8F0]',
+            text: 'text-[#11253E]',
+            badge: 'text-[#036989]',
         };
     };
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-10 h-10 text-[#4338CA] animate-spin mb-3" />
-                <p className="text-[#8A8FA6] font-bold uppercase tracking-[0.3em] text-[10px]">Loading Pipeline...</p>
+                <Loader2 className="w-10 h-10 text-[#036989] animate-spin mb-3" />
+                <p className="text-[#718A9E] font-bold uppercase tracking-[0.3em] text-[10px]">Loading Pipeline...</p>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-transparent font-sans text-[#171A2B] overflow-hidden">
+        <div className="flex flex-col h-full bg-transparent font-sans text-[#11253E] overflow-hidden">
             {/* Header */}
-            <header className="px-4 py-3 border-b border-[#E6E8F0] bg-white/70 backdrop-blur-xs shrink-0">
+            <header className="px-4 py-3 border-b border-[#E2E8F0] bg-white/70 backdrop-blur-xs shrink-0">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#EEF0FF] rounded-xl border border-[#4338CA]/15 shadow-xs">
-                            <Workflow className="w-5 h-5 text-[#4338CA]" />
+                        <div className="p-2 bg-[#E6F2F7] rounded-xl border border-[#036989]/15 shadow-xs">
+                            <Workflow className="w-5 h-5 text-[#036989]" />
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold tracking-tight text-[#171A2B]">
-                                Production <span className="text-[#4338CA]">Board</span>
+                            <h1 className="text-lg font-bold tracking-tight text-[#11253E]">
+                                Production <span className="text-[#036989]">Board</span>
                             </h1>
-                            <p className="text-[11px] text-[#8A8FA6] font-medium">Real-time job progress tracking by department</p>
+                            <p className="text-[11px] text-[#718A9E] font-medium">Real-time department pipeline tracking</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1 p-1 bg-white border border-[#E6E8F0] rounded-xl shadow-xs">
+                    <div className="flex items-center gap-1 p-1 bg-white border border-[#E2E8F0] rounded-xl shadow-xs">
                         {['All', 'Cartons', 'Inserts', 'Labels'].map(cat => (
                             <button
                                 key={cat}
@@ -186,8 +186,8 @@ export default function ProductionBoardGrid() {
                                 className={`
                                     px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all
                                     ${selectedCategory === cat
-                                        ? 'bg-[#4338CA] text-white shadow-xs'
-                                        : 'text-[#4B5068] hover:text-[#171A2B] hover:bg-[#F6F7FB]'}
+                                        ? 'bg-[#036989] text-white shadow-xs'
+                                        : 'text-[#3B556E] hover:text-[#11253E] hover:bg-[#F4F6F9]'}
                                 `}
                             >
                                 {cat}
@@ -200,7 +200,7 @@ export default function ProductionBoardGrid() {
             <main className="flex-1 overflow-y-auto p-3 no-scrollbar">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 w-full h-full min-h-0">
                     {PROCESS_STEPS.map((step) => {
-                        const stepColor = STAGE_COLORS[step] || '#64748B';
+                        const stepColor = STAGE_COLORS[step] || '#718A9E';
                         const stepOrders = orders.filter(o => {
                             const prog = o.progress || 'Paper';
                             const matchesStep = prog.toLowerCase() === step.toLowerCase();
@@ -219,20 +219,20 @@ export default function ProductionBoardGrid() {
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, step)}
                                 style={{ borderTop: `3px solid ${stepColor}` }}
-                                className="flex flex-col min-h-[220px] lg:h-[calc((100vh-160px)/3)] border border-[#E6E8F0] bg-white shadow-xs hover:shadow-sm rounded-xl overflow-hidden transition-all duration-200"
+                                className="flex flex-col min-h-[220px] lg:h-[calc((100vh-160px)/3)] border border-[#E2E8F0] bg-white shadow-xs hover:shadow-sm rounded-xl overflow-hidden transition-all duration-200"
                             >
-                                <div className="px-3.5 py-2.5 border-b border-[#F0F1F6] flex items-center justify-between bg-white shrink-0">
+                                <div className="px-3.5 py-2.5 border-b border-[#EDF2F7] flex items-center justify-between bg-white shrink-0">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <span
                                             className="w-2.5 h-2.5 rounded-full shrink-0"
                                             style={{ backgroundColor: stepColor }}
                                         />
-                                        <h3 className="font-bold text-[#171A2B] text-xs uppercase tracking-wide truncate">{step}</h3>
+                                        <h3 className="font-bold text-[#11253E] text-xs uppercase tracking-wide truncate">{step}</h3>
                                     </div>
                                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                                         stepOrders.length > 0
-                                            ? 'bg-[#EEF0FF] text-[#322A9E]'
-                                            : 'bg-[#F6F7FB] text-[#8A8FA6]'
+                                            ? 'bg-[#E6F2F7] text-[#024B62]'
+                                            : 'bg-[#F4F6F9] text-[#718A9E]'
                                     }`}>
                                         {stepOrders.length}
                                     </span>
@@ -240,7 +240,7 @@ export default function ProductionBoardGrid() {
 
                                 <div className="p-2 flex-1 overflow-y-auto space-y-1.5 no-scrollbar min-h-0">
                                     {stepOrders.length === 0 ? (
-                                        <div className="h-full flex items-center justify-center text-[11px] text-[#8A8FA6] italic">
+                                        <div className="h-full flex items-center justify-center text-[11px] text-[#718A9E] italic">
                                             No jobs in {step}
                                         </div>
                                     ) : (
@@ -255,7 +255,7 @@ export default function ProductionBoardGrid() {
                                                     className={`
                                                         p-2.5 rounded-lg transition-all cursor-grab active:cursor-grabbing group relative border
                                                         ${styles.borderLeft} ${styles.border} ${styles.bg}
-                                                        ${updatingId === order.id ? 'opacity-50 ring-2 ring-[#4338CA]' : ''}
+                                                        ${updatingId === order.id ? 'opacity-50 ring-2 ring-[#036989]' : ''}
                                                         ${draggedOrderId === order.id ? 'opacity-25 translate-x-1' : ''}
                                                     `}
                                                 >
@@ -264,16 +264,16 @@ export default function ProductionBoardGrid() {
                                                             <span className={`text-[11.5px] font-semibold leading-tight block truncate uppercase tracking-tight ${styles.text}`}>
                                                                 {order.products?.product_name || order.product_name || 'Job'}
                                                             </span>
-                                                            <div className="flex items-center gap-2 mt-1 text-[10px] text-[#8A8FA6]">
-                                                                <span>Qty: <strong className="text-[#4B5068]">{Number(order.quantity || 0).toLocaleString()}</strong></span>
+                                                            <div className="flex items-center gap-2 mt-1 text-[10px] text-[#718A9E]">
+                                                                <span>Qty: <strong className="text-[#3B556E]">{Number(order.quantity || 0).toLocaleString()}</strong></span>
                                                                 {order.total_print_qty ? (
-                                                                    <span>• Print: <strong className="text-[#4B5068]">{Number(order.total_print_qty).toLocaleString()}</strong></span>
+                                                                    <span>• Print: <strong className="text-[#3B556E]">{Number(order.total_print_qty).toLocaleString()}</strong></span>
                                                                 ) : null}
                                                             </div>
                                                         </div>
                                                         <Link
                                                             href={`/orders?q=${encodeURIComponent(order.order_id || '')}`}
-                                                            className="p-1 text-[#8A8FA6] hover:text-[#4338CA] transition-all shrink-0 rounded-md hover:bg-white"
+                                                            className="p-1 text-[#718A9E] hover:text-[#036989] transition-all shrink-0 rounded-md hover:bg-white"
                                                             onClick={(e) => e.stopPropagation()}
                                                             title="View Order"
                                                         >
@@ -283,7 +283,7 @@ export default function ProductionBoardGrid() {
 
                                                     {updatingId === order.id && (
                                                         <div className="absolute inset-0 rounded-md bg-white/70 backdrop-blur-xs flex items-center justify-center">
-                                                            <Loader2 className="w-4 h-4 text-[#4338CA] animate-spin" />
+                                                            <Loader2 className="w-4 h-4 text-[#036989] animate-spin" />
                                                         </div>
                                                     )}
                                                 </div>

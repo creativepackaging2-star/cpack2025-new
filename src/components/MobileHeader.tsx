@@ -8,14 +8,14 @@ import { twMerge } from 'tailwind-merge';
 import { useAuth } from './AuthProvider';
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#4338CA' },
-    { name: 'Products', href: '/products', icon: Package, iconColor: '#0E8FB8' },
-    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#C42B7A' },
-    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#B88400' },
-    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#0D9488' },
-    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#2563EB' },
-    { name: 'Quotations', href: '/quotations', icon: ClipboardList, iconColor: '#7C3AED' },
-    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#64748B' },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#11395D' },
+    { name: 'Products', href: '/products', icon: Package, iconColor: '#036989' },
+    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#5999AF' },
+    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#FD9B6C' },
+    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#036989' },
+    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#11395D' },
+    { name: 'Quotations', href: '/quotations', icon: ClipboardList, iconColor: '#DA3D27' },
+    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#718A9E' },
     { name: 'To-Do', href: '/todos', icon: CheckSquare, iconColor: '#14804A' },
 ];
 
@@ -29,7 +29,7 @@ export function MobileHeader() {
 
     return (
         <>
-            <header className="md:hidden sticky top-0 z-50 flex h-16 items-center justify-between border-b border-[#E6E8F0] bg-white px-4 shadow-sm">
+            <header className="md:hidden sticky top-0 z-50 flex h-16 items-center justify-between border-b border-[#E2E8F0] bg-white px-4 shadow-xs">
                 <div className="flex items-center gap-3">
                     <img
                         src="/logos/logo_main_user_transparent.png"
@@ -39,7 +39,7 @@ export function MobileHeader() {
                 </div>
                 <button
                     onClick={toggleMenu}
-                    className="rounded-lg p-2 text-[#4B5068] hover:bg-[#F6F7FB] active:scale-95 transition-all hover:text-[#171A2B]"
+                    className="rounded-lg p-2 text-[#3B556E] hover:bg-[#F4F6F9] active:scale-95 transition-all hover:text-[#11253E]"
                 >
                     {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
@@ -57,17 +57,17 @@ export function MobileHeader() {
             {/* Mobile Drawer Content */}
             <aside
                 className={twMerge(
-                    "fixed inset-y-0 left-0 z-50 w-72 transform bg-white text-[#171A2B] border-r border-[#E6E8F0] transition-transform duration-300 ease-in-out md:hidden shadow-xl",
+                    "fixed inset-y-0 left-0 z-50 w-72 transform bg-white text-[#11253E] border-r border-[#E2E8F0] transition-transform duration-300 ease-in-out md:hidden shadow-xl",
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
-                <div className="flex h-16 items-center border-b border-[#E6E8F0] px-6">
+                <div className="flex h-16 items-center border-b border-[#E2E8F0] px-6">
                     <img
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-9 w-auto"
                     />
-                    <button onClick={closeMenu} className="ml-auto rounded-lg p-1.5 text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#171A2B]">
+                    <button onClick={closeMenu} className="ml-auto rounded-lg p-1.5 text-[#3B556E] hover:bg-[#F4F6F9] hover:text-[#11253E]">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -83,8 +83,8 @@ export function MobileHeader() {
                                 className={twMerge(
                                     'group flex items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all border',
                                     isActive
-                                        ? 'bg-[#EEF0FF] text-[#322A9E] border-[#4338CA]/20 shadow-sm'
-                                        : 'text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#171A2B] border-transparent'
+                                        ? 'bg-[#E6F2F7] text-[#024B62] border-[#036989]/20 shadow-xs'
+                                        : 'text-[#3B556E] hover:bg-[#F4F6F9] hover:text-[#11253E] border-transparent'
                                 )}
                             >
                                 <item.icon

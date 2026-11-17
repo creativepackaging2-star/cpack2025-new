@@ -10,14 +10,14 @@ import { useAuth } from './AuthProvider';
 import { useLayout } from './LayoutContext';
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#4338CA' },
-    { name: 'Products', href: '/products', icon: Package, iconColor: '#0E8FB8' },
-    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#C42B7A' },
-    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#B88400' },
-    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#0D9488' },
-    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#2563EB' },
-    { name: 'Quotations', href: '/quotations', icon: FileText, iconColor: '#7C3AED' },
-    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#64748B' },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#11395D' },
+    { name: 'Products', href: '/products', icon: Package, iconColor: '#036989' },
+    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#5999AF' },
+    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#FD9B6C' },
+    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#036989' },
+    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#11395D' },
+    { name: 'Quotations', href: '/quotations', icon: FileText, iconColor: '#DA3D27' },
+    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#718A9E' },
     { name: 'To-Do', href: '/todos', icon: CheckSquare, iconColor: '#14804A' },
 ];
 
@@ -28,8 +28,8 @@ const NavItem = memo(({ item, isActive, isCollapsed, badge }: any) => (
             'group flex items-center rounded-xl transition-all duration-150 relative text-[13px] font-medium',
             isCollapsed ? 'justify-center p-2.5' : 'px-3 py-2.5',
             isActive
-                ? 'bg-[#EEF0FF] text-[#322A9E] font-semibold border border-[#4338CA]/15 shadow-sm'
-                : 'text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#171A2B] border border-transparent'
+                ? 'bg-[#E6F2F7] text-[#024B62] font-semibold border border-[#036989]/20 shadow-xs'
+                : 'text-[#3B556E] hover:bg-[#F4F6F9] hover:text-[#11253E] border border-transparent'
         )}
         title={isCollapsed ? item.name : ""}
     >
@@ -43,7 +43,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, badge }: any) => (
         {!isCollapsed && <span className="whitespace-nowrap">{item.name}</span>}
         {badge > 0 && (
             <span className={twMerge(
-                'absolute flex items-center justify-center rounded-full text-[9px] font-black bg-[#BE2D3A] text-white leading-none shadow-sm',
+                'absolute flex items-center justify-center rounded-full text-[9px] font-black bg-[#DA3D27] text-white leading-none shadow-sm',
                 isCollapsed
                     ? 'w-4 h-4 top-1 right-1'
                     : 'min-w-[18px] h-[18px] px-1 -top-1 -right-1'
@@ -84,10 +84,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
     return (
         <div className={twMerge(
-            "hidden border-r border-[#E6E8F0] bg-white md:block transition-all duration-300 ease-in-out text-[#171A2B] h-screen sticky top-0 z-50 shadow-sm",
+            "hidden border-r border-[#E2E8F0] bg-white md:block transition-all duration-300 ease-in-out text-[#11253E] h-screen sticky top-0 z-50 shadow-xs",
             isCollapsed ? "w-20" : "w-36 lg:w-44"
         )}>
-            <div className="flex h-[76px] items-center border-b border-[#E6E8F0] px-4 justify-center overflow-hidden bg-white">
+            <div className="flex h-[76px] items-center border-b border-[#E2E8F0] px-4 justify-center overflow-hidden bg-white">
                 {!isCollapsed && (
                     <img
                         src="/logos/logo_main_user_transparent.png"
@@ -107,7 +107,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             {/* Collapse toggle */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute -right-3 top-20 bg-white rounded-full p-1 border border-[#E6E8F0] shadow-md hover:bg-[#F6F7FB] text-[#4B5068] hover:text-[#171A2B] transition-colors z-50"
+                className="absolute -right-3 top-20 bg-white rounded-full p-1 border border-[#E2E8F0] shadow-sm hover:bg-[#F4F6F9] text-[#3B556E] hover:text-[#036989] transition-colors z-50"
                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
                 {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -117,8 +117,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <button
                 onClick={toggleNavStyle}
                 className={twMerge(
-                    "absolute -right-3 top-32 bg-white rounded-full p-1.5 border border-[#E6E8F0] shadow-md hover:bg-[#F6F7FB] transition-all z-50 group",
-                    "text-[#4B5068] hover:text-[#4338CA]"
+                    "absolute -right-3 top-32 bg-white rounded-full p-1.5 border border-[#E2E8F0] shadow-sm hover:bg-[#F4F6F9] transition-all z-50 group",
+                    "text-[#3B556E] hover:text-[#036989]"
                 )}
                 title="Switch to Top Navigation"
             >
@@ -152,22 +152,22 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
             )}>
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2.5 rounded-xl bg-[#F6F7FB] p-2.5 border border-[#E6E8F0]">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#6D5EF0] to-[#C42B7A] flex items-center justify-center shadow-sm shrink-0">
+                    <div className="flex items-center gap-2.5 rounded-xl bg-[#F4F6F9] p-2.5 border border-[#E2E8F0]">
+                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#11395D] via-[#036989] to-[#FD9B6C] flex items-center justify-center shadow-xs shrink-0">
                             <User className="h-4 w-4 text-white" />
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-[11px] font-bold text-[#171A2B] truncate uppercase tracking-tight">
+                            <p className="text-[11px] font-bold text-[#11253E] truncate uppercase tracking-tight">
                                 {user?.email?.split('@')[0] || 'Admin'}
                             </p>
-                            <p className="text-[8px] text-[#8A8FA6] font-semibold truncate uppercase tracking-widest"> Authorized </p>
+                            <p className="text-[8px] text-[#718A9E] font-semibold truncate uppercase tracking-widest"> Authorized </p>
                         </div>
                     </div>
                     <button
                         onClick={() => signOut()}
-                        className="flex items-center gap-2.5 w-full p-2 rounded-xl text-[#4B5068] hover:bg-[#FCE8EA] hover:text-[#BE2D3A] transition-all border border-transparent hover:border-[#BE2D3A]/20"
+                        className="flex items-center gap-2.5 w-full p-2 rounded-xl text-[#3B556E] hover:bg-[#FCEAE6] hover:text-[#8D2F18] transition-all border border-transparent hover:border-[#8D2F18]/20"
                     >
-                        <LogOut className="h-4 w-4 text-[#BE2D3A]" />
+                        <LogOut className="h-4 w-4 text-[#8D2F18]" />
                         <span className="text-[10px] font-bold uppercase tracking-wider">Sign Out</span>
                     </button>
                 </div>
@@ -175,8 +175,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
             {isCollapsed && (
                 <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-                    <div className="h-9 w-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center border border-[#4338CA]/20">
-                        <span className="text-xs font-black text-[#322A9E]">CP</span>
+                    <div className="h-9 w-9 rounded-xl bg-[#E6F2F7] flex items-center justify-center border border-[#036989]/20">
+                        <span className="text-xs font-black text-[#024B62]">CP</span>
                     </div>
                 </div>
             )}

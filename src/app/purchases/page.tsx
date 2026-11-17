@@ -17,20 +17,20 @@ export default function PurchasesPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-90px)] -m-4 sm:-m-6 lg:-m-8">
             {/* Header bar */}
-            <div className="bg-white border-b border-[#E6E8F0] px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shrink-0 shadow-xs">
+            <div className="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shrink-0 shadow-xs">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#EEF0FF] border border-[#4338CA]/15 flex items-center justify-center text-[#4338CA] shadow-xs">
-                        <ShoppingBag className="w-5 h-5 text-[#0D9488]" />
+                    <div className="w-9 h-9 rounded-xl bg-[#E6F2F7] border border-[#036989]/15 flex items-center justify-center text-[#036989] shadow-xs">
+                        <ShoppingBag className="w-5 h-5 text-[#036989]" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-sm sm:text-base font-bold text-[#171A2B] tracking-tight">Purchases Portal</h1>
+                            <h1 className="text-sm sm:text-base font-bold text-[#11253E] tracking-tight">Purchases Portal</h1>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E3F5EB] text-[#14804A] border border-[#14804A]/20">
                                 <ShieldCheck className="w-3 h-3" />
                                 Zoho InvoiceSync AI
                             </span>
                         </div>
-                        <p className="text-[11px] text-[#8A8FA6] mt-0.5 font-medium">
+                        <p className="text-[11px] text-[#718A9E] mt-0.5 font-medium">
                             Manage purchase bills, vendor reconciliation, and Zoho invoice matching
                         </p>
                     </div>
@@ -40,7 +40,7 @@ export default function PurchasesPage() {
                     <button
                         type="button"
                         onClick={handleRefresh}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F6F7FB] hover:bg-[#F0F1F6] text-[#4B5068] text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[#E6E8F0]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F4F6F9] hover:bg-[#EDF2F7] text-[#3B556E] text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[#E2E8F0]"
                         title="Reload Portal"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -51,7 +51,7 @@ export default function PurchasesPage() {
                         href={PURCHASES_PORTAL_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#4338CA] hover:bg-[#322A9E] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#036989] hover:bg-[#11395D] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
                     >
                         <span>Open in New Tab</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />

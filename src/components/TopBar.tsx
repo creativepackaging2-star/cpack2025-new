@@ -9,14 +9,14 @@ import { useAuth } from './AuthProvider';
 import { useLayout } from './LayoutContext';
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#4338CA' },
-    { name: 'Products', href: '/products', icon: Package, iconColor: '#0E8FB8' },
-    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#C42B7A' },
-    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#B88400' },
-    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#0D9488' },
-    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#2563EB' },
-    { name: 'Quotations', href: '/quotations', icon: FileText, iconColor: '#7C3AED' },
-    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#64748B' },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#11395D' },
+    { name: 'Products', href: '/products', icon: Package, iconColor: '#036989' },
+    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#5999AF' },
+    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#FD9B6C' },
+    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#036989' },
+    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#11395D' },
+    { name: 'Quotations', href: '/quotations', icon: FileText, iconColor: '#DA3D27' },
+    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#718A9E' },
     { name: 'To-Do', href: '/todos', icon: CheckSquare, iconColor: '#14804A' },
 ];
 
@@ -27,8 +27,8 @@ const TopNavItem = memo(({ item, isActive, onClick }: any) => (
         className={twMerge(
             'group flex items-center px-3.5 py-2 rounded-xl transition-all duration-150 gap-2 border text-[12px] font-semibold tracking-wide',
             isActive
-                ? 'bg-[#EEF0FF] text-[#322A9E] border-[#4338CA]/20 shadow-sm'
-                : 'text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#171A2B] border-transparent'
+                ? 'bg-[#E6F2F7] text-[#024B62] border-[#036989]/20 shadow-xs'
+                : 'text-[#3B556E] hover:bg-[#F4F6F9] hover:text-[#11253E] border-transparent'
         )}
     >
         <item.icon
@@ -61,7 +61,7 @@ export function TopBar() {
 
     return (
         <>
-            <header className="h-[70px] bg-white border-b border-[#E6E8F0] sticky top-0 z-50 w-full shrink-0 shadow-sm">
+            <header className="h-[70px] bg-white border-b border-[#E2E8F0] sticky top-0 z-50 w-full shrink-0 shadow-xs">
                 <div className="max-w-[1700px] mx-auto h-full px-6 flex items-center justify-between gap-6">
                     {/* Logo Section */}
                     <div className="flex items-center gap-4 shrink-0">
@@ -70,7 +70,7 @@ export function TopBar() {
                             alt="CPack Logo"
                             className="h-10 w-auto"
                         />
-                        <div className="hidden lg:block border-l border-[#E6E8F0] h-7 ml-1"></div>
+                        <div className="hidden lg:block border-l border-[#E2E8F0] h-7 ml-1"></div>
                     </div>
 
                     {/* Desktop Navigation Section */}
@@ -96,36 +96,36 @@ export function TopBar() {
                         {/* Layout Toggle */}
                         <button
                             onClick={toggleNavStyle}
-                            className="p-2 rounded-xl text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#4338CA] transition-all border border-[#E6E8F0] shadow-sm"
+                            className="p-2 rounded-xl text-[#3B556E] hover:bg-[#F4F6F9] hover:text-[#036989] transition-all border border-[#E2E8F0] shadow-xs"
                             title="Switch to Sidebar Layout"
                         >
                             <Tally2 className="h-4.5 w-4.5 rotate-90 md:rotate-0" />
                         </button>
 
-                        <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#F6F7FB] border border-[#E6E8F0]">
-                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#6D5EF0] to-[#C42B7A] flex items-center justify-center shadow-sm">
+                        <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#F4F6F9] border border-[#E2E8F0]">
+                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#11395D] via-[#036989] to-[#FD9B6C] flex items-center justify-center shadow-xs">
                                 <User className="h-3.5 w-3.5 text-white" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[11px] font-bold text-[#171A2B] uppercase leading-none">
+                                <span className="text-[11px] font-bold text-[#11253E] uppercase leading-none">
                                     {user?.email?.split('@')[0] || 'Admin'}
                                 </span>
-                                <span className="text-[8px] text-[#8A8FA6] uppercase tracking-widest mt-0.5 font-semibold">Authorized</span>
+                                <span className="text-[8px] text-[#718A9E] uppercase tracking-widest mt-0.5 font-semibold">Authorized</span>
                             </div>
                         </div>
 
                         <button
                             onClick={() => signOut()}
-                            className="hidden md:flex p-2 rounded-xl text-[#4B5068] hover:bg-[#FCE8EA] hover:text-[#BE2D3A] transition-all border border-[#E6E8F0] hover:border-[#BE2D3A]/20"
+                            className="hidden md:flex p-2 rounded-xl text-[#3B556E] hover:bg-[#FCEAE6] hover:text-[#8D2F18] transition-all border border-[#E2E8F0] hover:border-[#8D2F18]/20"
                             title="Sign Out"
                         >
-                            <LogOut className="h-4.5 w-4.5 text-[#BE2D3A]" />
+                            <LogOut className="h-4.5 w-4.5 text-[#8D2F18]" />
                         </button>
 
                         {/* Mobile Menu Toggle */}
                         <button
                             onClick={toggleMenu}
-                            className="md:hidden p-2 rounded-xl text-[#4B5068] hover:bg-[#F6F7FB] transition-all border border-[#E6E8F0]"
+                            className="md:hidden p-2 rounded-xl text-[#3B556E] hover:bg-[#F4F6F9] transition-all border border-[#E2E8F0]"
                         >
                             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                         </button>
@@ -145,17 +145,17 @@ export function TopBar() {
             {/* Mobile Drawer Content */}
             <aside
                 className={twMerge(
-                    "fixed inset-y-0 left-0 z-[70] w-72 transform bg-white text-[#171A2B] shadow-2xl transition-transform duration-300 ease-in-out md:hidden border-r border-[#E6E8F0]",
+                    "fixed inset-y-0 left-0 z-[70] w-72 transform bg-white text-[#11253E] shadow-2xl transition-transform duration-300 ease-in-out md:hidden border-r border-[#E2E8F0]",
                     isMenuOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
-                <div className="flex h-[70px] items-center border-b border-[#E6E8F0] px-6">
+                <div className="flex h-[70px] items-center border-b border-[#E2E8F0] px-6">
                     <img
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-9 w-auto"
                     />
-                    <button onClick={closeMenu} className="ml-auto rounded-xl p-2 text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#171A2B]">
+                    <button onClick={closeMenu} className="ml-auto rounded-xl p-2 text-[#3B556E] hover:bg-[#F4F6F9] hover:text-[#11253E]">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -175,22 +175,22 @@ export function TopBar() {
                 </nav>
 
                 <div className="absolute bottom-6 left-0 right-0 px-4">
-                    <div className="flex items-center gap-3 rounded-2xl bg-[#F6F7FB] p-3 border border-[#E6E8F0] mb-3">
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#6D5EF0] to-[#C42B7A] flex items-center justify-center shadow-sm">
+                    <div className="flex items-center gap-3 rounded-2xl bg-[#F4F6F9] p-3 border border-[#E2E8F0] mb-3">
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#11395D] via-[#036989] to-[#FD9B6C] flex items-center justify-center shadow-xs">
                             <User className="h-4.5 w-4.5 text-white" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-[#171A2B] uppercase tracking-tight">
+                            <p className="text-xs font-bold text-[#11253E] uppercase tracking-tight">
                                 {user?.email?.split('@')[0] || 'Admin'}
                             </p>
-                            <p className="text-[8px] text-[#8A8FA6] uppercase tracking-widest mt-0.5 font-semibold">Authorized</p>
+                            <p className="text-[8px] text-[#718A9E] uppercase tracking-widest mt-0.5 font-semibold">Authorized</p>
                         </div>
                     </div>
                     <button
                         onClick={() => signOut()}
-                        className="flex items-center gap-3 w-full p-2.5 rounded-xl text-[#4B5068] hover:bg-[#FCE8EA] hover:text-[#BE2D3A] transition-all border border-transparent hover:border-[#BE2D3A]/20"
+                        className="flex items-center gap-3 w-full p-2.5 rounded-xl text-[#3B556E] hover:bg-[#FCEAE6] hover:text-[#8D2F18] transition-all border border-transparent hover:border-[#8D2F18]/20"
                     >
-                        <LogOut className="h-4.5 w-4.5 text-[#BE2D3A]" />
+                        <LogOut className="h-4.5 w-4.5 text-[#8D2F18]" />
                         <span className="text-[10px] font-bold uppercase tracking-wider">Sign Out</span>
                     </button>
                 </div>

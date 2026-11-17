@@ -1,54 +1,66 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
-/* ===== Design tokens ===== */
+/* ===== Design tokens (Taste-Skills Art Direction & Nautical Palette) ===== */
 :root {
-  --bg: #F6F7FB;
+  /* Canvas & Atmospheric Surfaces */
+  --bg: #F4F6F9;
   --surface: #FFFFFF;
-  --line: #E6E8F0;
-  --line-2: #F0F1F6;
-  --ink: #171A2B;
-  --ink-2: #4B5068;
-  --ink-3: #8A8FA6;
-  --brand: #4338CA;
-  --brand-soft: #EEF0FF;
-  --brand-ink: #322A9E;
+  --line: #E2E8F0;
+  --line-2: #EDF2F7;
+  
+  /* Typography Hierarchy */
+  --ink: #11253E;
+  --ink-2: #3B556E;
+  --ink-3: #718A9E;
 
-  /* print-process accents: cyan / magenta / yellow */
-  --carton: #0E8FB8;
-  --carton-soft: #E4F4FA;
-  --insert: #C42B7A;
-  --insert-soft: #FBE8F2;
-  --label: #B88400;
-  --label-soft: #FFF4D6;
+  /* Primary & Brand Accents (Palette #11395D, #036989, #5999AF) */
+  --brand: #036989;
+  --brand-deep: #11395D;
+  --brand-soft: #E6F2F7;
+  --brand-ink: #024B62;
 
-  /* semantic status */
+  /* Print-Process & Product Category Accents */
+  /* Carton: Deep Marine Teal (#036989) */
+  --carton: #036989;
+  --carton-soft: #E4F3F7;
+  
+  /* Insert: Warm Sunset Peach (#FD9B6C) */
+  --insert: #C95922;
+  --insert-accent: #FD9B6C;
+  --insert-soft: #FFF1EB;
+  
+  /* Label: Vibrant Terracotta (#DA3D27) */
+  --label: #DA3D27;
+  --label-soft: #FDECE9;
+
+  /* Semantic Status */
   --ok: #14804A;
   --ok-soft: #E3F5EB;
-  --warn: #B45309;
-  --warn-soft: #FEF0DC;
-  --bad: #BE2D3A;
-  --bad-soft: #FCE8EA;
+  --warn: #D97706;
+  --warn-soft: #FFF1EB;
+  --bad: #8D2F18;
+  --bad-soft: #FCEAE6;
 
-  /* production process stages */
-  --c-paper: #64748B;
-  --c-plate: #7C3AED;
-  --c-print: #2563EB;
-  --c-varnish: #0D9488;
-  --c-foil: #D97706;
-  --c-pasting: #4338CA;
-  --c-folding: #EA580C;
+  /* Production Process Stages (Harmonized across palette) */
+  --c-paper: #718A9E;
+  --c-plate: #5999AF;
+  --c-print: #036989;
+  --c-varnish: #11395D;
+  --c-foil: #FD9B6C;
+  --c-pasting: #DA3D27;
+  --c-folding: #8D2F18;
   --c-ready: #14804A;
-  --c-hold: #BE2D3A;
+  --c-hold: #8D2F18;
 
   --r-s: 8px;
   --r-m: 12px;
   --r-l: 18px;
-  --shadow: 0 1px 2px rgba(23,26,43,.05), 0 8px 24px -12px rgba(23,26,43,.10);
+  --shadow: 0 1px 3px rgba(17, 37, 62, 0.05), 0 8px 24px -12px rgba(17, 37, 62, 0.08);
   --font: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --background: #F6F7FB;
-  --foreground: #171A2B;
+  --background: #F4F6F9;
+  --foreground: #11253E;
 }
 
 @theme inline {
@@ -72,8 +84,8 @@ td {
 }
 
 body {
-  background: radial-gradient(900px 380px at 90% -80px, #E8EAFF 0%, transparent 70%),
-              radial-gradient(700px 300px at 0 0, #E3F4FA 0%, transparent 65%),
+  background: radial-gradient(1000px 450px at 95% -60px, rgba(89, 153, 175, 0.14) 0%, transparent 70%),
+              radial-gradient(850px 380px at 0% 0%, rgba(253, 155, 108, 0.10) 0%, transparent 65%),
               var(--bg) !important;
   background-attachment: fixed !important;
   color: var(--ink);
@@ -87,56 +99,56 @@ body {
   outline-offset: 2px;
 }
 
-/* Custom UI helpers matching reference theme */
+/* Taste-skills button styling with oceanic depth */
 .btn-primary {
-  background: linear-gradient(135deg, #5B4FE6, #4338CA);
+  background: linear-gradient(135deg, #036989 0%, #11395D 100%);
   color: #FFFFFF;
   border-radius: var(--r-s);
   font-weight: 600;
-  box-shadow: 0 6px 16px -8px rgba(67,56,202,.7);
+  box-shadow: 0 4px 14px -4px rgba(3, 105, 137, 0.5);
   transition: all 0.15s ease;
 }
 .btn-primary:hover {
-  background: #322A9E;
+  background: #11395D;
 }
 
 /* Category pills */
 .pill-carton {
   background: var(--carton-soft);
   color: var(--carton);
-  border: 1px solid rgba(14, 143, 184, 0.15);
+  border: 1px solid rgba(3, 105, 137, 0.2);
 }
 .pill-insert {
   background: var(--insert-soft);
   color: var(--insert);
-  border: 1px solid rgba(196, 43, 122, 0.15);
+  border: 1px solid rgba(201, 89, 34, 0.25);
 }
 .pill-label {
   background: var(--label-soft);
   color: var(--label);
-  border: 1px solid rgba(184, 132, 0, 0.15);
+  border: 1px solid rgba(218, 61, 39, 0.2);
 }
 
 /* Status pills */
 .pill-ok {
   background: var(--ok-soft);
   color: var(--ok);
-  border: 1px solid rgba(20, 128, 74, 0.15);
+  border: 1px solid rgba(20, 128, 74, 0.18);
 }
 .pill-warn {
   background: var(--warn-soft);
   color: var(--warn);
-  border: 1px solid rgba(180, 83, 9, 0.15);
+  border: 1px solid rgba(217, 119, 6, 0.2);
 }
 .pill-bad {
   background: var(--bad-soft);
   color: var(--bad);
-  border: 1px solid rgba(190, 45, 58, 0.15);
+  border: 1px solid rgba(141, 47, 24, 0.2);
 }
 .pill-brand {
   background: var(--brand-soft);
   color: var(--brand-ink);
-  border: 1px solid rgba(67, 56, 202, 0.15);
+  border: 1px solid rgba(3, 105, 137, 0.2);
 }
 .pill-mute {
   background: var(--bg);
