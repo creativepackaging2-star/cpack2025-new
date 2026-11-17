@@ -18,7 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className={twMerge(
-            "flex h-[100dvh] bg-slate-50 overflow-hidden",
+            "flex h-[100dvh] bg-transparent overflow-hidden",
             navStyle === 'topbar' ? "flex-col" : "flex-row"
         )}>
             {/* Desktop Sidebar — hidden on mobile via its own md:block class */}

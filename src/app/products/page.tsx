@@ -37,32 +37,47 @@ const ProductRow = memo(({ product, categories, onDelete, isDeleting, onSendArtw
     };
 
     const isArchived = product.status === 'archived';
+    const catName = (product.category_id && categories[product.category_id] ? categories[product.category_id] : '').toLowerCase();
+    
+    let catPillClass = 'bg-[#EEF0FF] text-[#322A9E] border border-[#4338CA]/20';
+    let thumbClass = 'bg-[#EEF0FF]/40 border-[#4338CA]/20 text-[#322A9E]';
+
+    if (catName.includes('carton')) {
+        catPillClass = 'bg-[#E4F4FA] text-[#0E8FB8] border border-[#0E8FB8]/25';
+        thumbClass = 'bg-[#E4F4FA]/40 border-[#0E8FB8]/30 text-[#0E8FB8]';
+    } else if (catName.includes('insert')) {
+        catPillClass = 'bg-[#FBE8F2] text-[#C42B7A] border border-[#C42B7A]/25';
+        thumbClass = 'bg-[#FBE8F2]/40 border-[#C42B7A]/30 text-[#C42B7A]';
+    } else if (catName.includes('label')) {
+        catPillClass = 'bg-[#FFF4D6] text-[#B88400] border border-[#B88400]/25';
+        thumbClass = 'bg-[#FFF4D6]/40 border-[#B88400]/30 text-[#B88400]';
+    }
 
     return (
-        <tr className={`hover:bg-slate-50 transition-colors ${isArchived ? 'bg-slate-50/50 grayscale opacity-70' : ''}`}>
+        <tr className={`hover:bg-[#FAFAFE] transition-colors ${isArchived ? 'bg-slate-50/50 grayscale opacity-70' : ''}`}>
             {/* 1. Product Info */}
             <td className="px-6 py-2">
                 <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-300">
+                    <div className={`h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center border ${thumbClass} overflow-hidden shadow-xs`}>
                         {product.product_image ? (
                             <img src={product.product_image} alt={product.product_name || 'Product Image'} className="h-full w-full object-cover rounded-lg" />
                         ) : (
-                            <span className="text-xs font-bold text-slate-400">IMG</span>
+                            <span className="text-[10px] font-bold">IMG</span>
                         )}
                     </div>
                     <div className="ml-4">
                         <div className="flex items-center gap-2">
-                            <div className="text-sm font-semibold text-slate-900">{product.product_name || 'Unnamed Product'}</div>
+                            <div className="text-sm font-semibold text-[#171A2B]">{product.product_name || 'Unnamed Product'}</div>
                             {isArchived && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Archived</span>}
                         </div>
-                        <div className="text-xs text-slate-500">Code: {product.artwork_code || 'N/A'}</div>
+                        <div className="text-xs text-[#8A8FA6]">Code: {product.artwork_code || 'N/A'}</div>
                     </div>
                 </div>
             </td>
 
             {/* 2. Category */}
             <td className="px-6 py-2 whitespace-nowrap">
-                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${catPillClass}`}>
                     {product.category_id && categories[product.category_id]
                         ? categories[product.category_id]
                         : `Category ${product.category_id || '-'}`}
@@ -345,32 +360,32 @@ export default function ProductsPage() {
             </div>
 
             {/* Table (Desktop) */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+            <div className="hidden md:block overflow-hidden rounded-xl border border-[#E6E8F0] bg-white shadow-xs">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-300">
-                        <thead className="bg-slate-50">
+                    <table className="min-w-full divide-y divide-[#E6E8F0]">
+                        <thead className="bg-[#F3F4FB]">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
                                     Product Info
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
                                     Category
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
                                     U
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">
                                     Specs
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-[#4B5068]">
                                     CDR/PDF
                                 </th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500">
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#4B5068]">
                                     Action
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-300 bg-white">
+                        <tbody className="divide-y divide-[#E6E8F0] bg-white">
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-20 text-center text-slate-500">

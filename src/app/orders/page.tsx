@@ -37,40 +37,68 @@ DetailGroup.displayName = 'DetailGroup';
 
 const OrderGroup = memo(({ category, catOrders, expandedOrderId, toggleRow, handleMarkComplete, handleUndoComplete, toggleQuickEdit, isUpdating, editingOrderId, editProgress, setEditProgress, handleQuickUpdate, handlePaperEntry, handleSplitOrder, selectedIds, toggleSelect, selectAll }: any) => {
     const categoryValue = catOrders.reduce((sum: number, o: any) => sum + (o.value || 0), 0);
+    const catLower = (category || '').toLowerCase();
+    
+    let borderTopColor = '#4338CA';
+    let headerBg = 'bg-[#EEF0FF]/60';
+    let categoryTextColor = 'text-[#322A9E]';
+    let badgeBorder = 'border-[#4338CA]/20';
+
+    if (catLower.includes('carton')) {
+        borderTopColor = '#0E8FB8';
+        headerBg = 'bg-[#E4F4FA]/70';
+        categoryTextColor = 'text-[#0E8FB8]';
+        badgeBorder = 'border-[#0E8FB8]/25';
+    } else if (catLower.includes('insert')) {
+        borderTopColor = '#C42B7A';
+        headerBg = 'bg-[#FBE8F2]/70';
+        categoryTextColor = 'text-[#C42B7A]';
+        badgeBorder = 'border-[#C42B7A]/25';
+    } else if (catLower.includes('label')) {
+        borderTopColor = '#B88400';
+        headerBg = 'bg-[#FFF4D6]/70';
+        categoryTextColor = 'text-[#B88400]';
+        badgeBorder = 'border-[#B88400]/25';
+    }
 
     return (
-        <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm mb-8">
-            <div className="bg-slate-50 px-6 py-2 border-b border-slate-400 flex items-center gap-3">
-                <h3 className="text-base font-semibold text-slate-800">{category}</h3>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-500 bg-white border border-slate-300 px-2 py-0.5 rounded-full">
-                        {catOrders.length}
-                    </span>
-                    <span className="text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                        ₹{categoryValue.toLocaleString()}
-                    </span>
+        <div
+            style={{ borderTop: `3px solid ${borderTopColor}` }}
+            className="overflow-hidden rounded-xl border border-[#E6E8F0] bg-white shadow-xs mb-8"
+        >
+            <div className={`${headerBg} px-5 py-2.5 border-b border-[#E6E8F0] flex items-center justify-between`}>
+                <div className="flex items-center gap-3">
+                    <h3 className={`text-sm font-bold tracking-tight uppercase ${categoryTextColor}`}>{category}</h3>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#4B5068] bg-white border border-[#E6E8F0] px-2 py-0.5 rounded-full shadow-xs">
+                            {catOrders.length}
+                        </span>
+                        <span className="text-xs font-bold text-[#14804A] bg-[#E3F5EB] border border-[#14804A]/20 px-2 py-0.5 rounded-full shadow-xs">
+                            ₹{categoryValue.toLocaleString()}
+                        </span>
+                    </div>
                 </div>
             </div>
             <div className="overflow-x-auto hidden md:block">
-                <table className="min-w-full divide-y divide-slate-300">
-                    <thead className="bg-slate-50">
-                        <tr className="bg-slate-50">
-                            <th className="px-3 py-3 text-left w-[40px]">
+                <table className="min-w-full divide-y divide-[#E6E8F0]">
+                    <thead className="bg-[#F3F4FB]">
+                        <tr className="bg-[#F3F4FB]">
+                            <th className="px-3 py-2.5 text-left w-[40px]">
                                 <input
                                     type="checkbox"
                                     aria-label="Select all orders in this group"
                                     checked={catOrders.every((o: any) => selectedIds.includes(o.id))}
                                     onChange={() => selectAll(catOrders.map((o: any) => o.id))}
-                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                    className="rounded border-[#E6E8F0] text-[#4338CA] focus:ring-[#4338CA]"
                                 />
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Product</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Qty</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">U</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Specs</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Process</th>
-                            <th className="px-3 py-3 text-center text-xs font-medium uppercase tracking-wider text-slate-500 w-[100px]">Logos</th>
-                            <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500 w-[110px]">Action</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Product</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Qty</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">U</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Specs</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-[#4B5068]">Process</th>
+                            <th className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-[#4B5068] w-[100px]">Logos</th>
+                            <th className="px-3 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-[#4B5068] w-[110px]">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300 bg-white">

@@ -229,11 +229,11 @@ function TodoTableView({
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#E6E8F0] shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                        <tr className="bg-[#F3F4FB] border-b border-[#E6E8F0] text-[11px] font-bold uppercase text-[#4B5068] tracking-wider">
                             <th className="py-3 px-4 w-[280px]">Product Name</th>
                             <th className="py-3 px-4">Task / Requirement</th>
                             <th className="py-3 px-4 w-[160px] text-center">Status</th>

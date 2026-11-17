@@ -2,48 +2,48 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2, CheckSquare, ShoppingBag } from 'lucide-react';
-import { clsx } from 'clsx';
+import { LayoutDashboard, Package, ShoppingCart, Settings, Menu, ClipboardList, ChevronLeft, ChevronRight, User, FileText, Tally2, CheckSquare, ShoppingBag, LogOut } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-
 import { memo, useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
+import { useAuth } from './AuthProvider';
+import { useLayout } from './LayoutContext';
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Products', href: '/products', icon: Package },
-    { name: 'Orders', href: '/orders', icon: ShoppingCart },
-    { name: 'Sales Invoices', href: '/invoices', icon: FileText },
-    { name: 'Purchases', href: '/purchases', icon: ShoppingBag },
-    { name: 'Production', href: '/production', icon: LayoutDashboard },
-    { name: 'Quotations', href: '/quotations', icon: FileText },
-    { name: 'Inventory', href: '/inventory', icon: ClipboardList },
-    { name: 'To-Do', href: '/todos', icon: CheckSquare },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard, iconColor: '#4338CA' },
+    { name: 'Products', href: '/products', icon: Package, iconColor: '#0E8FB8' },
+    { name: 'Orders', href: '/orders', icon: ShoppingCart, iconColor: '#C42B7A' },
+    { name: 'Sales Invoices', href: '/invoices', icon: FileText, iconColor: '#B88400' },
+    { name: 'Purchases', href: '/purchases', icon: ShoppingBag, iconColor: '#0D9488' },
+    { name: 'Production', href: '/production', icon: LayoutDashboard, iconColor: '#2563EB' },
+    { name: 'Quotations', href: '/quotations', icon: FileText, iconColor: '#7C3AED' },
+    { name: 'Inventory', href: '/inventory', icon: ClipboardList, iconColor: '#64748B' },
+    { name: 'To-Do', href: '/todos', icon: CheckSquare, iconColor: '#14804A' },
 ];
 
 const NavItem = memo(({ item, isActive, isCollapsed, badge }: any) => (
     <Link
         href={item.href}
         className={twMerge(
-            'group flex items-center rounded-xl transition-colors duration-200 relative',
-            isCollapsed ? 'justify-center p-3' : 'px-4 py-3',
+            'group flex items-center rounded-xl transition-all duration-150 relative text-[13px] font-medium',
+            isCollapsed ? 'justify-center p-2.5' : 'px-3 py-2.5',
             isActive
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                ? 'bg-[#EEF0FF] text-[#322A9E] font-semibold border border-[#4338CA]/15 shadow-sm'
+                : 'text-[#4B5068] hover:bg-[#F6F7FB] hover:text-[#171A2B] border border-transparent'
         )}
         title={isCollapsed ? item.name : ""}
     >
         <item.icon
             className={twMerge(
-                'h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110',
-                isCollapsed ? "" : "mr-3",
-                isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
+                'h-4.5 w-4.5 flex-shrink-0 transition-transform duration-150 group-hover:scale-110',
+                isCollapsed ? "" : "mr-3"
             )}
+            style={{ color: item.iconColor }}
         />
-        {!isCollapsed && <span className="text-sm font-semibold whitespace-nowrap">{item.name}</span>}
+        {!isCollapsed && <span className="whitespace-nowrap">{item.name}</span>}
         {badge > 0 && (
             <span className={twMerge(
-                'absolute flex items-center justify-center rounded-full text-[9px] font-black bg-rose-500 text-white leading-none',
+                'absolute flex items-center justify-center rounded-full text-[9px] font-black bg-[#BE2D3A] text-white leading-none shadow-sm',
                 isCollapsed
                     ? 'w-4 h-4 top-1 right-1'
                     : 'min-w-[18px] h-[18px] px-1 -top-1 -right-1'
@@ -59,10 +59,6 @@ interface SidebarProps {
     isCollapsed: boolean;
     setIsCollapsed: (val: boolean) => void;
 }
-
-import { useAuth } from './AuthProvider';
-import { LogOut } from 'lucide-react';
-import { useLayout } from './LayoutContext';
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     const pathname = usePathname();
@@ -82,23 +78,21 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             } catch {}
         }
         fetchTodoBadge();
-        // Refresh every 60s
         const interval = setInterval(fetchTodoBadge, 60000);
         return () => clearInterval(interval);
     }, []);
 
     return (
         <div className={twMerge(
-            "hidden border-r bg-slate-900 md:block transition-all duration-300 ease-in-out text-white h-screen sticky top-0 z-50",
-            isCollapsed ? "w-20" : "w-36 lg:w-40"
+            "hidden border-r border-[#E6E8F0] bg-white md:block transition-all duration-300 ease-in-out text-[#171A2B] h-screen sticky top-0 z-50 shadow-sm",
+            isCollapsed ? "w-20" : "w-36 lg:w-44"
         )}>
-            <div className="flex h-[80px] items-center border-b border-slate-800 px-6 justify-center overflow-hidden">
+            <div className="flex h-[76px] items-center border-b border-[#E6E8F0] px-4 justify-center overflow-hidden bg-white">
                 {!isCollapsed && (
                     <img
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
-                        className="h-12 w-auto transition-all duration-300"
-                        style={{ filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))' }}
+                        className="h-11 w-auto transition-all duration-300"
                     />
                 )}
                 {isCollapsed && (
@@ -106,14 +100,15 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                         src="/logos/logo_main_user_transparent.png"
                         alt="CPack Logo"
                         className="h-8 w-8 object-contain mx-auto"
-                        style={{ filter: 'drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))' }}
                     />
                 )}
             </div>
 
+            {/* Collapse toggle */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute -right-3 top-20 bg-indigo-600 rounded-full p-1 border-2 border-slate-900 hover:bg-indigo-500 transition-colors z-50"
+                className="absolute -right-3 top-20 bg-white rounded-full p-1 border border-[#E6E8F0] shadow-md hover:bg-[#F6F7FB] text-[#4B5068] hover:text-[#171A2B] transition-colors z-50"
+                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
                 {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
             </button>
@@ -122,16 +117,16 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <button
                 onClick={toggleNavStyle}
                 className={twMerge(
-                    "absolute -right-3 top-32 bg-slate-800 rounded-full p-1.5 border-2 border-slate-900 hover:bg-slate-700 transition-all z-50 group",
-                    "text-slate-400 hover:text-indigo-400"
+                    "absolute -right-3 top-32 bg-white rounded-full p-1.5 border border-[#E6E8F0] shadow-md hover:bg-[#F6F7FB] transition-all z-50 group",
+                    "text-[#4B5068] hover:text-[#4338CA]"
                 )}
                 title="Switch to Top Navigation"
             >
                 <Tally2 className="h-3 w-3 rotate-90" />
             </button>
 
-            <div className="px-3 py-6">
-                <nav className="space-y-2">
+            <div className="px-2.5 py-4">
+                <nav className="space-y-1">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href || (
                             item.href !== '/' &&
@@ -153,35 +148,35 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             </div>
 
             <div className={twMerge(
-                "absolute bottom-6 left-0 right-0 px-3 transition-opacity duration-300",
+                "absolute bottom-5 left-0 right-0 px-2.5 transition-opacity duration-300",
                 isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
             )}>
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3 rounded-2xl bg-slate-800/30 p-3 border border-slate-700/50">
-                        <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-inner shrink-0">
-                            <User className="h-4 w-4 text-indigo-100" />
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2.5 rounded-xl bg-[#F6F7FB] p-2.5 border border-[#E6E8F0]">
+                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#6D5EF0] to-[#C42B7A] flex items-center justify-center shadow-sm shrink-0">
+                            <User className="h-4 w-4 text-white" />
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-[11px] font-semibold text-slate-200 truncate uppercase tracking-tight">
+                            <p className="text-[11px] font-bold text-[#171A2B] truncate uppercase tracking-tight">
                                 {user?.email?.split('@')[0] || 'Admin'}
                             </p>
-                            <p className="text-[8px] text-slate-500 font-normal truncate uppercase tracking-widest"> Authorized </p>
+                            <p className="text-[8px] text-[#8A8FA6] font-semibold truncate uppercase tracking-widest"> Authorized </p>
                         </div>
                     </div>
                     <button
                         onClick={() => signOut()}
-                        className="flex items-center gap-3 w-full p-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20"
+                        className="flex items-center gap-2.5 w-full p-2 rounded-xl text-[#4B5068] hover:bg-[#FCE8EA] hover:text-[#BE2D3A] transition-all border border-transparent hover:border-[#BE2D3A]/20"
                     >
-                        <LogOut className="h-4 w-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Sign Out</span>
+                        <LogOut className="h-4 w-4 text-[#BE2D3A]" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Sign Out</span>
                     </button>
                 </div>
             </div>
 
             {isCollapsed && (
-                <div className="absolute bottom-10 left-0 right-0 flex justify-center">
-                    <div className="h-10 w-10 rounded-xl bg-slate-800/50 flex items-center justify-center border border-slate-700/50">
-                        <span className="text-xs font-black text-indigo-500">CP</span>
+                <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+                    <div className="h-9 w-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center border border-[#4338CA]/20">
+                        <span className="text-xs font-black text-[#322A9E]">CP</span>
                     </div>
                 </div>
             )}

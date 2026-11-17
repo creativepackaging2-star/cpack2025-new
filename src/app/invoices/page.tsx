@@ -377,9 +377,9 @@ export default function SalesInvoicesPage() {
             </div>
 
             {/* Filter & Sorting Toolbar */}
-            <div className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap gap-2 items-center justify-between">
+            <div className="bg-white px-3 py-1.5 rounded-xl border border-[#E6E8F0] shadow-xs flex flex-wrap gap-2 items-center justify-between">
                 {/* Company Tabs */}
-                <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg text-xs font-bold overflow-x-auto">
+                <div className="flex items-center gap-1 p-0.5 bg-[#F6F7FB] rounded-lg text-xs font-bold overflow-x-auto border border-[#E6E8F0]">
                     {(['All', 'Creative Printers', 'Creative Packaging', 'Creative Enterprise'] as const).map(c => {
                         const active = companyFilter === c;
                         return (
@@ -389,8 +389,8 @@ export default function SalesInvoicesPage() {
                                 onClick={() => setCompanyFilter(c)}
                                 className={`px-2.5 py-1 rounded-md transition-all cursor-pointer whitespace-nowrap text-xs ${
                                     active
-                                        ? 'bg-white text-slate-900 shadow-2xs font-black'
-                                        : 'text-slate-600 hover:text-slate-900'
+                                        ? 'bg-white text-[#171A2B] shadow-xs font-bold border border-[#E6E8F0]'
+                                        : 'text-[#4B5068] hover:text-[#171A2B]'
                                 }`}
                             >
                                 {c === 'All' ? 'All Billing Companies' : c}
@@ -401,33 +401,33 @@ export default function SalesInvoicesPage() {
 
                 {/* Search & Sort Indicator */}
                 <div className="flex items-center gap-2 ml-auto">
-                    <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                    <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold text-[#4B5068] bg-[#F6F7FB] px-2 py-0.5 rounded border border-[#E6E8F0]">
                         <span>Sort:</span>
-                        <strong className="text-indigo-700 capitalize">
+                        <strong className="text-[#322A9E] capitalize">
                             {sortField === 'date' ? 'Dispatch Date' : sortField.replace('_', ' ')}
                         </strong>
-                        <span className="text-[10px] text-slate-400">({sortOrder === 'desc' ? 'Latest' : 'Oldest'})</span>
+                        <span className="text-[10px] text-[#8A8FA6]">({sortOrder === 'desc' ? 'Latest' : 'Oldest'})</span>
                     </span>
 
                     <div className="relative w-48 sm:w-64">
-                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8A8FA6]" />
                         <input
                             type="text"
                             placeholder="Search invoice, product, customer..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-8 pr-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
+                            className="w-full pl-8 pr-2.5 py-1 bg-[#F6F7FB] border border-[#E6E8F0] rounded-lg text-xs font-medium text-[#171A2B] placeholder-[#8A8FA6] focus:bg-white focus:outline-none focus:border-[#4338CA] transition-colors"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Invoices Table */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#E6E8F0] shadow-xs overflow-hidden">
                 {loading && invoices.length === 0 ? (
                     <div className="py-20 flex flex-col items-center justify-center text-center">
-                        <Loader2 className="w-7 h-7 text-indigo-600 animate-spin mb-2" />
-                        <p className="text-xs font-bold text-slate-600">Loading invoices from Zoho Books & Database...</p>
+                        <Loader2 className="w-7 h-7 text-[#4338CA] animate-spin mb-2" />
+                        <p className="text-xs font-bold text-[#4B5068]">Loading invoices from Zoho Books & Database...</p>
                     </div>
                 ) : errorMsg && invoices.length === 0 ? (
                     <div className="p-6 text-center text-rose-600 bg-rose-50/50">
@@ -435,16 +435,16 @@ export default function SalesInvoicesPage() {
                         <p className="text-xs font-bold">{errorMsg}</p>
                     </div>
                 ) : sortedInvoices.length === 0 ? (
-                    <div className="py-16 text-center text-slate-500">
-                        <AlertCircle className="w-7 h-7 text-slate-400 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-slate-700">No matching invoices found</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Try clearing your search query or company filter.</p>
+                    <div className="py-16 text-center text-[#8A8FA6]">
+                        <AlertCircle className="w-7 h-7 text-[#8A8FA6] mx-auto mb-2" />
+                        <p className="text-xs font-bold text-[#171A2B]">No matching invoices found</p>
+                        <p className="text-[11px] text-[#8A8FA6] mt-0.5">Try clearing your search query or company filter.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+                                <tr className="border-b border-[#E6E8F0] bg-[#F3F4FB] text-[11px] font-bold uppercase text-[#4B5068] tracking-wider">
                                     {renderSortableHeader('Dispatch Date', 'date')}
                                     {renderSortableHeader('Invoice No', 'invoice_number')}
                                     {renderSortableHeader('Customer', 'customer_name')}
