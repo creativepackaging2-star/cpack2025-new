@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 export interface WhatsAppSendParams {
     target: string; // Phone number (e.g., "919876543210") or Group ID (e.g., "120363023456789012@g.us")
     filename: string;
@@ -9,6 +12,7 @@ export interface WhatsAppSendResult {
     success: boolean;
     provider: 'ultramsg' | 'evolution' | 'none';
     messageId?: string;
+    target?: string;
     error?: string;
     rawResponse?: any;
 }
@@ -47,8 +51,38 @@ export function getWhatsAppConfig() {
     return {
         configured: false,
         provider: 'none' as const,
+        ultraInstance: ultraInstance || '',
+        ultraToken: ultraToken || '',
         defaultTarget
     };
+}
+
+export function saveWhatsAppConfig(config: { ultraInstance?: string; ultraToken?: string; defaultTarget?: string }) {
+    try {
+        const envPath = path.join(process.cwd(), '.env.local');
+        let content = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+
+        const updates: Record<string, string> = {};
+        if (config.ultraInstance !== undefined) updates['ULTRAMSG_INSTANCE_ID'] = config.ultraInstance.trim();
+        if (config.ultraToken !== undefined) updates['ULTRAMSG_TOKEN'] = config.ultraToken.trim();
+        if (config.defaultTarget !== undefined) updates['WHATSAPP_DEFAULT_TARGET'] = config.defaultTarget.trim();
+
+        for (const [k, v] of Object.entries(updates)) {
+            process.env[k] = v;
+            const regex = new RegExp(`^${k}=.*$`, 'm');
+            if (regex.test(content)) {
+                content = content.replace(regex, `${k}=${v}`);
+            } else {
+                content += `\n${k}=${v}`;
+            }
+        }
+
+        fs.writeFileSync(envPath, content.trim() + '\n', 'utf8');
+        return true;
+    } catch (e) {
+        console.error('Failed to write .env.local for WhatsApp config:', e);
+        return false;
+    }
 }
 
 /**
@@ -69,7 +103,8 @@ export function formatWhatsAppTarget(target: string): string {
 }
 
 /**
- * Send PDF Document to WhatsApp via UltraMsg or Evolution API
+ * Send PDF Document to WhatsApp via UltraMsg (default) or Evolution API
+ * When caption is omitted or empty, only the clean PDF document is sent (no write up).
  */
 export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<WhatsAppSendResult> {
     const config = getWhatsAppConfig();
@@ -78,7 +113,8 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
         return {
             success: false,
             provider: 'none',
-            error: 'WhatsApp API credentials are not configured. Please set ULTRAMSG_INSTANCE_ID & ULTRAMSG_TOKEN, or EVOLUTION_API_URL & EVOLUTION_API_KEY in .env.local.'
+            target: params.target,
+            error: 'WhatsApp API credentials are not configured. Please enter your UltraMsg Instance ID & Token.'
         };
     }
 
@@ -87,30 +123,37 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
         return {
             success: false,
             provider: config.provider,
+            target: params.target,
             error: 'A valid WhatsApp phone number or Group ID is required.'
         };
     }
 
     const base64Data = params.fileBuffer.toString('base64');
 
-    // 1. UltraMsg Provider
+    // 1. UltraMsg Provider (Best & Recommended option)
     if (config.provider === 'ultramsg') {
         try {
             const dataUri = `data:application/pdf;base64,${base64Data}`;
             const endpoint = `https://api.ultramsg.com/${config.ultraInstance}/messages/document`;
+
+            const formBody: Record<string, string> = {
+                token: config.ultraToken!,
+                to: targetFormatted,
+                filename: params.filename,
+                document: dataUri,
+            };
+
+            // Only attach caption if explicitly passed and not empty
+            if (params.caption && params.caption.trim()) {
+                formBody.caption = params.caption.trim();
+            }
 
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams({
-                    token: config.ultraToken!,
-                    to: targetFormatted,
-                    filename: params.filename,
-                    document: dataUri,
-                    caption: params.caption || '',
-                }).toString(),
+                body: new URLSearchParams(formBody).toString(),
             });
 
             const data = await res.json();
@@ -118,6 +161,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
                 return {
                     success: true,
                     provider: 'ultramsg',
+                    target: targetFormatted,
                     messageId: data.id || (typeof data.message === 'string' ? data.message : undefined),
                     rawResponse: data,
                 };
@@ -126,6 +170,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
             return {
                 success: false,
                 provider: 'ultramsg',
+                target: targetFormatted,
                 error: data.error || data.message || 'UltraMsg failed to deliver document.',
                 rawResponse: data,
             };
@@ -133,6 +178,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
             return {
                 success: false,
                 provider: 'ultramsg',
+                target: targetFormatted,
                 error: err.message || 'Network error connecting to UltraMsg.',
             };
         }
@@ -144,6 +190,16 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
             const cleanUrl = config.evoUrl!.replace(/\/+$/, '');
             const endpoint = `${cleanUrl}/message/sendMedia/${config.evoInstance}`;
 
+            const mediaMessage: any = {
+                mediatype: 'document',
+                media: base64Data,
+                fileName: params.filename,
+            };
+
+            if (params.caption && params.caption.trim()) {
+                mediaMessage.caption = params.caption.trim();
+            }
+
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -152,12 +208,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
                 },
                 body: JSON.stringify({
                     number: targetFormatted,
-                    mediaMessage: {
-                        mediatype: 'document',
-                        media: base64Data,
-                        fileName: params.filename,
-                        caption: params.caption || '',
-                    },
+                    mediaMessage,
                 }),
             });
 
@@ -166,6 +217,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
                 return {
                     success: true,
                     provider: 'evolution',
+                    target: targetFormatted,
                     messageId: data.key?.id || data.messageId,
                     rawResponse: data,
                 };
@@ -174,6 +226,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
             return {
                 success: false,
                 provider: 'evolution',
+                target: targetFormatted,
                 error: data.message || data.error || 'Evolution API failed to deliver document.',
                 rawResponse: data,
             };
@@ -181,6 +234,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
             return {
                 success: false,
                 provider: 'evolution',
+                target: targetFormatted,
                 error: err.message || 'Network error connecting to Evolution API.',
             };
         }
@@ -189,6 +243,7 @@ export async function sendWhatsAppDocument(params: WhatsAppSendParams): Promise<
     return {
         success: false,
         provider: 'none',
+        target: targetFormatted,
         error: 'Unknown WhatsApp provider configuration.',
     };
 }
