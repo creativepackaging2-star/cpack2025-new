@@ -23,6 +23,8 @@ import {
     ShoppingBag
 } from 'lucide-react';
 import SendInvoiceEmailModal, { formatToDDMMYYYY } from '@/components/SendInvoiceEmailModal';
+import SendWhatsAppModal from '@/components/SendWhatsAppModal';
+import { WhatsAppLogo } from '@/components/FileLogos';
 
 interface SalesInvoiceRecord {
     invoice_number: string;
@@ -116,6 +118,9 @@ export default function SalesInvoicesPage() {
 
     // Email Modal state
     const [emailModalInvoice, setEmailModalInvoice] = useState<SalesInvoiceRecord | null>(null);
+
+    // WhatsApp Modal state
+    const [whatsAppModalInvoice, setWhatsAppModalInvoice] = useState<SalesInvoiceRecord | null>(null);
 
     // View Loading state
     const [viewingInvoiceNo, setViewingInvoiceNo] = useState<string | null>(null);
@@ -596,7 +601,17 @@ export default function SalesInvoicesPage() {
                                                         <Mail className="w-3.5 h-3.5" />
                                                     </button>
 
-                                                    {/* 5. Unlink / Delete Invoice */}
+                                                    {/* 5. WhatsApp Dispatch Package (Background) */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setWhatsAppModalInvoice(inv)}
+                                                        className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 border border-green-200 rounded transition-all cursor-pointer"
+                                                        title="Send 3 Invoices + COAs via WhatsApp"
+                                                    >
+                                                        <WhatsAppLogo className="w-3.5 h-3.5" />
+                                                    </button>
+
+                                                    {/* 6. Unlink / Delete Invoice */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleUnlinkInvoice(inv)}
@@ -622,6 +637,15 @@ export default function SalesInvoicesPage() {
                     isOpen={Boolean(emailModalInvoice)}
                     onClose={() => setEmailModalInvoice(null)}
                     invoice={emailModalInvoice}
+                />
+            )}
+
+            {/* WhatsApp Sales Invoice Modal */}
+            {whatsAppModalInvoice && (
+                <SendWhatsAppModal
+                    isOpen={Boolean(whatsAppModalInvoice)}
+                    onClose={() => setWhatsAppModalInvoice(null)}
+                    invoice={whatsAppModalInvoice}
                 />
             )}
 
