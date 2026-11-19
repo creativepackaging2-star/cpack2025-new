@@ -123,6 +123,7 @@ export async function GET(req: NextRequest) {
                     orders: [],
                     total_delivered_qty: 0,
                     total_amount: 0,
+                    status: 'active',
                     source: 'supabase',
                     pdf_available: false,
                     pdf_url: '',
@@ -164,7 +165,7 @@ export async function GET(req: NextRequest) {
             const orgPromises = orgs.map(async (org) => {
                 try {
                     const zRes = await fetch(
-                        `https://www.zohoapis.com/books/v3/invoices?organization_id=${org.id}&sort_column=created_time&sort_order=D&per_page=50`,
+                        `https://www.zohoapis.com/books/v3/invoices?organization_id=${org.id}&sort_column=created_time&sort_order=D&per_page=200`,
                         {
                             headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` },
                             signal: AbortSignal.timeout(5000), // 5s timeout so user never waits
@@ -232,6 +233,13 @@ export async function GET(req: NextRequest) {
         // Detect any invoice from Supabase that no longer exists in Zoho
         if (zohoFetchSuccess) {
             Object.values(invoiceMap).forEach((inv: any) => {
+                // Creative Enterprise invoices are local records and not synced to Zoho Books
+                const isEnterprise = inv.company === 'Creative Enterprise' || (inv.invoice_number || '').toUpperCase().startsWith('P-');
+                if (isEnterprise) {
+                    inv.status = 'active';
+                    return;
+                }
+
                 if (!inv.zoho_id && inv.source === 'supabase') {
                     inv.status = 'deleted_in_zoho';
                 }

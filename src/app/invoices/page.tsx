@@ -248,6 +248,11 @@ export default function SalesInvoicesPage() {
     }, [filteredInvoices]);
 
     const handleViewInvoice = async (inv: SalesInvoiceRecord) => {
+        if (inv.company === 'Creative Enterprise') {
+            window.open(`/api/invoices/download?invoiceNumber=${encodeURIComponent(inv.invoice_number)}`, '_blank');
+            return;
+        }
+
         if (inv.invoice_url) {
             window.open(inv.invoice_url, '_blank');
             return;
