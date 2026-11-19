@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase/client';
+import { resolveZohoAddress } from '@/utils/zohoAddressHelper';
 
 function formatDateForZoho(dateStr: string): string {
     if (!dateStr) {
@@ -100,39 +101,11 @@ export async function POST(req: NextRequest) {
 
         const accessToken = tokenData.access_token;
 
-        // 2. Resolve Customer ID
-        // For Creative Printers, check BDR locations or search contact list
-        let customerId = '';
-        const searchCustomer = (customerName || '').toLowerCase();
-        const searchAddr = (deliveryAddress || '').toLowerCase();
-
-        if (searchCustomer.includes('bdr')) {
-            if (searchAddr.includes('halol') || searchAddr.includes('tajpura') || searchAddr.includes('vanseti')) {
-                customerId = '874645000002907003'; // BDR PHARMACEUTICALS INTERNATIONAL PVT. LTD-Halol- BARODA
-            } else if (searchAddr.includes('baroda') || searchAddr.includes('vadodara')) {
-                customerId = '874645000000060303'; // BDR PHARMACEUTICALS INTERNATIONAL PVT. LTD- BARODA
-            } else {
-                customerId = '874645000000060293'; // BDR PHARMACEUTICALS INTERNATIONAL PRIVATE LIMITED
-            }
-        } else {
-            // Dynamic search in Zoho Contacts
-            try {
-                const searchRes = await fetch(`https://www.zohoapis.com/books/v3/contacts?organization_id=${zohoOrgId}&search_text=${encodeURIComponent(customerName || '')}`, {
-                    headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
-                });
-                const searchData = await searchRes.json();
-                if (searchData.contacts && searchData.contacts.length > 0) {
-                    customerId = searchData.contacts[0].contact_id;
-                }
-            } catch (searchErr) {
-                console.error('Contact search error:', searchErr);
-            }
-        }
-
-        if (!customerId) {
-            // Fallback default customer if unmatched
-            customerId = '874645000002907003';
-        }
+        // 2. Resolve Customer ID & Address IDs
+        const zohoAddr = resolveZohoAddress(isPackaging, customerName, deliveryAddress);
+        let customerId = zohoAddr.customerId;
+        let shippingAddressId = zohoAddr.shippingAddressId;
+        let billingAddressId = zohoAddr.billingAddressId;
 
         // 3. Format line items for Zoho Books (Matching S-2526-085.pdf format)
         const isInterState = taxType === 'IGST';
@@ -283,6 +256,9 @@ export async function POST(req: NextRequest) {
                 },
                 body: JSON.stringify({
                     customer_id: customerId,
+                    ...(shippingAddressId ? { shipping_address_id: shippingAddressId } : {}),
+                    ...(billingAddressId ? { billing_address_id: billingAddressId } : {}),
+                    place_of_supply: zohoAddr.placeOfSupply,
                     reference_number: '', // Left side is empty so PO No appears cleanly on right side table
                     invoice_number: finalInvoiceNumber,
                     date: formattedDate,

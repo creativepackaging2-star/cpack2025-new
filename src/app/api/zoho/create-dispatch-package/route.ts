@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { normalizeCompany, parseOrderPoInfo, CompanyName } from '@/utils/orderUtils';
 import { appendCoaPageToMergedDoc, getCompanyBranding } from '@/utils/generateCoaPdf';
+import { resolveZohoAddress } from '@/utils/zohoAddressHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,39 +145,13 @@ export async function POST(req: NextRequest) {
             }
             finalInvoiceNumber = `${prefix}${maxNum + 1}`;
 
-            // Resolve contact ID & Place of Supply
-            let customerId = isPackaging ? '687997000000062001' : '874645000000060001';
-            let contactPlaceOfSupply = 'MH';
-            try {
-                const searchKeyword = customerName.replace(/[^a-zA-Z0-9\s]/g, ' ').trim().split(/\s+/)[0] || 'BDR';
-                const searchRes = await fetch(`https://www.zohoapis.com/books/v3/contacts?organization_id=${zohoOrgId}&search_text=${encodeURIComponent(searchKeyword)}`, {
-                    headers: { 'Authorization': `Zoho-oauthtoken ${accessToken}` }
-                });
-                const searchData = await searchRes.json();
-                if (searchData.contacts && searchData.contacts.length > 0) {
-                    let matchedContact = searchData.contacts[0];
-                    if (isPackaging && deliveryAddress.toLowerCase().includes('padra')) {
-                        const padra = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('padra'));
-                        if (padra) matchedContact = padra;
-                    } else if (!isPackaging) {
-                        if (deliveryAddress.toLowerCase().includes('halol') || deliveryAddress.toLowerCase().includes('tajpura')) {
-                            const halol = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('halol'));
-                            if (halol) matchedContact = halol;
-                        } else if (deliveryAddress.toLowerCase().includes('baroda') || deliveryAddress.toLowerCase().includes('vadodara')) {
-                            const baroda = searchData.contacts.find((c: any) => (c.contact_name || '').toLowerCase().includes('baroda'));
-                            if (baroda) matchedContact = baroda;
-                        }
-                    }
-                    customerId = matchedContact.contact_id;
-                    contactPlaceOfSupply = matchedContact.place_of_contact || (matchedContact.gst_no?.startsWith('24') ? 'GJ' : 'MH');
-                }
-            } catch {}
-
-            // Determine Interstate vs Intrastate
-            // Both Creative Packaging & Creative Printers are registered in Maharashtra (MH) in Zoho Books.
-            // When customer's Place of Supply is MH -> Intrastate (CGST + SGST)
-            // When customer's Place of Supply is outside MH (e.g. GJ) -> Interstate (IGST)
-            const isInterState = contactPlaceOfSupply !== 'MH';
+            // Resolve exact customer ID, shipping address ID, and place of supply
+            const zohoAddr = resolveZohoAddress(isPackaging, customerName, deliveryAddress);
+            let customerId = zohoAddr.customerId;
+            let shippingAddressId = zohoAddr.shippingAddressId;
+            let billingAddressId = zohoAddr.billingAddressId;
+            let contactPlaceOfSupply = zohoAddr.placeOfSupply;
+            let isInterState = zohoAddr.isInterState;
 
             // Line items
             const lineItems: any[] = [];
@@ -273,6 +248,9 @@ export async function POST(req: NextRequest) {
                 },
                 body: JSON.stringify({
                     customer_id: customerId,
+                    ...(shippingAddressId ? { shipping_address_id: shippingAddressId } : {}),
+                    ...(billingAddressId ? { billing_address_id: billingAddressId } : {}),
+                    place_of_supply: contactPlaceOfSupply,
                     invoice_number: finalInvoiceNumber,
                     date: todayZoho,
                     line_items: lineItems,
@@ -359,6 +337,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
+            orderIds,
             invoiceNumber: finalInvoiceNumber,
             invoiceId: zohoInvoiceId,
             invoiceUrl: invoiceViewUrl,

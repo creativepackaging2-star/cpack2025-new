@@ -73,6 +73,7 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
         downloadUrl: string;
         invoiceUrl?: string;
         invoice?: any;
+        orderIds?: number[];
     } | null>(null);
 
     // Email modal state
@@ -1004,6 +1005,18 @@ export default function GenerateDocsModal({ isOpen, onClose }: GenerateDocsModal
                                     <Download className="w-4 h-4" />
                                     <span>Download Dispatch PDF Again</span>
                                 </a>
+
+                                {generatedResult.orderIds && generatedResult.orderIds.length > 0 && (
+                                    <a
+                                        href={`/orders/summary/coa?ids=${generatedResult.orderIds.join(',')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                    >
+                                        <FileText className="w-4 h-4 text-blue-600" />
+                                        <span>Open / Print Official COAs in Browser</span>
+                                    </a>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-2.5">
                                     {generatedResult.invoiceUrl && (
