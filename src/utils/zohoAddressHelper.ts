@@ -7,8 +7,9 @@ export interface ZohoAddressResolution {
 }
 
 /**
- * Resolves exact Zoho Books Contact ID and Shipping Address ID based on billing company and delivery address.
- * Prevents Zoho Books from defaulting to primary contact address (e.g. Gotri) when Padra, Halol, etc. are selected.
+ * Resolves exact Zoho Books Contact ID, Shipping Address ID, and Billing Address ID.
+ * Ensures both Bill To and Ship To are set to the destination address (Padra, Halol, etc.)
+ * and never default to Gotri unless Gotri is explicitly the delivery location.
  */
 export function resolveZohoAddress(
     isPackaging: boolean,
@@ -24,7 +25,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '687997000000079367', // BDR Pharmacueticals Pvt Ltd - PADRA -Baroda
                 shippingAddressId: '687997000001536084', // VILLAGE LUNA, PADRA, VADODRA 391440
-                billingAddressId: '687997000000079371', // 205-206, LOTUS PLAZA, GOTRI
+                billingAddressId: '687997000001536084', // VILLAGE LUNA, PADRA, VADODRA 391440
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -34,7 +35,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '687997000000079367', // BDR Pharmacueticals Pvt Ltd - PADRA -Baroda
                 shippingAddressId: '687997000002002001', // Survey No. 51/1, Vanseti Village, Tajpura, Halol
-                billingAddressId: '687997000000079371',
+                billingAddressId: '687997000002002001', // Survey No. 51/1, Vanseti Village, Tajpura, Halol
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -44,7 +45,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '687997000000079367',
                 shippingAddressId: '687997000003221001', // Vapi
-                billingAddressId: '687997000000079371',
+                billingAddressId: '687997000003221001', // Vapi
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -54,7 +55,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '687997000000079367',
                 shippingAddressId: '687997000000079371', // Lotus Plaza, Gotri
-                billingAddressId: '687997000000079371',
+                billingAddressId: '687997000000079371', // Lotus Plaza, Gotri
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -74,7 +75,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '687997000000079367',
                 shippingAddressId: '687997000001536084', // Padra
-                billingAddressId: '687997000000079371',
+                billingAddressId: '687997000001536084', // Padra
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -94,7 +95,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '874645000002907003', // BDR PHARMACEUTICALS INTERNATIONAL PVT. LTD-Halol- BARODA
                 shippingAddressId: '874645000002907010', // Tajpura, Halol
-                billingAddressId: '874645000002907010',
+                billingAddressId: '874645000002907010', // Tajpura, Halol
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -104,7 +105,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '874645000000060303', // BDR PHARMACEUTICALS INTERNATIONAL PVT. LTD- BARODA
                 shippingAddressId: '874645000000060307', // Village Luna, Padra
-                billingAddressId: '874645000000870001', // Gotri
+                billingAddressId: '874645000000060307', // Village Luna, Padra
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -114,7 +115,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '874645000000060303',
                 shippingAddressId: '874645000002884001', // Vapi
-                billingAddressId: '874645000000870001',
+                billingAddressId: '874645000002884001', // Vapi
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -124,7 +125,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '874645000000060303',
                 shippingAddressId: '874645000000870001', // Gotri
-                billingAddressId: '874645000000870001',
+                billingAddressId: '874645000000870001', // Gotri
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
@@ -144,7 +145,7 @@ export function resolveZohoAddress(
             return {
                 customerId: '874645000000060303',
                 shippingAddressId: '874645000000060307', // Padra
-                billingAddressId: '874645000000870001',
+                billingAddressId: '874645000000060307', // Padra
                 placeOfSupply: 'GJ',
                 isInterState: true,
             };
