@@ -144,9 +144,19 @@ export default function COAPage() {
                         }
                     }
 
-                    // Force batch no calculation if missing but we have what we need
+                    // Delivery date has to be same as invoice date unless filled otherwise
+                    if (!orderData.delivery_date) {
+                        orderData.delivery_date = new Date().toISOString().slice(0, 10);
+                    }
+
+                    // Force batch no calculation as per system formula
                     if (!orderData.batch_no && orderData.product_name && orderData.delivery_date) {
                         orderData.batch_no = calculateBatchNo(orderData.product_name, orderData.category_name || '', orderData.delivery_date);
+                    }
+
+                    // Customer name fallback
+                    if (!orderData.customer_name || !orderData.customer_name.trim()) {
+                        orderData.customer_name = 'BDR Pharmaceuticals International Pvt. Ltd.';
                     }
 
                     setOrder(orderData);

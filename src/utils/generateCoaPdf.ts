@@ -95,7 +95,7 @@ function getBase64DataUri(relativeFilePath: string): string {
     return '';
 }
 
-function generateBatchNoFromDate(dateStr: string | null | undefined): string {
+export function generateBatchNoFromDate(dateStr: string | null | undefined): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '';
@@ -105,7 +105,7 @@ function generateBatchNoFromDate(dateStr: string | null | undefined): string {
     return `${dd}${mm}${yy}`;
 }
 
-function calculateBatchNo(pName: string, cName: string, dDate: string): string {
+export function calculateBatchNo(pName: string, cName: string, dDate: string): string {
     const datePart = generateBatchNoFromDate(dDate);
     if (!datePart) return '';
     const namePart = (pName || '').replace(/\s+/g, '').substring(0, 6).toUpperCase();

@@ -4,7 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import { normalizeCompany, parseOrderPoInfo, CompanyName } from '@/utils/orderUtils';
-import { appendCoaPageToMergedDoc, getCompanyBranding } from '@/utils/generateCoaPdf';
+import { appendCoaPageToMergedDoc, getCompanyBranding, calculateBatchNo } from '@/utils/generateCoaPdf';
 import { resolveZohoAddress } from '@/utils/zohoAddressHelper';
 
 export const dynamic = 'force-dynamic';
@@ -279,14 +279,25 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // 2. Update orders in Supabase
-        await supabase
-            .from('orders')
-            .update({
-                invoice_no: finalInvoiceNumber,
-                status: 'Complete'
-            })
-            .in('id', orderIds);
+        // 2. Update orders in Supabase: delivery_date defaults to invoice date, batch_no autofills as per system formula, invoice_no filled
+        const invoiceDateIso = formatDateForZoho('');
+        for (const ord of orders) {
+            const finalDelivDate = ord.delivery_date || invoiceDateIso;
+            const finalBatchNo = ord.batch_no || calculateBatchNo(ord.product_name, ord.category_name || '', finalDelivDate);
+            ord.invoice_no = finalInvoiceNumber;
+            ord.delivery_date = finalDelivDate;
+            ord.batch_no = finalBatchNo;
+
+            await supabase
+                .from('orders')
+                .update({
+                    invoice_no: finalInvoiceNumber,
+                    delivery_date: finalDelivDate,
+                    batch_no: finalBatchNo,
+                    status: 'Complete'
+                })
+                .eq('id', ord.id);
+        }
 
         // 3. Build Unified 3-Copy Invoices + Client COAs Package
         const mergedDoc = await PDFDocument.create();
